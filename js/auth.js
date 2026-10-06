@@ -10,6 +10,8 @@ export async function registerUser(email, password, fullName, city) {
     email,
     password,
     options: {
+      // после подтверждения почты пользователь вернётся на сайт
+      emailRedirectTo: window.location.origin,
       data: {
         full_name: fullName,
         city: city
