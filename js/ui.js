@@ -75,7 +75,8 @@ export function updateUIForGuest() {
 
 function getAvatarUrl(profile) {
   if (profile.avatar_url) return profile.avatar_url;
-  const initials = (profile.full_name || 'В').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  const words = (profile.full_name || 'Вадим').match(/[A-Za-zА-Яа-яЁё0-9]+/g) || ['В'];
+  const initials = words.slice(0, 2).map(w => w[0]).join('').toUpperCase();
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150"><rect width="150" height="150" fill="#6a11cb"/><text x="75" y="75" font-family="Arial" font-size="60" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">${initials}</text></svg>`;
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
@@ -764,6 +765,26 @@ export function setupModalCloseHandlers() {
 // ЛЕТОПИСЬ — РЕЖИМ ЧТЕНИЯ
 // ============================================
 
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// Превращает текст летописи в HTML: главы (## ...), абзацы, метки событий [[ID|фрагмент]]
+// и старые вставки [СОБЫТИЕ: ... | АВТОР: ... | ДАТА: ... | ГОРОД: ...]
+export function formatChronicleHtml(text) {
+  const legacyRegex = /\[СОБЫТИЕ:\s*(.*?)\s*\|\s*АВТОР:\s*(.*?)\s*\|\s*ДАТА:\s*(.*?)\s*\|\s*ГОРОД:\s*(.*?)\s*\]/g;
+  const inline = (raw) => escapeHtml(raw)
+    .replace(/\[\[(\d+)\|([^\]]+)\]\]/g, (m, id, frag) => `<span class="chronicle-ref" data-event-id="${id}" title="Нажми, чтобы узнать, кто и когда это записал">${frag}</span>`)
+    .replace(legacyRegex, (m, text, author, date, city) =>
+      `<span class="chronicle-ref legacy" data-event-text="${text}" data-author="${author}" data-date="${date}" data-city="${city}">${text}</span>`)
+    .replace(/\n/g, '<br>');
+  return String(text || '').replace(/\r/g, '').split(/\n\s*\n/).map(block => block.trim()).filter(Boolean).map(block => {
+    const heading = block.match(/^#{1,3}\s+(.+?)(?:\n([\s\S]*))?$/);
+    if (heading) return `<h3 class="chronicle-chapter">${inline(heading[1])}</h3>` + (heading[2] ? `<p>${inline(heading[2].trim())}</p>` : '');
+    return `<p>${inline(block)}</p>`;
+  }).join('');
+}
+
 export function renderChronicle(chronicle, onEventClick) {
   const content = document.getElementById('chronicle-content');
   if (!content) return;
@@ -773,54 +794,24 @@ export function renderChronicle(chronicle, onEventClick) {
     return;
   }
 
-  let html = chronicle.content;
-  
-  const eventRegex = /\[СОБЫТИЕ:\s*(.*?)\s*\|\s*АВТОР:\s*(.*?)\s*\|\s*ДАТА:\s*(.*?)\s*\|\s*ГОРОД:\s*(.*?)\s*\]/g;
-  
-  html = html.replace(eventRegex, (match, text, author, date, city) => {
-    return `<div class="chronicle-event-insert" data-event-text="${text}" data-author="${author}" data-date="${date}" data-city="${city}">
-      <div class="insert-header">📜 Событие</div>
-      <div class="insert-text">${text}</div>
-      <div class="insert-meta">
-        <span>👤 ${author}</span>
-        <span>📅 ${date}</span>
-        <span>📍 ${city}</span>
-      </div>
-      <button class="btn-read-more">Подробнее</button>
-    </div>`;
-  });
-
-  const paragraphs = html.split('\n\n').filter(p => p.trim());
-  
   content.innerHTML = `
     <div class="chronicle-reader">
       <div class="chronicle-header">
-        <h2>📖 Летопись Вадимопедии</h2>
+        <h2>Летопись Вадимопедии</h2>
         <p class="chronicle-meta">Версия ${chronicle.version} • Обновлено: ${new Date(chronicle.updated_at).toLocaleDateString('ru-RU')}</p>
       </div>
-      <div class="chronicle-text">
-        ${paragraphs.map(p => `<p>${p}</p>`).join('')}
-      </div>
+      <div class="chronicle-text">${formatChronicleHtml(chronicle.content)}</div>
     </div>
   `;
 
-  content.querySelectorAll('.chronicle-event-insert').forEach(insert => {
-    insert.addEventListener('click', () => {
-      if (onEventClick) {
-        onEventClick({
-          event_text: insert.dataset.eventText,
-          author: insert.dataset.author,
-          event_date: insert.dataset.date,
-          city: insert.dataset.city
-        });
-      }
+  content.querySelectorAll('.chronicle-ref').forEach(ref => {
+    ref.addEventListener('click', () => {
+      if (!onEventClick) return;
+      if (ref.dataset.eventId) onEventClick({ id: Number(ref.dataset.eventId) });
+      else onEventClick({ event_text: ref.dataset.eventText, author: ref.dataset.author, event_date: ref.dataset.date, city: ref.dataset.city });
     });
   });
 }
-
-// ============================================
-// ЛЕТОПИСЬ — РЕДАКТОР (АДМИН)
-// ============================================
 
 export function renderChronicleEditor(chronicle, pendingEvents, onSave, onGenerate, onRollback) {
   const content = document.getElementById('chronicle-content');
@@ -831,7 +822,7 @@ export function renderChronicleEditor(chronicle, pendingEvents, onSave, onGenera
       <div class="editor-header">
         <h2>✏️ Редактор летописи</h2>
         <div class="editor-actions">
-          <button class="btn-primary" id="btn-generate-chronicle">🤖 Сгенерировать с ИИ</button>
+          <button class="btn-primary" id="btn-generate-chronicle">Сгенерировать с ИИ</button>
           <button class="btn-secondary" id="btn-rollback-chronicle">↩️ Откатить</button>
           <button class="btn-primary" id="btn-save-chronicle"> Сохранить</button>
         </div>
@@ -881,10 +872,9 @@ export function renderChronicleEditor(chronicle, pendingEvents, onSave, onGenera
 
   const textarea = document.getElementById('chronicle-textarea');
   const preview = document.getElementById('chronicle-preview');
-  textarea.addEventListener('input', () => {
-    const paragraphs = textarea.value.split('\n\n').filter(p => p.trim());
-    preview.innerHTML = paragraphs.map(p => `<p>${p}</p>`).join('');
-  });
+  const updatePreview = () => { preview.innerHTML = formatChronicleHtml(textarea.value); };
+  textarea.addEventListener('input', updatePreview);
+  updatePreview();
 }
 
 // ============================================
@@ -1027,7 +1017,8 @@ export function renderMap(events, onEventClick) {
 
     Object.entries(cityEvents).forEach(([city, cityEvts]) => {
       const cityLower = city.toLowerCase().trim();
-      let coords = cityCoords[cityLower];
+      const withCoords = cityEvts.find(e => e.lat != null && e.lon != null);
+      let coords = withCoords ? [withCoords.lat, withCoords.lon] : cityCoords[cityLower];
       
       if (!coords) {
         for (const [key, value] of Object.entries(cityCoords)) {
@@ -1302,8 +1293,8 @@ export function showEditEventModal(event, onSave, isValidDate, isValidCity) {
         <textarea id="edit-event-text" rows="3">${event.event_text}</textarea>
       </div>
       <div class="form-input-group">
-        <label for="edit-event-city">Город</label>
-        <input type="text" id="edit-event-city" value="${event.city || ''}">
+        <label for="edit-event-city">Место</label>
+        <input type="text" id="edit-event-city" value="${event.city || ''}" placeholder="Город, например: Коломна">
       </div>
       <div class="form-input-group">
         <label for="edit-event-date">Дата события</label>

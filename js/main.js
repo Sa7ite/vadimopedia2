@@ -13,9 +13,10 @@ import {
   getLoreSignificantEventsNotInChronicle,
   toggleReaction, addEventComment, deleteEventComment,
   toggleBookmark, getBookmarks,
-  getEventsByUser
+  getEventsByUser, getEventById
 } from './api.js';
 import { registerUser, loginUser, logoutUser, onAuthStateChange } from './auth.js';
+import { validateDate, geocodePlace } from './validation.js';
 import {
   showSection, showNotification, updateUIForUser, updateUIForGuest,
   renderEvents, renderPendingEvents, renderProfile, renderEditProfileForm,
@@ -32,6 +33,7 @@ let chatRefreshInterval = null;
 let presenceChannel = null;
 let chronicleData = null;
 let chronicleViewMode = 'read';
+let generatedEventIds = []; // события, вплетённые ИИ в текущий черновик летописи
 
 async function initApp() {
   console.log('Вадимопедия загружается...');
@@ -116,95 +118,15 @@ function setupAuthButtons() {
   if (btnShowLogin) btnShowLogin.addEventListener('click', () => openModal('modal-login'));
 }
 
-// ИСПРАВЛЕНИЕ 5: Валидация города
-function isValidCity(cityStr) {
-  if (!cityStr || !cityStr.trim()) return true;
-  const regex = /^[a-zA-Zа-яА-ЯёЁ\s\-]{2,}$/;
-  return regex.test(cityStr.trim());
-}
+// Проверка даты для модалки редактирования (логика — в validation.js)
+function isValidDate(dateStr) { return validateDate(dateStr) === null; }
 
-// Валидация даты
-function isValidDate(dateStr) {
-  if (!dateStr || !dateStr.trim()) return true;
-  
-  const str = dateStr.trim();
-  
-  const dotMatch = str.match(/^(\d{1,2})\.(\d{1,2})\.(\d{1,})$/);
-  if (dotMatch) {
-    const day = parseInt(dotMatch[1]);
-    const month = parseInt(dotMatch[2]);
-    const year = parseInt(dotMatch[3]);
-    
-    if (month < 1 || month > 12) return false;
-    if (day < 1 || day > 31) return false;
-    
-    const daysInMonth = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-    if (day > daysInMonth[month - 1]) return false;
-    
-    if (month === 2 && day === 29) {
-      const isLeap = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
-      if (!isLeap) return false;
-    }
-    
-    return true;
-  }
-  
-  const dashMatch = str.match(/^(\d{1,})-(\d{1,2})-(\d{1,2})$/);
-  if (dashMatch) {
-    const year = parseInt(dashMatch[1]);
-    const month = parseInt(dashMatch[2]);
-    const day = parseInt(dashMatch[3]);
-    
-    if (month < 1 || month > 12) return false;
-    if (day < 1 || day > 31) return false;
-    
-    const daysInMonth = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-    if (day > daysInMonth[month - 1]) return false;
-    
-    if (month === 2 && day === 29) {
-      const isLeap = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
-      if (!isLeap) return false;
-    }
-    
-    return true;
-  }
-  
-  const monthNames = ['январ', 'феврал', 'март', 'апрел', 'ма', 'июн', 'июл', 'август', 'сентябр', 'октябр', 'ноябр', 'декабр'];
-  const textMatch = str.match(/^(\d{1,2})\s+([а-яё]+)\s+(\d{1,})$/i);
-  if (textMatch) {
-    const day = parseInt(textMatch[1]);
-    const monthText = textMatch[2].toLowerCase();
-    const year = parseInt(textMatch[3]);
-    
-    const monthIndex = monthNames.findIndex(m => monthText.startsWith(m));
-    if (monthIndex === -1) return false;
-    
-    const month = monthIndex + 1;
-    if (day < 1 || day > 31) return false;
-    
-    const daysInMonth = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-    if (day > daysInMonth[month - 1]) return false;
-    
-    if (month === 2 && day === 29) {
-      const isLeap = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
-      if (!isLeap) return false;
-    }
-    
-    return true;
-  }
-  
-  const monthYearMatch = str.match(/^([а-яё]+)\s+(\d{1,})$/i);
-  if (monthYearMatch) {
-    const monthText = monthYearMatch[1].toLowerCase();
-    const monthIndex = monthNames.findIndex(m => monthText.startsWith(m));
-    if (monthIndex === -1) return false;
-    return true;
-  }
-  
-  const yearMatch = str.match(/^\d{1,}$/);
-  if (yearMatch) return true;
-  
-  return false;
+// Проверка места: возвращает координаты или бросает понятную ошибку
+async function resolvePlace(city) {
+  if (!city) return { lat: null, lon: null };
+  const place = await geocodePlace(city);
+  if (!place) throw new Error(`Не нашёл место «${city}» на карте. Проверь написание (например: «Москва», «Нью-Йорк»)`);
+  return { lat: place.lat, lon: place.lon };
 }
 
 function setupForms() {
@@ -245,13 +167,16 @@ function setupForms() {
         showNotification('Введите текст события', 'error');
         return;
       }
-      if (eventDate && !isValidDate(eventDate)) {
-        showNotification('Неверная дата. Примеры: "15.03.2024", "15 марта 2024", "2024"', 'error');
+      const dateError = validateDate(eventDate);
+      if (dateError) {
+        showNotification(dateError, 'error');
         return;
       }
-      // ИСПРАВЛЕНИЕ 5: Валидация города
-      if (city && !isValidCity(city)) {
-        showNotification('Неверный формат города. Используйте только буквы (например: "Москва", "Нью-Йорк")', 'error');
+      let coords;
+      try {
+        coords = await resolvePlace(city);
+      } catch (error) {
+        showNotification(error.message, 'error');
         return;
       }
 
@@ -259,7 +184,7 @@ function setupForms() {
       const isAutoApprove = currentProfile && (currentProfile.role === 'admin' || currentProfile.role === 'moderator');
 
       try {
-        await addEvent(eventText, city, isLore, eventDate, isAutoApprove);
+        await addEvent(eventText, city, isLore, eventDate, isAutoApprove, coords);
         if (isAutoApprove) {
           showNotification('✅ Событие добавлено и опубликовано!', 'success');
         } else {
@@ -371,9 +296,10 @@ async function handleDeleteEvent(eventId) {
 // ИСПРАВЛЕНИЕ 1: Новая функция редактирования
 function handleEditEvent(event) {
   showEditEventModal(event, async (eventId, updates) => {
-    await updateEvent(eventId, updates);
+    const coords = await resolvePlace(updates.city);
+    await updateEvent(eventId, { ...updates, ...coords });
     await loadEvents();
-  }, isValidDate, isValidCity);
+  }, isValidDate, null);
 }
 
 async function handleAuthorClick(userId) {
@@ -461,7 +387,8 @@ async function loadChronicleEditor() {
 async function handleSaveChronicle(content) {
   try {
     showNotification('Сохранение...', 'info');
-    chronicleData = await updateChronicle(content, chronicleData?.last_event_id);
+    chronicleData = await updateChronicle(content, generatedEventIds);
+    generatedEventIds = [];
     showNotification('Летопись сохранена!', 'success');
     chronicleViewMode = 'read';
     renderChronicle(chronicleData, handleShowEventModal);
@@ -472,22 +399,29 @@ async function handleSaveChronicle(content) {
 
 async function handleGenerateChronicle() {
   try {
-    showNotification('Генерация текста... Это может занять до 30 секунд.', 'info');
     const pendingEvents = await getLoreSignificantEventsNotInChronicle();
     if (pendingEvents.length === 0) {
       showNotification('Нет новых значимых событий для добавления', 'error');
       return;
     }
-    const newText = await generateChronicleText(chronicleData?.content || '', pendingEvents);
+    const btn = document.getElementById('btn-generate-chronicle');
+    if (btn) { btn.disabled = true; btn.textContent = 'Летописец пишет...'; }
+    showNotification(`Летописец вплетает событий: ${pendingEvents.length}. Обычно это 20–60 секунд.`, 'info');
     const textarea = document.getElementById('chronicle-textarea');
-    if (textarea) {
-      textarea.value = newText;
-      const preview = document.getElementById('chronicle-preview');
-      if (preview) {
-        const paragraphs = newText.split('\n\n').filter(p => p.trim());
-        preview.innerHTML = paragraphs.map(p => `<p>${p}</p>`).join('');
-      }
+    const baseText = textarea ? textarea.value : (chronicleData?.content || '');
+    let result;
+    try {
+      result = await generateChronicleText(baseText, pendingEvents);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = 'Сгенерировать с ИИ'; }
     }
+    generatedEventIds = result.usedIds.length ? result.usedIds : pendingEvents.map(e => e.id);
+    if (textarea) {
+      textarea.value = result.text;
+      textarea.dispatchEvent(new Event('input'));
+    }
+    const missed = pendingEvents.filter(e => !result.usedIds.includes(e.id));
+    if (missed.length) showNotification(`ИИ не отметил событий: ${missed.length}. Проверь текст или сгенерируй ещё раз.`, 'error');
     showNotification('Текст сгенерирован! Проверьте и сохраните.', 'success');
   } catch (error) {
     showNotification(`Ошибка генерации: ${error.message}`, 'error');
@@ -508,8 +442,14 @@ async function handleRollbackChronicle() {
 
 async function handleShowEventModal(event) {
   if (!currentProfile) return;
+  // из летописи приходит только id — подгружаем событие целиком
+  let fullEvent = event;
+  if (event?.id && !event.event_text) {
+    fullEvent = await getEventById(event.id);
+    if (!fullEvent) { showNotification('Событие не найдено (возможно, удалено)', 'error'); return; }
+  }
   await showEventModal(
-    event,
+    fullEvent,
     currentProfile.id,
     handleToggleReaction,
     handleAddComment,

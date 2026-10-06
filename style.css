@@ -4284,3 +4284,36 @@ footer em {
   min-height: 500px;
   resize: vertical;
 }
+/* ============================================ */
+/* ЛЕТОПИСЬ: главы и метки событий */
+/* ============================================ */
+.chronicle-text .chronicle-chapter {
+  font-family: Georgia, serif;
+  font-size: 1.35rem;
+  margin: 1.6em 0 0.6em;
+  color: #4a148c;
+}
+.chronicle-text p { line-height: 1.75; margin: 0 0 1em; }
+.chronicle-ref {
+  cursor: pointer;
+  border-bottom: 2px dotted #8e44ad;
+  transition: background 0.15s;
+}
+.chronicle-ref:hover { background: rgba(142, 68, 173, 0.12); }
+
+/* Кнопки редактора летописи и формы профиля всегда на виду */
+.chronicle-editor .editor-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: white;
+  padding: 10px 0;
+}
+.profile-card .form-actions {
+  position: sticky;
+  bottom: 0;
+  background: white;
+  padding: 12px 0;
+  z-index: 10;
+}
+button:disabled { opacity: 0.6; cursor: wait; }

@@ -65,29 +65,30 @@ export async function getPendingEvents() {
 }
 
 export async function getLoreSignificantEventsNotInChronicle() {
-  const { data: chronicle, error: chronicleError } = await supabase
-    .from('chronicle')
-    .select('last_event_id')
-    .single();
-
-  if (chronicleError) return [];
-
-  const lastEventId = chronicle.last_event_id || 0;
-
   const { data, error } = await supabase
     .from('events')
     .select('*, profiles (full_name, avatar_url)')
     .eq('is_approved', true)
     .eq('is_lore_significant', true)
-    .gt('id', lastEventId)
+    .or('is_in_chronicle.is.null,is_in_chronicle.eq.false')
     .order('created_at', { ascending: true });
 
   if (error) { console.error('Ошибка получения значимых событий:', error); return []; }
   return data;
 }
 
+export async function getEventById(eventId) {
+  const { data, error } = await supabase
+    .from('events')
+    .select('*, profiles (full_name, avatar_url)')
+    .eq('id', eventId)
+    .maybeSingle();
+  if (error) { console.error('Ошибка получения события:', error); return null; }
+  return data;
+}
+
 // ИСПРАВЛЕНИЕ 3: Добавлен параметр isAutoApprove
-export async function addEvent(eventText, city, isLoreSignificant, eventDate, isAutoApprove = false) {
+export async function addEvent(eventText, city, isLoreSignificant, eventDate, isAutoApprove = false, coords = {}) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Пользователь не авторизован');
 
@@ -99,7 +100,9 @@ export async function addEvent(eventText, city, isLoreSignificant, eventDate, is
       city: city,
       is_lore_significant: isLoreSignificant,
       is_approved: isAutoApprove, // ИСПРАВЛЕНИЕ: автоодобрение для админов
-      event_date: eventDate || null
+      event_date: eventDate || null,
+      lat: coords.lat ?? null,
+      lon: coords.lon ?? null
     }]);
 
   if (error) { console.error('Ошибка добавления события:', error); throw error; }
@@ -315,11 +318,15 @@ export async function uploadAvatar(file, userId) {
   if (!allowedTypes.includes(file.type)) throw new Error('Недопустимый формат. Используйте JPG, PNG или WebP');
 
   const compressedFile = await compressImage(file);
-  const fileExt = compressedFile.name.split('.').pop();
-  const fileName = `${userId}/${Date.now()}.${fileExt}`;
+  const fileName = `${userId}/${Date.now()}.jpg`;
 
   const { error } = await supabase.storage.from('avatars').upload(fileName, compressedFile, { cacheControl: '3600', upsert: true });
   if (error) throw new Error(`Ошибка загрузки: ${error.message}`);
+
+  // храним только одно фото: удаляем старые файлы пользователя
+  const { data: oldFiles } = await supabase.storage.from('avatars').list(userId);
+  const toRemove = (oldFiles || []).map(f => `${userId}/${f.name}`).filter(p => p !== fileName);
+  if (toRemove.length) await supabase.storage.from('avatars').remove(toRemove);
 
   const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName);
   return publicUrl;
@@ -379,7 +386,7 @@ export async function getChronicleVersions() {
   return data;
 }
 
-export async function updateChronicle(content, lastEventId) {
+export async function updateChronicle(content, usedEventIds = []) {
   const { data: current } = await supabase.from('chronicle').select('*').single();
   if (current) {
     await supabase.from('chronicle_versions').insert([{
@@ -393,7 +400,6 @@ export async function updateChronicle(content, lastEventId) {
     .from('chronicle')
     .update({
       content: content,
-      last_event_id: lastEventId,
       version: (current?.version || 0) + 1,
       updated_at: new Date().toISOString()
     })
@@ -401,6 +407,12 @@ export async function updateChronicle(content, lastEventId) {
     .select();
 
   if (error) throw error;
+
+  // отмечаем события, которые вошли в летопись
+  if (usedEventIds.length) {
+    const { error: markError } = await supabase.from('events').update({ is_in_chronicle: true }).in('id', usedEventIds);
+    if (markError) console.error('Не удалось отметить события как вписанные:', markError);
+  }
   return data[0];
 }
 
@@ -415,18 +427,21 @@ export async function rollbackChronicle() {
 
   const lastVersion = versions[0];
 
-  await supabase.from('chronicle').update({
+  const { data, error } = await supabase.from('chronicle').update({
     content: lastVersion.content,
     version: lastVersion.version,
     updated_at: new Date().toISOString()
-  }).eq('id', lastVersion.chronicle_id);
+  }).eq('id', lastVersion.chronicle_id).select();
+  if (error) throw error;
 
   await supabase.from('chronicle_versions').delete().eq('id', lastVersion.id);
+  return data[0];
 }
 
 export async function generateChronicleText(currentContent, newEvents) {
   // ИИ вызывается через серверную функцию Supabase (ключ OpenRouter хранится на сервере)
   const events = newEvents.map(e => ({
+    id: e.id,
     event_text: e.event_text,
     event_date: e.event_date || null,
     city: e.city || null,
@@ -441,7 +456,7 @@ export async function generateChronicleText(currentContent, newEvents) {
     throw new Error(`Ошибка ИИ: ${msg}`);
   }
   if (!data?.text) throw new Error('ИИ вернул пустой ответ');
-  return data.text;
+  return { text: data.text, usedIds: data.usedIds || [], model: data.model };
 }
 
 // ============================================
