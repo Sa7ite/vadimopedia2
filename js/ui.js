@@ -18,6 +18,10 @@ export function showSection(sectionName) {
     link.classList.remove('active');
     if (link.dataset.section === sectionName) link.classList.add('active');
   });
+
+  // запоминаем раздел в адресе, чтобы после обновления страницы остаться в нём
+  const hash = sectionName === 'home' ? '' : `#${sectionName}`;
+  if (location.hash !== hash) history.replaceState(null, '', hash || location.pathname + location.search);
 }
 
 export function showNotification(message, type = 'info') {

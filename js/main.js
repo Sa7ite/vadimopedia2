@@ -83,7 +83,20 @@ async function initApp() {
     }
   });
 
+  // после обновления страницы остаёмся в том же разделе (#events, #chat, ...)
+  openSectionFromHash();
+  window.addEventListener('hashchange', openSectionFromHash);
+
   console.log('Приложение инициализировано');
+}
+
+function openSectionFromHash() {
+  const section = decodeURIComponent(location.hash.slice(1));
+  if (!section) return;
+  const link = document.querySelector(`.nav-link[data-section="${section}"]`);
+  // раздел недоступен (например, админка у гостя) — остаёмся на главной
+  if (!link || link.style.display === 'none') return;
+  if (!link.classList.contains('active')) link.click();
 }
 
 async function loadUserCount() {
