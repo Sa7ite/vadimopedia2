@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Вадимопедия — Все Вадимы Мира</title>
+  
+  <!-- Шрифты -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&family=Georgia&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet CSS (для карты событий в летописи) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <!-- Основные стили -->
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+</head>
+<body>
+
+  <!-- Контейнер для всплывающих уведомлений -->
+  <div id="notification-container"></div>
+
+  <!-- ============================================ -->
+  <!-- ШАПКА САЙТА -->
+  <!-- ============================================ -->
+  <header>
+    <div class="container">
+      <h1>🌍 Вадимопедия</h1>
+      <p>Все Вадимы мира — за всю историю</p>
+    </div>
+  </header>
+
+  <!-- ============================================ -->
+  <!-- НАВИГАЦИЯ -->
+  <!-- ============================================ -->
+  <nav class="navbar">
+    <div class="container">
+      <a href="#" class="nav-link active" data-section="home">Главная</a>
+      <a href="#" class="nav-link" data-section="events">События</a>
+      <a href="#" class="nav-link" data-section="chat">Чат</a>
+      <a href="#" class="nav-link" data-section="chronicle">Летопись</a>
+      <a href="#" class="nav-link" data-section="profile" id="nav-profile" style="display: none;">Профиль</a>
+      <a href="#" class="nav-link" data-section="admin" id="nav-admin" style="display: none;">Админка</a>
+    </div>
+  </nav>
+
+  <!-- ============================================ -->
+  <!-- КНОПКИ АВТОРИЗАЦИИ (для гостей) -->
+  <!-- ============================================ -->
+  <div class="auth-corner-buttons" id="auth-buttons">
+    <button class="auth-corner-btn register-btn" id="btn-show-register">
+      <span>✨</span> Стать Вадимом
+    </button>
+    <button class="auth-corner-btn login-btn" id="btn-show-login">
+      <span>🔑</span> Войти
+    </button>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- СЕКЦИЯ: ГЛАВНАЯ -->
+  <!-- ============================================ -->
+  <section id="section-home" class="section active">
+    <div class="hero">
+      <div class="hero-content">
+        <svg viewBox="0 0 1200 400" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:auto; border-radius:20px; max-height:400px;">
+          <defs>
+            <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#6a11cb" />
+              <stop offset="100%" stop-color="#2575fc" />
+            </linearGradient>
+          </defs>
+          <rect width="1200" height="400" fill="url(#grad)" rx="20" />
+          <path d="M580 120 L600 80 L620 120 L650 100 L630 130 L660 140 L620 150 L630 180 L600 160 L570 180 L580 150 L540 140 L570 130 L550 100 Z" fill="gold" />
+          <text x="600" y="240" font-family="Montserrat, sans-serif" font-size="50" font-weight="900" fill="white" text-anchor="middle">Вадим — это не имя.</text>
+          <text x="600" y="300" font-family="Montserrat, sans-serif" font-size="50" font-weight="900" fill="white" text-anchor="middle">Это судьба.</text>
+        </svg>
+        
+        <div class="hero-stats">
+          <div class="stat"><strong id="stat-events">0</strong> событий</div>
+          <div class="stat"><strong id="stat-users">0</strong> Вадимов</div>
+          <div class="stat"><strong id="stat-online">0</strong> онлайн</div>
+          <div class="stat"><strong>1</strong> истина</div>
+        </div>
+        
+        <blockquote>«Я не просто Вадим. Я — Вадим Школов. А это уже уровень.»</blockquote>
+        <button class="cta-btn" id="btn-go-events">Посмотреть события</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- СЕКЦИЯ: СОБЫТИЯ -->
+  <!-- ============================================ -->
+  <section id="section-events" class="section">
+    <div class="container">
+      <h2>📜 Лента событий</h2>
+      <p>Все значимые события из жизни Вадимов</p>
+      
+      <!-- Форма добавления события (скрыта для гостей, управляется через JS) -->
+      <div id="add-event-form-container" style="display: none;">
+        <div class="add-section-inline">
+          <h3>➕ Добавить событие</h3>
+          <form id="form-add-event">
+            <div class="form-input-group">
+              <label for="event-text">Текст события</label>
+              <textarea id="event-text" rows="3" placeholder="Что произошло? (например: Открыл кофейню)" required></textarea>
+            </div>
+            <div class="form-input-group">
+              <label for="event-city">Город</label>
+              <input type="text" id="event-city" placeholder="Город">
+            </div>
+            <div class="form-input-group">
+              <label for="event-date">Дата события (необязательно)</label>
+              <input type="text" id="event-date" placeholder="Например: 15 марта 2024">
+            </div>
+            <div class="form-input-group" style="display: flex; align-items: center; gap: 10px;">
+              <input type="checkbox" id="event-is-lore" style="width: auto; margin: 0;">
+              <label for="event-is-lore" style="margin: 0; cursor: pointer;">⭐ Это значимое событие для летописи</label>
+            </div>
+            <button type="submit" class="btn-primary" style="width: 100%; margin-top: 10px;">Добавить</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Список событий -->
+      <ul id="events-list"></ul>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- СЕКЦИЯ: ЧАТ -->
+  <!-- ============================================ -->
+  <section id="section-chat" class="section">
+    <div class="container">
+      <h2>💬 Чат Вадимов</h2>
+      <div class="chat-container">
+        <div id="chat-messages" class="chat-messages"></div>
+        <form id="form-chat-message" class="chat-input-form">
+          <input type="text" id="chat-message-text" placeholder="Напишите сообщение..." required autocomplete="off" />
+          <button type="submit" class="btn-primary">Отправить</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- СЕКЦИЯ: ЛЕТОПИСЬ -->
+  <!-- ============================================ -->
+  <section id="section-chronicle" class="section">
+    <div class="container">
+      <h2>📖 Летопись Вадимопедии</h2>
+      
+      <!-- Кнопки управления летописью -->
+      <div class="chronicle-controls">
+        <button class="btn-primary" id="btn-read-chronicle">📚 Читать</button>
+        <button class="btn-secondary" id="btn-timeline-chronicle">📅 Таймлайн</button>
+        <button class="btn-secondary" id="btn-map-chronicle">🗺️ Карта</button>
+        <button class="btn-secondary" id="btn-bookmarks-chronicle">🔖 Закладки</button>
+        <!-- Эта кнопка видна только админу (управляется через класс .admin-only в JS) -->
+        <button class="btn-secondary admin-only" id="btn-edit-chronicle" style="display: none;">✏️ Редактировать</button>
+      </div>
+      
+      <!-- Контейнер для контента летописи (текст, таймлайн, карта или редактор) -->
+      <div id="chronicle-content"></div>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- СЕКЦИЯ: ПРОФИЛЬ -->
+  <!-- ============================================ -->
+  <section id="section-profile" class="section">
+    <div class="container">
+      <h2>👤 Мой профиль</h2>
+      <div id="profile-content">
+        <!-- Сюда JS вставит карточку профиля или форму редактирования -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- СЕКЦИЯ: АДМИНКА -->
+  <!-- ============================================ -->
+  <section id="section-admin" class="section">
+    <div class="container">
+      <h2>⚙️ Панель модератора</h2>
+      <div id="admin-content">
+        <h3>Ожидают модерации</h3>
+        <ul id="admin-pending-events">
+          <!-- Сюда JS вставит события на модерацию и запросы на титулы -->
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- МОДАЛЬНОЕ ОКНО: ВХОД -->
+  <!-- ============================================ -->
+  <div id="modal-login" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" data-modal="modal-login">&times;</span>
+      <div class="modal-header">
+        <h2>Вход в Вадимопедию</h2>
+      </div>
+      <form id="form-login">
+        <div class="input-group">
+          <input type="email" id="login-email" placeholder=" " required>
+          <label>Email</label>
+        </div>
+        <div class="input-group">
+          <input type="password" id="login-password" placeholder=" " required>
+          <label>Пароль</label>
+        </div>
+        <button type="submit" class="modal-submit-btn">Войти</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- МОДАЛЬНОЕ ОКНО: РЕГИСТРАЦИЯ -->
+  <!-- ============================================ -->
+  <div id="modal-register" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" data-modal="modal-register">&times;</span>
+      <div class="modal-header">
+        <h2>Стать Вадимом</h2>
+      </div>
+      <form id="form-register">
+        <div class="input-group">
+          <input type="text" id="register-name" placeholder=" " required>
+          <label>Имя</label>
+        </div>
+        <div class="input-group">
+          <input type="email" id="register-email" placeholder=" " required>
+          <label>Email</label>
+        </div>
+        <div class="input-group">
+          <input type="password" id="register-password" placeholder=" " required minlength="6">
+          <label>Пароль (мин. 6 символов)</label>
+        </div>
+        <div class="input-group">
+          <input type="text" id="register-city" placeholder=" ">
+          <label>Город (необязательно)</label>
+        </div>
+        <button type="submit" class="modal-submit-btn">Зарегистрироваться</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- ПОДВАЛ -->
+  <!-- ============================================ -->
+  <footer>
+    <div class="container">
+      <p>© 2026 Вадимопедия. Все Вадимы принадлежат себе.</p>
+      <p>Вадимизм: <em>«Быть Вадимом — значит быть собой, но с огоньком»</em></p>
+    </div>
+  </footer>
+
+  <!-- ============================================ -->
+  <!-- ПОДКЛЮЧЕНИЕ СКРИПТОВ -->
+  <!-- ============================================ -->
+  <!-- Leaflet JS (для карты событий) -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
+  <!-- Основной скрипт приложения (он автоматически импортирует config.js, api.js, auth.js и ui.js) -->
+  <script type="module" src="js/main.js"></script>
+
+</body>
+</html>

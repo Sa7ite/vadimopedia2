@@ -1,0 +1,4286 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  background: #f4f2ff;
+  color: #333;
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+header {
+  background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+  color: white;
+  padding: 40px 0;
+  text-align: center;
+  border-bottom: 5px solid gold;
+}
+
+header h1 {
+  font-size: 3rem;
+  font-weight: 900;
+  text-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+}
+
+header p {
+  font-size: 1.2rem;
+  opacity: 0.9;
+}
+
+.navbar {
+  background: #6a11cb;
+  padding: 10px 0;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.nav-link {
+  color: white;
+  text-decoration: none;
+  margin: 0 10px;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.nav-link:hover, .nav-link.active {
+  text-decoration: underline;
+}
+
+/* Кнопки аутентификации в углу */
+.auth-corner-buttons {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 1000;
+}
+
+.auth-corner-btn {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 25px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.register-btn {
+  background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+  color: white;
+}
+
+.login-btn {
+  background: linear-gradient(135deg, #4ecdc4, #44a08d);
+  color: white;
+}
+
+.auth-corner-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+/* Главная: Обложка */
+.hero {
+  padding: 80px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.hero-content {
+  text-align: center;
+  max-width: 800px;
+}
+
+.hero-stats {
+  display: flex;
+  gap: 30px;
+  justify-content: center;
+  margin: 30px 0;
+}
+
+.stat {
+  background: white;
+  padding: 15px 20px;
+  border-radius: 15px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  text-align: center;
+  font-weight: 600;
+}
+
+.cta-btn {
+  background: #6a11cb;
+  color: white;
+  border: none;
+  padding: 15px 40px;
+  font-size: 1.2rem;
+  border-radius: 50px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.3s;
+  margin-top: 20px;
+}
+
+.cta-btn:hover {
+  background: #540ca0;
+  transform: scale(1.05);
+}
+
+.secondary {
+  background: #2575fc;
+}
+
+.cta-btn:hover {
+  background: #540ca0;
+  transform: scale(1.05);
+}
+
+.secondary:hover {
+  background: #1a5dbb;
+}
+
+.hero-content blockquote {
+  font-style: italic;
+  background: #f0f0ff;
+  padding: 20px;
+  border-radius: 15px;
+  border-left: 5px solid #6a11cb;
+  margin: 30px auto;
+  max-width: 600px;
+  color: #6a11cb;
+}
+
+/* Все Вадимы */
+.all-vadims-section {
+  padding: 80px 0;
+  background: #f9f9ff;
+}
+
+.all-vadims-section h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+#search {
+  width: 100%;
+  padding: 15px;
+  font-size: 1rem;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  outline: none;
+}
+
+#search:focus {
+  border-color: #6a11cb;
+  box-shadow: 0 0 10px rgba(106, 17, 203, 0.2);
+}
+
+#vadim-list {
+  list-style: none;
+  margin: 20px 0;
+}
+
+#vadim-list li {
+  background: white;
+  padding: 18px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  border-left: 5px solid #2575fc;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+}
+
+#vadim-list li strong {
+  color: #444;
+  font-size: 1.1rem;
+}
+
+.vadim-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.vadim-header strong {
+  margin-right: 10px;
+}
+
+.vadim-date {
+  color: #666;
+  font-size: 0.9em;
+}
+
+.vadim-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.edit-btn, .delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 5px;
+  border-radius: 5px;
+  transition: 0.2s;
+}
+
+.edit-btn:hover {
+  background-color: #e3f2fd;
+}
+
+.delete-btn:hover {
+  background-color: #ffebee;
+}
+
+/* Теги под Вадимом */
+.tags {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.badge {
+  display: inline-block;
+  background: #6a11cb;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* Стили для дополнительных тегов */
+.badge-cool { background: #6a11cb; }
+.badge-normal { background: #2575fc; }
+.badge-funny { background: #ff9800; }
+.badge-fictional { background: #9c27b0; }
+.badge-legend { background: #f44336; }
+.badge-hero { background: #4caf50; }
+.badge-philosopher { background: #607d8b; }
+.badge-warrior { background: #795548; }
+.badge-creator { background: #009688; }
+.badge-mystic { background: #673ab7; }
+.badge-custom { background: #e91e63; }
+
+/* Описание Вадима */
+.description {
+  margin-top: 10px;
+  font-style: italic;
+  color: #555;
+  font-size: 0.95rem;
+  padding: 8px 12px;
+  background: #f8f8ff;
+  border-radius: 8px;
+  border-left: 3px solid #6a11cb;
+}
+
+/* Форма добавления */
+.add-section-inline {
+  margin-top: 50px;
+  padding: 30px;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  border: 1px solid #e0e0ff;
+}
+
+.add-section-inline h3 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #6a11cb;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+#add-vadim-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+#add-vadim-form input,
+#add-vadim-form select,
+#add-vadim-form textarea {
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 0;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-family: 'Montserrat', sans-serif;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+#add-vadim-form input:focus,
+#add-vadim-form select:focus,
+#add-vadim-form textarea:focus {
+  border-color: #6a11cb;
+  box-shadow: 0 0 10px rgba(106, 17, 203, 0.2);
+}
+
+#add-vadim-form select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='black' viewBox='0 0 16 16'><path d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 15px center;
+  background-size: 16px;
+  padding-right: 40px;
+}
+
+#add-vadim-form textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+#add-vadim-form button {
+  width: 100%;
+  background: linear-gradient(135deg, #6a11cb, #2575fc);
+  color: white;
+  border: none;
+  padding: 15px;
+  font-size: 1.2rem;
+  border-radius: 15px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+  box-shadow: 0 5px 15px rgba(106, 17, 203, 0.3);
+}
+
+#add-vadim-form button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(106, 17, 203, 0.4);
+  opacity: 0.95;
+}
+
+/* История */
+.history-section {
+  padding: 80px 0;
+  background: #fff3cd;
+}
+
+.history-section h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.history-content {
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.history-img {
+  max-width: 300px;
+  border-radius: 15px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.history-text {
+  flex: 1;
+  min-width: 300px;
+}
+
+.history-chapter {
+  margin-top: 40px;
+}
+
+.history-chapter h3 {
+  color: #6a11cb;
+  margin: 30px 0 15px;
+}
+
+.history-chapter img {
+  margin: 20px 0;
+  border-radius: 15px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+/* Вадимизм */
+.vadimism-section {
+  padding: 80px 0;
+  background: #f9f4ff;
+}
+
+.vadimism-section h2 {
+  text-align: center;
+  color: #6a11cb;
+  margin-bottom: 15px;
+}
+
+.vadimism-section p {
+  text-align: center;
+  max-width: 700px;
+  margin: 0 auto 40px;
+  color: #555;
+}
+
+.vadimism-content {
+  background: white;
+  padding: 40px;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  max-width: 900px;
+  margin: 0 auto;
+  line-height: 1.8;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
+.vadimism-content h1,
+.vadimism-content h2,
+.vadimism-content h3 {
+  margin-top: 30px;
+  margin-bottom: 15px;
+}
+
+.vadimism-content h1 {
+  font-size: 2.2rem;
+}
+
+.vadimism-content h2 {
+  font-size: 1.8rem;
+  border-bottom: 2px solid #6a11cb;
+  padding-bottom: 8px;
+}
+
+.vadimism-content h3 {
+  font-size: 1.4rem;
+  color: #444;
+}
+
+.vadimism-content blockquote {
+  margin: 25px 0;
+  padding: 20px;
+  border-radius: 15px;
+  border-left: 5px solid #6a11cb;
+  background: #f0f0ff;
+}
+
+.vadimism-content ul {
+  margin: 15px 0 25px 30px;
+}
+
+.vadimism-content li {
+  margin-bottom: 8px;
+}
+
+.vadimism-content hr {
+  margin: 40px 0;
+  border-color: #6a11cb;
+}
+
+/* Популярные */
+.popular-section {
+  padding: 80px 0;
+  background: #f0fff4;
+}
+
+.popular-section h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.popular-section p {
+  text-align: center;
+  color: #555;
+  margin-bottom: 40px;
+}
+
+.popular-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 30px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.card {
+  background: white;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-10px);
+}
+
+.card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
+.card h3 {
+  margin: 15px 0 5px;
+  color: #6a11cb;
+}
+
+.card p {
+  color: #777;
+  font-size: 0.9rem;
+  padding: 0 15px 15px;
+}
+
+/* Календарь */
+.calendar-section {
+  padding: 80px 0;
+  background: #f4f2ff;
+}
+
+.calendar-section h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #6a11cb;
+}
+
+.calendar-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.calendar-nav-btn {
+  padding: 10px 20px;
+  background: #6a11cb;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.calendar-nav-btn:hover {
+  background: #540ca0;
+}
+
+.current-month-display {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.calendar-container {
+  background: white;
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+}
+
+.calendar-day-header {
+  text-align: center;
+  font-weight: bold;
+  padding: 10px;
+  background: #6a11cb;
+  color: white;
+  border-radius: 5px;
+}
+
+.calendar-day {
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.calendar-day:hover {
+  background: #e3f2fd;
+}
+
+.calendar-day.today {
+  background: #6a11cb;
+  color: white;
+  font-weight: bold;
+}
+
+.calendar-day.event {
+  background: #ffe082;
+  font-weight: bold;
+  position: relative;
+  cursor: pointer;
+}
+
+.calendar-day.event:hover {
+  background: #ffd54f;
+}
+
+.calendar-day.event::after {
+  content: '•';
+  position: absolute;
+  bottom: 2px;
+  font-size: 20px;
+  color: #ff6f00;
+}
+
+.calendar-day.empty {
+  background: transparent;
+  border: none;
+  cursor: default;
+}
+
+/* Описание события под календарём */
+.event-description {
+  animation: fadeIn 0.5s ease;
+  background: white;
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  border-top: 5px solid #6a11cb;
+  margin-top: 40px;
+}
+
+.event-description h3 {
+  color: #6a11cb;
+  margin-bottom: 20px;
+  font-size: 1.8rem;
+  text-align: center;
+}
+
+.event-description p {
+  line-height: 1.8;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.event-description strong {
+  color: #6a11cb;
+}
+
+/* Вадим Года */
+.vadim-year-section {
+  padding: 80px 0;
+  background: #f4f2ff;
+}
+
+.vadim-year-section h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #6a11cb;
+}
+
+.vadim-year-section p {
+  text-align: center;
+  color: #555;
+  margin-bottom: 40px;
+}
+
+.nominees-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 30px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.nominee-card {
+  background: white;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.nominee-card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
+.nominee-card h3 {
+  margin: 15px 0 5px;
+  color: #6a11cb;
+}
+
+.nominee-card p {
+  color: #777;
+  font-size: 0.9rem;
+  padding: 0 15px 15px;
+}
+
+.vote-count {
+  font-weight: bold;
+  padding: 10px;
+  background: #f0f0f0;
+  border-top: 1px solid #ddd;
+}
+
+.vote-btn {
+  width: 100%;
+  padding: 12px;
+  background: #6a11cb;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.vote-btn:hover:not(:disabled) {
+  background: #540ca0;
+}
+
+.vote-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.voting-status {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #6a11cb;
+}
+
+/* Стили для профиля */
+.profile-section {
+  padding: 80px 0;
+  background: #f0f8ff;
+}
+
+.profile-card {
+  background: white;
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.profile-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #6a11cb;
+}
+
+.profile-info h3 {
+  color: #6a11cb;
+  margin-bottom: 5px;
+}
+
+.profile-details {
+  margin-top: 20px;
+}
+
+.profile-detail {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.profile-detail:last-child {
+  border-bottom: none;
+}
+
+.profile-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 25px;
+  justify-content: center;
+}
+
+.edit-profile-btn, .request-admin-btn, .logout-btn {
+  padding: 12px 25px;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.edit-profile-btn {
+  background: linear-gradient(135deg, #6a11cb, #2575fc);
+  color: white;
+}
+
+.request-admin-btn {
+  background: linear-gradient(135deg, #ff9800, #f57c00);
+  color: white;
+}
+
+.logout-btn {
+  background: linear-gradient(135deg, #f44336, #d32f2f);
+  color: white;
+}
+
+.edit-profile-btn:hover, .request-admin-btn:hover, .logout-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
+/* Превью фото */
+#edit-photo-preview img, #photo-preview img {
+  max-width: 150px;
+  max-height: 150px;
+  border-radius: 10px;
+  margin-top: 10px;
+  border: 2px solid #6a11cb;
+}
+
+/* Чекбокс для популярных */
+#popular-checkbox-container {
+  margin: 15px 0;
+}
+
+#popular-checkbox-container label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  color: #6a11cb;
+}
+
+#popular-checkbox-container input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+}
+
+/* Модалка событий календаря */
+.event-list {
+  margin-top: 20px;
+}
+
+.event-item {
+  padding: 10px;
+  background: #f8f9ff;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  border-left: 3px solid #6a11cb;
+  font-weight: 500;
+}
+
+/* Улучшенные модальные окна */
+.modal {
+  position: fixed;
+  z-index: 10000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.7);
+  display: none;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal.show {
+  display: flex;
+  animation: fadeIn 0.3s;
+}
+
+.modal-content {
+  background: white;
+  padding: 40px;
+  border-radius: 20px;
+  max-width: 450px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+.modal-content.narrow {
+  max-width: 400px;
+  padding: 30px;
+}
+
+.modal-content.extra-narrow {
+  max-width: 350px;
+  padding: 25px;
+}
+
+.modal-content.wide {
+  max-width: 900px;
+  padding: 30px;
+}
+
+.modal-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.modal-header h2 {
+  color: #6a11cb;
+  margin-bottom: 10px;
+  font-size: 28px;
+}
+
+.modal-header p {
+  color: #666;
+  font-size: 16px;
+}
+
+.input-group {
+  position: relative;
+  margin-bottom: 25px;
+}
+
+.input-group input,
+.input-group textarea {
+  width: 100%;
+  padding: 15px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  font-size: 16px;
+  background: transparent;
+  transition: all 0.3s ease;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.input-group textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.input-group label {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background: white;
+  padding: 0 5px;
+  color: #999;
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+.input-group input:focus,
+.input-group textarea:focus {
+  border-color: #6a11cb;
+  outline: none;
+}
+
+.input-group input:focus + label,
+.input-group textarea:focus + label,
+.input-group input:not(:placeholder-shown) + label,
+.input-group textarea:not(:placeholder-shown) + label {
+  top: -10px;
+  left: 10px;
+  font-size: 12px;
+  color: #6a11cb;
+  font-weight: 600;
+}
+
+.input-group input::placeholder,
+.input-group textarea::placeholder {
+  color: transparent;
+}
+
+.modal-submit-btn {
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(135deg, #6a11cb, #2575fc);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.modal-submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(106, 17, 203, 0.4);
+}
+
+.modal-status {
+  text-align: center;
+  margin-top: 20px;
+  padding: 10px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.close {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 2rem;
+  color: #aaa;
+  cursor: pointer;
+  z-index: 10001;
+}
+
+.close:hover {
+  color: #000;
+}
+
+.vadim-detail-card {
+  text-align: center;
+}
+
+.vadim-detail-photo {
+  width: 200px;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 15px;
+  margin: 0 auto 20px;
+  border: 3px solid #6a11cb;
+}
+
+.vadim-detail-info {
+  text-align: left;
+  background: #f8f9ff;
+  padding: 20px;
+  border-radius: 15px;
+  margin-top: 15px;
+}
+
+.vadim-detail-info p {
+  margin-bottom: 10px;
+  padding: 5px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.vadim-detail-info p:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.vadim-detail-info strong {
+  display: inline-block;
+  margin-right: 8px;
+  min-width: 120px;
+  color: #6a11cb;
+}
+
+.photo-hint {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 10px;
+  padding: 12px;
+  margin: 10px 0;
+  font-size: 13px;
+  color: #856404;
+}
+
+.photo-hint strong {
+  display: block;
+  margin-bottom: 5px;
+  color: #6a11cb;
+}
+
+.photo-hint ul {
+  margin: 5px 0;
+  padding-left: 20px;
+}
+
+.photo-hint li {
+  margin-bottom: 3px;
+}
+
+/* Анимация появления модалок */
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  animation: slideInUp 0.3s ease-out;
+}
+
+.notification {
+  background: white;
+  color: #333;
+  padding: 15px 20px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  border-left: 5px solid #6a11cb;
+  animation: slideIn 0.3s ease-out;
+  transition: all 0.3s ease;
+  max-width: 300px;
+}
+
+.notification-success {
+  border-left-color: #4caf50;
+}
+
+.notification-error {
+  border-left-color: #f44336;
+}
+
+.notification-warning {
+  border-left-color: #ff9800;
+}
+
+.notification-info {
+  border-left-color: #2196f3;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Улучшенный скролл для модалок */
+.modal-content {
+  scrollbar-width: thin;
+  scrollbar-color: #6a11cb #f1f1f1;
+}
+
+.modal-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background: #6a11cb;
+  border-radius: 3px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+  background: #5a0cad;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .modal-content {
+    padding: 30px 20px;
+    margin: 20px;
+  }
+
+  .modal-content.narrow {
+    padding: 25px 15px;
+  }
+
+  .modal-content.extra-narrow {
+    padding: 20px 15px;
+  }
+
+  .auth-corner-buttons {
+    bottom: 10px;
+    right: 10px;
+  }
+
+  .auth-corner-btn {
+    padding: 10px 16px;
+    font-size: 12px;
+  }
+
+  .profile-actions {
+    flex-direction: column;
+  }
+
+  .profile-header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .vadim-detail-photo {
+    width: 150px;
+    height: 150px;
+  }
+
+  .vadim-detail-info {
+    padding: 15px;
+  }
+
+  .vadim-detail-info strong {
+    min-width: 100px;
+  }
+
+  .calendar-controls {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .calendar-grid {
+    gap: 3px;
+  }
+
+  .calendar-day {
+    height: 40px;
+    font-size: 0.9rem;
+  }
+
+  #quiz-answer-input {
+    min-height: 60px;
+  }
+
+  .hero {
+    padding: 40px 0;
+  }
+
+  .hero-content {
+    padding: 0 20px;
+  }
+
+  .hero-cta-group {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .history-content {
+    flex-direction: column;
+  }
+
+  .history-img {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  .history-text {
+    min-width: 100%;
+  }
+
+  .history-chapter {
+    margin-top: 30px;
+  }
+
+  .history-chapter h3 {
+    font-size: 1.4rem;
+    margin: 25px 0 10px;
+  }
+
+  .history-chapter img {
+    margin: 15px 0;
+    border-radius: 12px;
+  }
+
+  .vadimism-content {
+    padding: 30px;
+  }
+
+  .vadimism-content h1 {
+    font-size: 1.8rem;
+  }
+
+  .vadimism-content h2 {
+    font-size: 1.6rem;
+  }
+
+  .vadimism-content h3 {
+    font-size: 1.3rem;
+  }
+
+  .vadimism-content blockquote {
+    padding: 15px;
+    font-size: 1rem;
+  }
+
+  .vadimism-content ul {
+    margin: 10px 0 20px 20px;
+  }
+
+  .vadimism-content li {
+    margin-bottom: 5px;
+    font-size: 0.95rem;
+  }
+
+  .vadimism-content hr {
+    margin: 30px 0;
+  }
+
+  .popular-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+  }
+
+  .card img {
+    height: 150px;
+  }
+
+  .card h3 {
+    font-size: 1.1rem;
+    margin: 10px 0 3px;
+  }
+
+  .card p {
+    font-size: 0.8rem;
+    padding: 0 10px 10px;
+  }
+
+  .nominees-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+  }
+
+  .nominee-card img {
+    height: 150px;
+  }
+
+  .nominee-card h3 {
+    font-size: 1.1rem;
+    margin: 10px 0 3px;
+  }
+
+  .nominee-card p {
+    font-size: 0.8rem;
+    padding: 0 10px 10px;
+  }
+
+  .vote-count {
+    font-size: 0.9rem;
+    padding: 8px;
+  }
+
+  .vote-btn {
+    padding: 10px;
+    font-size: 0.9rem;
+  }
+
+  .voting-status {
+    font-size: 1rem;
+  }
+
+  .profile-card {
+    padding: 25px;
+  }
+
+  .profile-header {
+    gap: 15px;
+    margin-bottom: 15px;
+  }
+
+  .profile-avatar {
+    width: 80px;
+    height: 80px;
+  }
+
+  .profile-info h3 {
+    font-size: 1.2rem;
+    margin-bottom: 3px;
+  }
+
+  .profile-details {
+    margin-top: 15px;
+  }
+
+  .profile-detail {
+    padding: 8px 0;
+    font-size: 0.9rem;
+  }
+
+  .profile-detail strong {
+    min-width: 100px;
+  }
+
+  .profile-actions {
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .edit-profile-btn, .request-admin-btn, .logout-btn {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+  }
+
+  #edit-photo-preview img, #photo-preview img {
+    max-width: 120px;
+    max-height: 120px;
+  }
+
+  .photo-hint {
+    padding: 10px;
+    font-size: 12px;
+  }
+
+  .photo-hint strong {
+    font-size: 13px;
+  }
+
+  .photo-hint ul {
+    padding-left: 15px;
+  }
+
+  .photo-hint li {
+    margin-bottom: 2px;
+    font-size: 11px;
+  }
+
+  .modal-header h2 {
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+
+  .modal-header p {
+    font-size: 14px;
+  }
+
+  .input-group input,
+  .input-group textarea {
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  .input-group label {
+    top: 12px;
+    left: 12px;
+    font-size: 14px;
+  }
+
+  .input-group input:focus + label,
+  .input-group textarea:focus + label,
+  .input-group input:not(:placeholder-shown) + label,
+  .input-group textarea:not(:placeholder-shown) + label {
+    top: -8px;
+    left: 8px;
+    font-size: 11px;
+  }
+
+  .modal-submit-btn {
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  .modal-status {
+    font-size: 14px;
+    padding: 8px;
+  }
+
+  .close {
+    font-size: 1.5rem;
+    top: 10px;
+    right: 15px;
+  }
+
+  .vadim-detail-card {
+    padding: 20px;
+  }
+
+  .vadim-detail-photo {
+    width: 150px;
+    height: 150px;
+  }
+
+  .vadim-detail-info {
+    padding: 15px;
+  }
+
+  .vadim-detail-info p {
+    font-size: 0.9rem;
+    padding: 4px 0;
+  }
+
+  .vadim-detail-info strong {
+    min-width: 100px;
+    font-size: 0.9rem;
+  }
+
+  .event-list {
+    margin-top: 15px;
+  }
+
+  .event-item {
+    padding: 8px;
+    font-size: 0.9rem;
+  }
+
+  .notification {
+    padding: 12px 15px;
+    font-size: 14px;
+    max-width: 250px;
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(80px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  footer {
+    padding: 25px 0;
+    font-size: 0.8rem;
+  }
+
+  footer p {
+    margin-bottom: 6px;
+  }
+
+  footer em {
+    font-size: 0.85rem;
+  }
+}
+
+footer {
+  background: #333;
+  color: #ccc;
+  text-align: center;
+  padding: 30px 0;
+  font-size: 0.9rem;
+}
+
+footer p {
+  margin-bottom: 8px;
+}
+
+footer em {
+  color: gold;
+}
+
+/* Стили для расширенной истории */
+.history-section {
+  padding: 60px 0;
+  background: #f9f7ff;
+}
+
+.history-epoch {
+  background: white;
+  padding: 40px;
+  border-radius: 20px;
+  margin-bottom: 40px;
+  box-shadow: 0 5px 25px rgba(0,0,0,0.05);
+  border-left: 5px solid #6a11cb;
+  position: relative;
+  overflow: hidden;
+}
+
+.history-epoch::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  background: linear-gradient(90deg, #6a11cb, gold, #2575fc);
+}
+
+.history-epoch h2 {
+  color: #6a11cb;
+  font-size: 2rem;
+  margin-bottom: 25px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.history-epoch h2 span {
+  font-size: 1.2rem;
+  background: #6a11cb;
+  color: white;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.history-epoch blockquote {
+  font-style: italic;
+  background: #f0f0ff;
+  padding: 25px;
+  border-radius: 15px;
+  border-left: 5px solid #6a11cb;
+  margin: 30px 0;
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: #444;
+}
+
+.history-epoch p {
+  margin-bottom: 20px;
+  line-height: 1.8;
+  font-size: 1.05rem;
+  color: #333;
+}
+
+.history-epoch strong {
+  color: #6a11cb;
+}
+
+.history-epoch img {
+  max-width: 100%;
+  border-radius: 15px;
+  margin: 30px 0;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  display: block;
+}
+
+.history-epoch .sub-epoch {
+  background: #f8f4ff;
+  padding: 25px;
+  border-radius: 15px;
+  margin: 30px 0;
+  border-left: 3px solid #2575fc;
+}
+
+.sub-epoch h3 {
+  color: #2575fc;
+  margin-bottom: 15px;
+  font-size: 1.4rem;
+}
+
+/* Описание события под календарём */
+.event-description {
+  animation: fadeIn 0.5s ease;
+  background: white;
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  border-top: 5px solid #6a11cb;
+  margin-top: 40px;
+}
+
+.event-description h3 {
+  color: #6a11cb;
+  margin-bottom: 20px;
+  font-size: 1.8rem;
+  text-align: center;
+}
+
+.event-description p {
+  line-height: 1.8;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.event-description strong {
+  color: #6a11cb;
+}
+
+/* Полная история */
+.full-history {
+  background: white;
+  padding: 50px;
+  border-radius: 25px;
+  box-shadow: 0 15px 50px rgba(106, 17, 203, 0.1);
+  line-height: 1.9;
+  font-size: 1.1rem;
+  text-align: justify;
+  position: relative;
+  overflow: hidden;
+}
+
+.full-history::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  background: linear-gradient(90deg, #6a11cb, gold, #2575fc);
+}
+
+.full-history h2 {
+  color: #6a11cb;
+  font-size: 2.2rem;
+  text-align: center;
+  margin-bottom: 40px;
+  font-weight: 900;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+}
+
+.full-history h3 {
+  color: #2575fc;
+  font-size: 1.6rem;
+  margin: 50px 0 25px;
+  padding-bottom: 10px;
+  border-bottom: 2px dashed #6a11cb;
+}
+
+.full-history p {
+  margin-bottom: 25px;
+  text-indent: 30px;
+}
+
+.full-history blockquote {
+  font-style: italic;
+  background: #f0f0ff;
+  border-left: 5px solid gold;
+  padding: 25px 30px;
+  margin: 40px 0;
+  border-radius: 0 15px 15px 0;
+  font-size: 1.2rem;
+  color: #555;
+  position: relative;
+}
+
+.full-history blockquote::before {
+  content: "";
+  position: absolute;
+  top: -20px;
+  left: 10px;
+  font-size: 5rem;
+  color: gold;
+  font-family: Georgia, serif;
+  opacity: 0.3;
+}
+
+.full-history img {
+  max-width: 100%;
+  border-radius: 15px;
+  margin: 40px auto;
+  display: block;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.full-history strong {
+  color: #6a11cb;
+  font-weight: 700;
+}
+
+.full-history em {
+  font-style: italic;
+  color: #d35400;
+}
+
+/* Редактор истории */
+#history-editor-modal {
+  position: fixed;
+  z-index: 10000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.7);
+  display: none;
+  justify-content: center;
+  align-items: center;
+}
+
+#history-editor-modal.show {
+  display: flex;
+  animation: fadeIn 0.3s;
+}
+
+#history-editor-modal .modal-content {
+  background: white;
+  padding: 40px;
+  border-radius: 20px;
+  max-width: 900px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+#history-editor-modal .modal-content.wide {
+  max-width: 900px;
+  padding: 30px;
+}
+
+#history-editor-modal .modal-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+#history-editor-modal .modal-header h2 {
+  color: #6a11cb;
+  margin-bottom: 10px;
+  font-size: 28px;
+}
+
+#history-editor-modal .modal-header p {
+  color: #666;
+  font-size: 16px;
+}
+
+#history-editor-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+#history-editor-textarea {
+  width: 100%;
+  padding: 15px;
+  font-family: 'Georgia', serif;
+  font-size: 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  resize: vertical;
+  min-height: 300px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+#history-editor-textarea:focus {
+  border-color: #6a11cb;
+  box-shadow: 0 0 10px rgba(106, 17, 203, 0.2);
+}
+
+#history-editor-form button {
+  width: 100%;
+  background: linear-gradient(135deg, #6a11cb, #2575fc);
+  color: white;
+  border: none;
+  padding: 15px;
+  font-size: 1.2rem;
+  border-radius: 15px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+  box-shadow: 0 5px 15px rgba(106, 17, 203, 0.3);
+}
+
+#history-editor-form button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(106, 17, 203, 0.4);
+  opacity: 0.95;
+}
+
+#history-editor-status {
+  text-align: center;
+  margin-top: 20px;
+  padding: 10px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.close {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 2rem;
+  color: #aaa;
+  cursor: pointer;
+  z-index: 10001;
+}
+
+.close:hover {
+  color: #000;
+}
+
+.vadim-detail-card {
+  text-align: center;
+}
+
+.vadim-detail-photo {
+  width: 200px;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 15px;
+  margin: 0 auto 20px;
+  border: 3px solid #6a11cb;
+}
+
+.vadim-detail-info {
+  text-align: left;
+  background: #f8f9ff;
+  padding: 20px;
+  border-radius: 15px;
+  margin-top: 15px;
+}
+
+.vadim-detail-info p {
+  margin-bottom: 10px;
+  padding: 5px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.vadim-detail-info p:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.vadim-detail-info strong {
+  display: inline-block;
+  margin-right: 8px;
+  min-width: 120px;
+  color: #6a11cb;
+}
+
+.photo-hint {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 10px;
+  padding: 12px;
+  margin: 10px 0;
+  font-size: 13px;
+  color: #856404;
+}
+
+.photo-hint strong {
+  display: block;
+  margin-bottom: 5px;
+  color: #6a11cb;
+}
+
+.photo-hint ul {
+  margin: 5px 0;
+  padding-left: 20px;
+}
+
+.photo-hint li {
+  margin-bottom: 3px;
+}
+
+/* Анимация появления модалок */
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  animation: slideInUp 0.3s ease-out;
+}
+
+.notification {
+  background: white;
+  color: #333;
+  padding: 15px 20px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  border-left: 5px solid #6a11cb;
+  animation: slideIn 0.3s ease-out;
+  transition: all 0.3s ease;
+  max-width: 300px;
+}
+
+.notification-success {
+  border-left-color: #4caf50;
+}
+
+.notification-error {
+  border-left-color: #f44336;
+}
+
+.notification-warning {
+  border-left-color: #ff9800;
+}
+
+.notification-info {
+  border-left-color: #2196f3;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Улучшенный скролл для модалок */
+.modal-content {
+  scrollbar-width: thin;
+  scrollbar-color: #6a11cb #f1f1f1;
+}
+
+.modal-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background: #6a11cb;
+  border-radius: 3px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+  background: #5a0cad;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .modal-content {
+    padding: 30px 20px;
+    margin: 20px;
+  }
+
+  .modal-content.narrow {
+    padding: 25px 15px;
+  }
+
+  .modal-content.extra-narrow {
+    padding: 20px 15px;
+  }
+
+  .auth-corner-buttons {
+    bottom: 10px;
+    right: 10px;
+  }
+
+  .auth-corner-btn {
+    padding: 10px 16px;
+    font-size: 12px;
+  }
+
+  .profile-actions {
+    flex-direction: column;
+  }
+
+  .profile-header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .vadim-detail-photo {
+    width: 150px;
+    height: 150px;
+  }
+
+  .vadim-detail-info {
+    padding: 15px;
+  }
+
+  .vadim-detail-info strong {
+    min-width: 100px;
+  }
+
+  .calendar-controls {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .calendar-grid {
+    gap: 3px;
+  }
+
+  .calendar-day {
+    height: 40px;
+    font-size: 0.9rem;
+  }
+
+  #quiz-answer-input {
+    min-height: 60px;
+  }
+
+  .hero {
+    padding: 40px 0;
+  }
+
+  .hero-content {
+    padding: 0 20px;
+  }
+
+  .hero-cta-group {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .history-content {
+    flex-direction: column;
+  }
+
+  .history-img {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  .history-text {
+    min-width: 100%;
+  }
+
+  .history-chapter {
+    margin-top: 30px;
+  }
+
+  .history-chapter h3 {
+    font-size: 1.4rem;
+    margin: 25px 0 10px;
+  }
+
+  .history-chapter img {
+    margin: 15px 0;
+    border-radius: 12px;
+  }
+
+  .vadimism-content {
+    padding: 30px;
+  }
+
+  .vadimism-content h1 {
+    font-size: 1.8rem;
+  }
+
+  .vadimism-content h2 {
+    font-size: 1.6rem;
+  }
+
+  .vadimism-content h3 {
+    font-size: 1.3rem;
+  }
+
+  .vadimism-content blockquote {
+    padding: 15px;
+    font-size: 1rem;
+  }
+
+  .vadimism-content ul {
+    margin: 10px 0 20px 20px;
+  }
+
+  .vadimism-content li {
+    margin-bottom: 5px;
+    font-size: 0.95rem;
+  }
+
+  .vadimism-content hr {
+    margin: 30px 0;
+  }
+
+  .popular-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+  }
+
+  .card img {
+    height: 150px;
+  }
+
+  .card h3 {
+    font-size: 1.1rem;
+    margin: 10px 0 3px;
+  }
+
+  .card p {
+    font-size: 0.8rem;
+    padding: 0 10px 10px;
+  }
+
+  .nominees-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+  }
+
+  .nominee-card img {
+    height: 150px;
+  }
+
+  .nominee-card h3 {
+    font-size: 1.1rem;
+    margin: 10px 0 3px;
+  }
+
+  .nominee-card p {
+    font-size: 0.8rem;
+    padding: 0 10px 10px;
+  }
+
+  .vote-count {
+    font-size: 0.9rem;
+    padding: 8px;
+  }
+
+  .vote-btn {
+    padding: 10px;
+    font-size: 0.9rem;
+  }
+
+  .voting-status {
+    font-size: 1rem;
+  }
+
+  .profile-card {
+    padding: 25px;
+  }
+
+  .profile-header {
+    gap: 15px;
+    margin-bottom: 15px;
+  }
+
+  .profile-avatar {
+    width: 80px;
+    height: 80px;
+  }
+
+  .profile-info h3 {
+    font-size: 1.2rem;
+    margin-bottom: 3px;
+  }
+
+  .profile-details {
+    margin-top: 15px;
+  }
+
+  .profile-detail {
+    padding: 8px 0;
+    font-size: 0.9rem;
+  }
+
+  .profile-detail strong {
+    min-width: 100px;
+  }
+
+  .profile-actions {
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .edit-profile-btn, .request-admin-btn, .logout-btn {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+  }
+
+  #edit-photo-preview img, #photo-preview img {
+    max-width: 120px;
+    max-height: 120px;
+  }
+
+  .photo-hint {
+    padding: 10px;
+    font-size: 12px;
+  }
+
+  .photo-hint strong {
+    font-size: 13px;
+  }
+
+  .photo-hint ul {
+    padding-left: 15px;
+  }
+
+  .photo-hint li {
+    margin-bottom: 2px;
+    font-size: 11px;
+  }
+
+  .modal-header h2 {
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+
+  .modal-header p {
+    font-size: 14px;
+  }
+
+  .input-group input,
+  .input-group textarea {
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  .input-group label {
+    top: 12px;
+    left: 12px;
+    font-size: 14px;
+  }
+
+  .input-group input:focus + label,
+  .input-group textarea:focus + label,
+  .input-group input:not(:placeholder-shown) + label,
+  .input-group textarea:not(:placeholder-shown) + label {
+    top: -8px;
+    left: 8px;
+    font-size: 11px;
+  }
+
+  .modal-submit-btn {
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  .modal-status {
+    font-size: 14px;
+    padding: 8px;
+  }
+
+  .close {
+    font-size: 1.5rem;
+    top: 10px;
+    right: 15px;
+  }
+
+  .vadim-detail-card {
+    padding: 20px;
+  }
+
+  .vadim-detail-photo {
+    width: 150px;
+    height: 150px;
+  }
+
+  .vadim-detail-info {
+    padding: 15px;
+  }
+
+  .vadim-detail-info p {
+    font-size: 0.9rem;
+    padding: 4px 0;
+  }
+
+  .vadim-detail-info strong {
+    min-width: 100px;
+    font-size: 0.9rem;
+  }
+
+  .event-list {
+    margin-top: 15px;
+  }
+
+  .event-item {
+    padding: 8px;
+    font-size: 0.9rem;
+  }
+
+  .notification {
+    padding: 12px 15px;
+    font-size: 14px;
+    max-width: 250px;
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(80px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  footer {
+    padding: 25px 0;
+    font-size: 0.8rem;
+  }
+
+  footer p {
+    margin-bottom: 6px;
+  }
+
+  footer em {
+    font-size: 0.85rem;
+  }
+}
+
+footer {
+  background: #333;
+  color: #ccc;
+  text-align: center;
+  padding: 30px 0;
+  font-size: 0.9rem;
+}
+
+footer p {
+  margin-bottom: 8px;
+}
+
+footer em {
+  color: gold;
+}
+
+/* Стили для секций */
+.section {
+  display: none;
+  padding: 60px 0;
+  min-height: 60vh;
+}
+
+.section.active {
+  display: block;
+}
+
+/* Стили для событий */
+#events-list {
+  list-style: none;
+  padding: 0;
+}
+
+#events-list li {
+  background: white;
+  padding: 20px;
+  margin-bottom: 15px;
+  border-radius: 10px;
+  border-left: 5px solid #6a11cb;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+#events-list li strong {
+  color: #6a11cb;
+  font-size: 1.1rem;
+}
+
+.event-date {
+  color: #888;
+  font-size: 0.9rem;
+  margin-left: 10px;
+}
+
+#events-list li p {
+  margin-top: 10px;
+  color: #333;
+  font-size: 1rem;
+}
+
+/* Стили для чата */
+.chat-container {
+  background: white;
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.chat-messages {
+  max-height: 400px;
+  overflow-y: auto;
+  margin-bottom: 20px;
+  padding: 10px;
+  background: #f9f9ff;
+  border-radius: 10px;
+}
+
+.chat-input-form {
+  display: flex;
+  gap: 10px;
+}
+
+.chat-input-form input {
+  flex: 1;
+  padding: 12px;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  font-size: 1rem;
+}
+
+.chat-input-form button {
+  padding: 12px 25px;
+  background: #6a11cb;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* Стили для уведомлений */
+#notification-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+}
+
+.notification {
+  background: white;
+  padding: 15px 20px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  border-left: 5px solid #6a11cb;
+  animation: slideIn 0.3s ease-out;
+  transition: opacity 0.3s;
+}
+
+.notification-success {
+  border-left-color: #4caf50;
+}
+
+.notification-error {
+  border-left-color: #f44336;
+}
+
+.notification-warning {
+  border-left-color: #ff9800;
+}
+
+.notification-info {
+  border-left-color: #2196f3;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Стили для профиля */
+.profile-card {
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.profile-card h3 {
+  color: #6a11cb;
+  margin-bottom: 15px;
+}
+
+.profile-card p {
+  margin-bottom: 10px;
+  color: #555;
+}
+
+.logout-btn {
+  margin-top: 20px;
+  padding: 12px 25px;
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.logout-btn:hover {
+  background: #d32f2f;
+}
+
+/* Стили для формы добавления событий */
+#add-event-form-container {
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  margin-bottom: 30px;
+}
+
+#add-event-form-container h3 {
+  color: #6a11cb;
+  margin-bottom: 20px;
+}
+
+#form-add-event {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+#form-add-event input[type="text"] {
+  padding: 12px;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  font-size: 1rem;
+}
+
+#form-add-event label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #555;
+}
+
+#form-add-event button {
+  padding: 12px;
+  background: #6a11cb;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+#form-add-event button:hover {
+  background: #540ca0;
+}
+
+/* Стили для редактирования профиля */
+.avatar-section {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.profile-avatar {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #6a11cb;
+  margin-bottom: 15px;
+}
+
+.btn-secondary {
+  padding: 10px 20px;
+  background: #f0f0f0;
+  color: #333;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.btn-secondary:hover {
+  background: #e0e0e0;
+  border-color: #6a11cb;
+}
+
+.btn-primary {
+  padding: 12px 30px;
+  background: #6a11cb;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s;
+}
+
+.btn-primary:hover {
+  background: #540ca0;
+  transform: translateY(-2px);
+}
+
+.input-group {
+  margin-bottom: 20px;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #333;
+  font-weight: 600;
+}
+
+.input-group input,
+.input-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: border-color 0.3s;
+}
+
+.input-group input:focus,
+.input-group textarea:focus {
+  outline: none;
+  border-color: #6a11cb;
+}
+/* ============================================ */
+/* СТИЛИ ДЛЯ ПРОФИЛЯ */
+/* ============================================ */
+
+.profile-card {
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.profile-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #6a11cb;
+  background: #6a11cb;
+}
+
+.profile-info h3 {
+  color: #6a11cb;
+  margin-bottom: 8px;
+  font-size: 1.5rem;
+}
+
+.profile-location,
+.profile-role {
+  color: #666;
+  margin-bottom: 5px;
+  font-size: 0.95rem;
+}
+
+.profile-bio {
+  margin-bottom: 25px;
+  padding: 15px;
+  background: #f9f9ff;
+  border-radius: 10px;
+  border-left: 4px solid #6a11cb;
+}
+
+.profile-bio h4 {
+  color: #6a11cb;
+  margin-bottom: 10px;
+}
+
+.profile-bio p {
+  color: #555;
+  line-height: 1.6;
+}
+
+.profile-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+/* ============================================ */
+/* СТИЛИ ДЛЯ ФОРМЫ РЕДАКТИРОВАНИЯ */
+/* ============================================ */
+
+.edit-form-title {
+  text-align: center;
+  color: #6a11cb;
+  margin-bottom: 25px;
+}
+
+.avatar-section {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.avatar-section .profile-avatar {
+  display: block;
+  margin: 0 auto 15px;
+}
+
+.form-input-group {
+  margin-bottom: 20px;
+}
+
+.form-input-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #333;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.form-input-group input,
+.form-input-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: border-color 0.3s;
+  background: white;
+}
+
+.form-input-group input:focus,
+.form-input-group textarea:focus {
+  outline: none;
+  border-color: #6a11cb;
+}
+
+.form-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 25px;
+}
+
+/* ============================================ */
+/* КНОПКИ */
+/* ============================================ */
+
+.btn-primary {
+  padding: 12px 30px;
+  background: #6a11cb;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s;
+}
+
+.btn-primary:hover {
+  background: #540ca0;
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  padding: 12px 30px;
+  background: #f0f0f0;
+  color: #333;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s;
+}
+
+.btn-secondary:hover {
+  background: #e0e0e0;
+  border-color: #6a11cb;
+}
+
+.btn-danger {
+  padding: 12px 30px;
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s;
+}
+
+.btn-danger:hover {
+  background: #d32f2f;
+  transform: translateY(-2px);
+}
+
+/* ============================================ */
+/* СТИЛИ ДЛЯ СОБЫТИЙ */
+/* ============================================ */
+
+#events-list {
+  list-style: none;
+  padding: 0;
+}
+
+#events-list li {
+  background: white;
+  padding: 20px;
+  margin-bottom: 15px;
+  border-radius: 10px;
+  border-left: 5px solid #6a11cb;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+#events-list li.empty-state {
+  text-align: center;
+  color: #888;
+  font-style: italic;
+  border-left: 5px solid #ddd;
+}
+
+.event-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.event-header strong {
+  color: #6a11cb;
+  font-size: 1.1rem;
+}
+
+.event-date {
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.event-text {
+  margin: 10px 0;
+  color: #333;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.badge {
+  display: inline-block;
+  background: #f0f0ff;
+  color: #6a11cb;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* ============================================ */
+/* УВЕДОМЛЕНИЯ */
+/* ============================================ */
+
+#notification-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+}
+
+.notification {
+  background: white;
+  padding: 15px 20px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  border-left: 5px solid #6a11cb;
+  animation: slideIn 0.3s ease-out;
+  transition: opacity 0.3s;
+}
+
+.notification-success {
+  border-left-color: #4caf50;
+}
+
+.notification-error {
+  border-left-color: #f44336;
+}
+
+.notification-warning {
+  border-left-color: #ff9800;
+}
+
+.notification-info {
+  border-left-color: #2196f3;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+/* ============================================ */
+/* СТИЛИ ДЛЯ МОДЕРАЦИИ СОБЫТИЙ */
+/* ============================================ */
+
+.pending-event-item {
+  background: white;
+  padding: 20px;
+  margin-bottom: 15px;
+  border-radius: 10px;
+  border-left: 5px solid #ff9800;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+.pending-event-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.pending-event-header strong {
+  color: #ff9800;
+  font-size: 1.1rem;
+}
+
+.pending-event-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.btn-approve {
+  padding: 8px 20px;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.btn-approve:hover {
+  background: #45a049;
+  transform: translateY(-2px);
+}
+
+.btn-reject {
+  padding: 8px 20px;
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.btn-reject:hover {
+  background: #d32f2f;
+  transform: translateY(-2px);
+}
+
+.badge-lore {
+  background: #ffd700;
+  color: #333;
+}
+/* Кнопка удаления события */
+.btn-delete-event {
+  margin-top: 10px;
+  padding: 6px 12px;
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.btn-delete-event:hover {
+  background: #d32f2f;
+  transform: translateY(-2px);
+}
+
+/* ============================================ */
+/* СТИЛИ ДЛЯ ЧАТА */
+/* ============================================ */
+
+.chat-container {
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  max-width: 800px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.chat-messages {
+  height: 500px;
+  overflow-y: auto;
+  padding: 20px;
+  background: #f9f9ff;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chat-empty {
+  text-align: center;
+  color: #888;
+  font-style: italic;
+  padding: 40px 20px;
+}
+
+.chat-message {
+  background: white;
+  padding: 12px 15px;
+  border-radius: 12px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  border-left: 3px solid #6a11cb;
+  position: relative;
+}
+
+.chat-message-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.chat-author {
+  color: #6a11cb;
+  font-size: 0.95rem;
+}
+
+.chat-author.own {
+  color: #2575fc;
+}
+
+.chat-time {
+  color: #999;
+  font-size: 0.8rem;
+}
+
+.chat-message-text {
+  color: #333;
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+
+.btn-delete-message {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+
+.btn-delete-message:hover {
+  opacity: 1;
+}
+
+.chat-input-form {
+  display: flex;
+  gap: 10px;
+  padding: 15px;
+  background: white;
+  border-top: 1px solid #eee;
+}
+
+.chat-input-form input {
+  flex: 1;
+  padding: 12px 15px;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: border-color 0.3s;
+}
+
+.chat-input-form input:focus {
+  outline: none;
+  border-color: #6a11cb;
+}
+
+.chat-input-form button {
+  padding: 12px 25px;
+  background: #6a11cb;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s;
+}
+
+.chat-input-form button:hover {
+  background: #540ca0;
+  transform: translateY(-2px);
+}
+
+/* Кнопка удаления события */
+.btn-delete-event {
+  margin-top: 10px;
+  padding: 6px 12px;
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.btn-delete-event:hover {
+  background: #d32f2f;
+  transform: translateY(-2px);
+}
+/* Стили для удалённых сообщений в чате */
+.chat-message.deleted {
+  opacity: 0.6;
+  border-left-color: #999;
+  background: #f5f5f5;
+}
+
+.chat-author.deleted {
+  color: #999;
+  text-decoration: line-through;
+}
+
+.deleted-text {
+  color: #999;
+  font-style: italic;
+}
+
+.deleted-text em {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+/* Кнопка удаления события */
+.btn-delete-event {
+  margin-top: 10px;
+  padding: 6px 12px;
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.btn-delete-event:hover {
+  background: #d32f2f;
+  transform: translateY(-2px);
+}
+/* Стили для титулов */
+.profile-titles {
+  margin: 10px 0;
+  font-size: 0.95rem;
+  color: #6a11cb;
+  font-weight: 600;
+}
+
+.chat-titles {
+  margin-left: 10px;
+  font-size: 0.85rem;
+  color: #6a11cb;
+  font-weight: 600;
+}
+
+.titles-modal {
+  max-width: 700px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.titles-section {
+  margin-bottom: 25px;
+}
+
+.titles-section h3 {
+  margin-bottom: 15px;
+  color: #6a11cb;
+}
+
+.titles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 15px;
+}
+
+.title-card {
+  background: white;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  padding: 15px;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: center;
+}
+
+.title-card:hover {
+  border-color: #6a11cb;
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(106, 17, 203, 0.2);
+}
+
+.title-card.selected {
+  border-color: #6a11cb;
+  background: #f0f0ff;
+}
+
+.title-card.special {
+  border-color: #ffd700;
+}
+
+.title-card.special.selected {
+  background: #fffacd;
+}
+
+.title-icon {
+  font-size: 2rem;
+  margin-bottom: 8px;
+}
+
+.title-name {
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.title-desc {
+  font-size: 0.85rem;
+  color: #666;
+}
+/* Титулы */
+.profile-titles { margin: 10px 0; font-size: 0.95rem; color: #6a11cb; font-weight: 600; }
+.chat-titles { margin-left: 10px; font-size: 0.85rem; color: #6a11cb; font-weight: 600; }
+
+.titles-modal { max-width: 700px; max-height: 80vh; overflow-y: auto; }
+.titles-section { margin-bottom: 25px; }
+.titles-section h3 { margin-bottom: 15px; color: #6a11cb; }
+.titles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
+
+.title-card {
+  background: white; border: 2px solid #ddd; border-radius: 12px; padding: 15px;
+  cursor: pointer; transition: all 0.3s; text-align: center;
+}
+.title-card:hover { border-color: #6a11cb; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(106, 17, 203, 0.2); }
+.title-card.selected { border-color: #6a11cb; background: #f0f0ff; }
+.title-card.special { border-color: #ffd700; }
+.title-card.special.selected { background: #fffacd; }
+.title-card.requestable { position: relative; }
+
+.title-icon { font-size: 2rem; margin-bottom: 8px; }
+.title-name { font-weight: 700; color: #333; margin-bottom: 5px; }
+.title-desc { font-size: 0.85rem; color: #666; }
+
+.btn-request-title {
+  margin-top: 10px; padding: 6px 12px; background: #2196f3; color: white;
+  border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem;
+}
+.btn-request-title:hover { background: #1976d2; }
+.btn-request-title:disabled { background: #ccc; cursor: not-allowed; }
+
+.request-hint { color: #666; font-size: 0.9rem; margin-bottom: 15px; }
+
+/* Форма создания титула */
+.create-title-form { display: flex; flex-direction: column; gap: 10px; max-width: 400px; }
+.create-title-form input, .create-title-form textarea, .create-title-form select {
+  padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem;
+}
+.create-title-form input:focus, .create-title-form textarea:focus, .create-title-form select:focus {
+  outline: none; border-color: #6a11cb;
+}
+
+/* Запросы на титулы в админке */
+.admin-section { margin-top: 30px; padding-top: 20px; border-top: 2px solid #eee; }
+.title-request-item {
+  background: white; padding: 15px; margin-bottom: 10px; border-radius: 10px;
+  border-left: 4px solid #2196f3; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+.request-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.request-header strong { color: #6a11cb; }
+.request-reason { color: #555; font-style: italic; margin-bottom: 10px; }
+.request-actions { display: flex; gap: 10px; }
+.btn-approve-request { padding: 6px 15px; background: #4caf50; color: white; border: none; border-radius: 6px; cursor: pointer; }
+.btn-reject-request { padding: 6px 15px; background: #f44336; color: white; border: none; border-radius: 6px; cursor: pointer; }
+
+/* Стили для кликабельных имён авторов */
+.clickable-author {
+  color: #6a11cb;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+
+.clickable-author:hover {
+  color: #540ca0;
+}
+
+/* Стили для модалки профиля пользователя */
+.user-profile-modal {
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.user-events-section {
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 2px solid #eee;
+}
+
+.user-events-section h3 {
+  margin-bottom: 15px;
+  color: #6a11cb;
+}
+
+.user-events-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.user-event-item {
+  background: #f9f9ff;
+  padding: 12px 15px;
+  border-radius: 8px;
+  border-left: 3px solid #6a11cb;
+}
+
+.user-event-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+}
+
+.user-event-header .event-date {
+  color: #888;
+}
+
+.user-event-item .event-text {
+  color: #333;
+  margin: 0;
+  line-height: 1.4;
+}
+/* Скрыть скроллбар у модальных окон */
+.modal-content {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE и Edge */
+}
+
+.modal-content::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+.user-profile-modal {
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.user-profile-modal::-webkit-scrollbar {
+  display: none;
+}
+
+.titles-modal {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.titles-modal::-webkit-scrollbar {
+  display: none;
+}
+/* ============================================ */
+/* ЛЕТОПИСЬ — СТИЛИ */
+/* ============================================ */
+
+/* Кнопки управления летописью */
+.chronicle-controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 25px;
+}
+
+.chronicle-controls button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.chronicle-controls .btn-primary {
+  background: #6a11cb;
+  color: white;
+}
+
+.chronicle-controls .btn-primary:hover {
+  background: #540ca0;
+  transform: translateY(-2px);
+}
+
+.chronicle-controls .btn-secondary {
+  background: #f0f0ff;
+  color: #6a11cb;
+}
+
+.chronicle-controls .btn-secondary:hover {
+  background: #e0e0ff;
+  transform: translateY(-2px);
+}
+
+/* Режим чтения */
+.chronicle-reader {
+  max-width: 800px;
+  margin: 0 auto;
+  background: white;
+  padding: 40px;
+  border-radius: 15px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.chronicle-header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #eee;
+}
+
+.chronicle-header h2 {
+  color: #6a11cb;
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.chronicle-meta {
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.chronicle-text p {
+  line-height: 1.8;
+  margin-bottom: 20px;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+/* Врезки событий в тексте */
+.chronicle-event-insert {
+  background: #f9f9ff;
+  border: 2px solid #6a11cb;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 25px 0;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.chronicle-event-insert:hover {
+  background: #f0f0ff;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(106, 17, 203, 0.2);
+}
+
+.insert-header {
+  font-weight: 700;
+  color: #6a11cb;
+  margin-bottom: 10px;
+  font-size: 1.1rem;
+}
+
+.insert-text {
+  font-size: 1.05rem;
+  color: #333;
+  margin-bottom: 10px;
+  line-height: 1.6;
+}
+
+.insert-meta {
+  display: flex;
+  gap: 15px;
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.btn-read-more {
+  background: #6a11cb;
+  color: white;
+  border: none;
+  padding: 6px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.btn-read-more:hover {
+  background: #540ca0;
+}
+
+.chronicle-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #888;
+  font-size: 1.2rem;
+}
+
+/* Редактор летописи */
+.chronicle-editor {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.editor-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pending-events-panel {
+  background: #f9f9ff;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.pending-events-panel h3 {
+  color: #6a11cb;
+  margin-bottom: 15px;
+}
+
+.pending-event-card {
+  background: white;
+  padding: 12px 15px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  border-left: 3px solid #6a11cb;
+}
+
+.pending-event-card strong {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.event-meta {
+  font-size: 0.85rem;
+  color: #666;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+#chronicle-textarea {
+  width: 100%;
+  min-height: 400px;
+  padding: 20px;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  font-size: 1.05rem;
+  line-height: 1.8;
+  font-family: Georgia, serif;
+  resize: vertical;
+  margin-bottom: 20px;
+}
+
+#chronicle-textarea:focus {
+  outline: none;
+  border-color: #6a11cb;
+}
+
+.editor-preview {
+  background: #f9f9ff;
+  padding: 20px;
+  border-radius: 12px;
+  margin-top: 20px;
+}
+
+.editor-preview h3 {
+  color: #6a11cb;
+  margin-bottom: 15px;
+}
+
+/* Таймлайн */
+.timeline-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.timeline-container h2 {
+  text-align: center;
+  color: #6a11cb;
+  margin-bottom: 30px;
+}
+
+.timeline {
+  position: relative;
+  padding-left: 30px;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #6a11cb;
+}
+
+.timeline-year {
+  margin-bottom: 30px;
+}
+
+.year-marker {
+  position: relative;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #6a11cb;
+  margin-bottom: 15px;
+  padding-left: 20px;
+}
+
+.year-marker::before {
+  content: '';
+  position: absolute;
+  left: -24px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 15px;
+  height: 15px;
+  background: #6a11cb;
+  border-radius: 50%;
+  border: 3px solid white;
+  box-shadow: 0 0 0 3px #6a11cb;
+}
+
+.year-events {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.timeline-event {
+  position: relative;
+  padding-left: 30px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.timeline-event:hover {
+  transform: translateX(5px);
+}
+
+.event-dot {
+  position: absolute;
+  left: -26px;
+  top: 15px;
+  width: 10px;
+  height: 10px;
+  background: #2575fc;
+  border-radius: 50%;
+}
+
+.timeline-event .event-card {
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  border-left: 3px solid #2575fc;
+}
+
+.timeline-event .event-card strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+/* Карта */
+.map-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.map-container h2 {
+  text-align: center;
+  color: #6a11cb;
+  margin-bottom: 20px;
+}
+
+#map {
+  border-radius: 12px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.map-legend {
+  margin-top: 20px;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.map-legend h3 {
+  color: #6a11cb;
+  margin-bottom: 15px;
+}
+
+.map-legend ul {
+  list-style: none;
+  padding: 0;
+}
+
+.map-event-item {
+  padding: 10px;
+  margin-bottom: 8px;
+  background: #f9f9ff;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.map-event-item:hover {
+  background: #f0f0ff;
+}
+
+.map-event-item strong {
+  color: #6a11cb;
+}
+
+.event-author {
+  color: #888;
+  font-size: 0.9rem;
+}
+
+/* Закладки */
+.bookmarks-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.bookmarks-container h2 {
+  text-align: center;
+  color: #6a11cb;
+  margin-bottom: 25px;
+}
+
+.bookmarks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.bookmark-card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: all 0.3s;
+  border-left: 4px solid #6a11cb;
+}
+
+.bookmark-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 20px rgba(106, 17, 203, 0.2);
+}
+
+.bookmark-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.bookmark-header strong {
+  color: #6a11cb;
+}
+
+.event-date {
+  color: #888;
+  font-size: 0.9rem;
+}
+
+/* Модалка события */
+.event-modal {
+  max-width: 600px;
+  max-height: 85vh;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.event-modal::-webkit-scrollbar {
+  display: none;
+}
+
+.event-detail-header {
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #eee;
+}
+
+.event-detail-header h3 {
+  color: #333;
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+.event-detail-meta {
+  display: flex;
+  gap: 15px;
+  font-size: 0.9rem;
+  color: #666;
+  flex-wrap: wrap;
+}
+
+/* Реакции */
+.reactions-section {
+  margin-bottom: 20px;
+}
+
+.reactions-section h4 {
+  color: #6a11cb;
+  margin-bottom: 12px;
+}
+
+.reactions-list {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.reaction-btn {
+  padding: 8px 16px;
+  border: 2px solid #ddd;
+  border-radius: 20px;
+  background: white;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.reaction-btn:hover {
+  border-color: #6a11cb;
+  transform: scale(1.05);
+}
+
+.reaction-btn.active {
+  border-color: #6a11cb;
+  background: #f0f0ff;
+}
+
+/* Закладка */
+.bookmark-section {
+  margin-bottom: 20px;
+}
+
+.btn-bookmark {
+  padding: 8px 16px;
+  border: 2px solid #6a11cb;
+  border-radius: 8px;
+  background: white;
+  color: #6a11cb;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+}
+
+.btn-bookmark:hover {
+  background: #f0f0ff;
+}
+
+/* Комментарии */
+.comments-section {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 2px solid #eee;
+}
+
+.comments-section h4 {
+  color: #6a11cb;
+  margin-bottom: 15px;
+}
+
+.comments-list {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 15px;
+  scrollbar-width: none;
+}
+
+.comments-list::-webkit-scrollbar {
+  display: none;
+}
+
+.comment-item {
+  background: #f9f9ff;
+  padding: 12px 15px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.comment-header strong {
+  color: #6a11cb;
+  font-size: 0.95rem;
+}
+
+.comment-date {
+  color: #888;
+  font-size: 0.8rem;
+}
+
+.btn-delete-comment {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.btn-delete-comment:hover {
+  opacity: 1;
+}
+
+.comment-text {
+  color: #333;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.comment-form {
+  display: flex;
+  gap: 10px;
+}
+
+.comment-form textarea {
+  flex: 1;
+  padding: 10px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  resize: vertical;
+  min-height: 60px;
+}
+
+.comment-form textarea:focus {
+  outline: none;
+  border-color: #6a11cb;
+}
+
+.comment-form .btn-primary {
+  padding: 10px 20px;
+  background: #6a11cb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  align-self: flex-end;
+}
+
+.comment-form .btn-primary:hover {
+  background: #540ca0;
+}
+
+/* Бейджи */
+.badge-chronicle {
+  background: #4caf50;
+  color: white;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.badge-lore {
+  background: #ff9800;
+  color: white;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* Кнопка добавления в летопись в админке */
+.btn-add-chronicle {
+  padding: 6px 12px;
+  background: #ff9800;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-add-chronicle:hover {
+  background: #f57c00;
+  transform: translateY(-2px);
+}
+/* Делаем шапку редактора летописи липкой */
+.editor-header {
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 50;
+  padding: 15px 0;
+  border-bottom: 2px solid #eee;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+/* Убедимся, что сам редактор имеет правильный контекст */
+.chronicle-editor {
+  position: relative;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Делаем текстовое поле более удобным для длинного текста */
+#chronicle-textarea {
+  min-height: 500px;
+  resize: vertical;
+}
+/* ============================================ */
+/* ЛИПКИЕ КНОПКИ ВНИЗУ МОДАЛОК */
+/* ============================================ */
+
+/* Панель кнопок (Подтвердить/Отмена/Сохранить) всегда видна внизу модалки */
+.modal-content .form-actions {
+  position: sticky;
+  bottom: 0;
+  background: white;
+  padding: 15px 10px 10px;
+  border-top: 2px solid #eee;
+  z-index: 10;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: auto;
+}
+
+/* Для менеджера титулов — кнопки всегда видны при прокрутке */
+.titles-modal .form-actions {
+  position: sticky;
+  bottom: 0;
+  background: white;
+  padding: 15px 10px 10px;
+  border-top: 2px solid #eee;
+  z-index: 10;
+}
+
+/* Для модалки события — реакции и комментарии прокручиваются, но форма отправки видна */
+.event-modal .comments-section .comment-form {
+  position: sticky;
+  bottom: 0;
+  background: white;
+  padding: 10px 0;
+  border-top: 1px solid #eee;
+  z-index: 5;
+}
+
+/* Для модалки профиля пользователя */
+.user-profile-modal .form-actions {
+  position: sticky;
+  bottom: 0;
+  background: white;
+  padding: 15px 10px 10px;
+  border-top: 2px solid #eee;
+  z-index: 10;
+}
+
+/* Для редактора летописи — шапка с кнопками сверху */
+.editor-header {
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 50;
+  padding: 15px 0;
+  border-bottom: 2px solid #eee;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+/* Предпросмотр в редакторе летописи — тоже sticky снизу, чтобы видеть результат */
+.editor-preview {
+  position: sticky;
+  bottom: 0;
+  background: #f9f9ff;
+  padding: 15px;
+  border-top: 2px solid #6a11cb;
+  z-index: 5;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* Убедимся, что сам редактор имеет правильный контекст */
+.chronicle-editor {
+  position: relative;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Текстовое поле редактора — удобный размер */
+#chronicle-textarea {
+  min-height: 500px;
+  resize: vertical;
+}
