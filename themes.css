@@ -1,0 +1,59 @@
+/* ====== ТЕМЫ: агитпроп (по умолчанию) и досье ====== */
+:root,body.theme-agit{--accent:#d41f1f;--accent-dark:#9e1111;--accent2:#111;--accent-soft:rgba(212,31,31,.18);--accent-grad:#d41f1f;--surface:#fbf6ea;--surface2:#efe6d2;--text:#111;--muted:#5a5248;--line:#111;--on-accent:#fbf6ea;--font:'PT Sans',Arial,sans-serif;--head:'Oswald',Impact,sans-serif;--paper:#efe6d2}
+body.theme-dossier{--accent:#b31b1b;--accent-dark:#7d1010;--accent2:#3a3a36;--accent-soft:rgba(179,27,27,.15);--accent-grad:#3a3a36;--surface:#f7f3e8;--surface2:#e9dcb8;--text:#222;--muted:#6b6455;--line:#8a7a55;--on-accent:#f7f3e8;--font:'PT Mono','Courier New',monospace;--head:'PT Mono','Courier New',monospace;--paper:#2b2a27}
+body{background:var(--paper);color:var(--text);font-family:var(--font)}
+h1,h2,h3,.modal-header h2{font-family:var(--head)}
+/* ---------- АГИТПРОП ---------- */
+body.theme-agit{background-color:#efe6d2;background-image:radial-gradient(rgba(0,0,0,.13) 1px,transparent 1px);background-size:4px 4px}
+.theme-agit header{background:#efe6d2;color:#111;border-bottom:0;padding:34px 0 0;text-align:left}
+.theme-agit header h1{font:700 4rem/0.9 var(--head);text-transform:uppercase;letter-spacing:-1px;text-shadow:none}
+.theme-agit header h1 .t2{background:#d41f1f;color:#efe6d2;padding:0 10px;display:inline-block;transform:skew(-8deg)}
+.theme-agit header p{font:700 1rem var(--head);text-transform:uppercase;margin:8px 0 22px}
+.theme-agit header:after{content:'';display:block;height:18px;background:repeating-linear-gradient(135deg,#d41f1f 0 16px,#111 16px 32px)}
+.theme-agit .navbar{background:transparent;box-shadow:none;padding:16px 0}
+.theme-agit .nav-link{display:inline-block;color:#111;font:700 1rem var(--head);text-transform:uppercase;border:3px solid #111;padding:6px 14px;margin:0 -3px 6px 0;background:#fbf6ea}
+.theme-agit .nav-link:hover,.theme-agit .nav-link.active{background:#111;color:#efe6d2;text-decoration:none}
+.theme-agit #events-list>li,.theme-agit .card,.theme-agit .modal-content,.theme-agit #chronicle-content,.theme-agit .chat-container,.theme-agit #profile-content>div{border:3px solid #111!important;border-radius:0!important;box-shadow:8px 8px 0 #d41f1f!important;background:#fbf6ea}
+.theme-agit #events-list>li{position:relative;margin-bottom:26px}
+.theme-agit .badge-lore{position:absolute;right:12px;top:-14px;transform:rotate(7deg);border:3px solid #d41f1f;color:#d41f1f;background:#efe6d2;font:700 .8rem var(--head);text-transform:uppercase;border-radius:0;animation:stamp .35s ease-out both}
+@keyframes stamp{0%{transform:rotate(7deg) scale(2.4);opacity:0}70%{transform:rotate(7deg) scale(.92);opacity:1}100%{transform:rotate(7deg) scale(1)}}
+.theme-agit button,.theme-agit .btn-primary,.theme-agit .cta-btn,.theme-agit .modal-submit-btn{border-radius:0!important;font-family:var(--head);text-transform:uppercase;letter-spacing:.5px}
+.theme-agit input,.theme-agit textarea,.theme-agit select{border:2px solid #111!important;border-radius:0!important;background:#fffdf6}
+.theme-agit .chronicle-chapter,.theme-agit h2{text-transform:uppercase}
+.theme-agit .chronicle-chapter{font:700 1.9rem/1 var(--head);border-left:10px solid #d41f1f;padding-left:12px}
+.theme-agit .chronicle-ref{background:linear-gradient(transparent 58%,rgba(212,31,31,.4) 58%);border:0;color:inherit}
+.theme-agit footer{background:#111;color:#efe6d2}
+/* ---------- ДОСЬЕ ---------- */
+body.theme-dossier{background:#2b2a27 radial-gradient(circle at 30% 10%,#3a3833,#232220)}
+.theme-dossier header{background:#d8b878;color:#222;border:0;margin:34px auto 0;max-width:1000px;border-radius:0 8px 0 0;position:relative;text-align:left;padding:26px 30px}
+.theme-dossier header:before{content:'ДЕЛО № 0421';position:absolute;top:-28px;left:0;background:#d8b878;padding:5px 18px;border-radius:8px 8px 0 0;font:700 .85rem var(--head)}
+.theme-dossier header h1{font:700 2.6rem var(--head);letter-spacing:8px;text-shadow:none;text-transform:uppercase}
+.theme-dossier header p{font-size:.8rem;text-transform:uppercase;letter-spacing:2px}
+.theme-dossier header p:after{content:' · СОВЕРШЕННО СЕКРЕТНО'}
+.theme-dossier .navbar{background:#d8b878;max-width:1000px;margin:0 auto;box-shadow:0 10px 24px rgba(0,0,0,.5);padding:4px 20px 14px}
+.theme-dossier .nav-link{color:#222;font:700 .95rem var(--head);text-decoration:underline}
+.theme-dossier .nav-link:before{content:'['}.theme-dossier .nav-link:after{content:']'}
+.theme-dossier .nav-link.active{background:#222;color:#d8b878;text-decoration:none}
+.theme-dossier main,.theme-dossier .section{color:#222}
+.theme-dossier .section>.container{background:#d8b878;padding-top:24px;padding-bottom:30px;box-shadow:0 10px 24px rgba(0,0,0,.5)}
+.theme-dossier #events-list>li,.theme-dossier .card,.theme-dossier #chronicle-content,.theme-dossier .chat-container,.theme-dossier .modal-content{background:#f7f3e8!important;border:0!important;border-radius:0!important;box-shadow:2px 4px 8px rgba(0,0,0,.35)!important;position:relative}
+.theme-dossier #events-list>li:nth-child(odd){transform:rotate(-.6deg)}.theme-dossier #events-list>li:nth-child(even){transform:rotate(.5deg)}
+.theme-dossier #events-list>li:before{content:'';position:absolute;top:-12px;left:34px;width:14px;height:38px;border:3px solid #8b8b8b;border-radius:8px}
+.theme-dossier .badge-lore{position:absolute;right:14px;bottom:10px;border:3px double #b31b1b;color:#b31b1b;background:transparent;transform:rotate(-10deg);font:700 .8rem var(--head);border-radius:0;opacity:.85;animation:stampd .35s ease-out both}
+@keyframes stampd{0%{transform:rotate(-10deg) scale(2.4);opacity:0}100%{transform:rotate(-10deg) scale(1);opacity:.85}}
+.theme-dossier button,.theme-dossier .btn-primary,.theme-dossier .cta-btn,.theme-dossier .modal-submit-btn{border-radius:0!important;font-family:var(--head)}
+.theme-dossier input,.theme-dossier textarea,.theme-dossier select{border:0!important;border-bottom:2px solid #222!important;border-radius:0!important;background:transparent;font-family:var(--head)}
+.theme-dossier .chronicle-chapter{border-bottom:2px solid #222;text-transform:uppercase}
+.theme-dossier .chronicle-ref{border-bottom:2px solid #b31b1b;color:inherit}
+.theme-dossier .redact{background:#111;color:#111;cursor:pointer;transition:all .4s}.theme-dossier .redact.open{background:transparent;color:inherit}
+.theme-dossier footer{background:transparent;color:#d8b878}
+/* ---------- общее: свои иконки реакций и выбор темы ---------- */
+.reaction-btn .ri{width:24px;height:24px;vertical-align:middle;color:var(--accent)}
+.reaction-btn{display:inline-flex;align-items:center;gap:4px}
+.reaction-btn.active{background:var(--accent-soft)!important;outline:2px solid var(--accent)}
+.theme-picker{display:flex;gap:12px;margin:14px 0}.theme-picker button{flex:1;padding:12px;border:3px solid var(--line);cursor:pointer;font-weight:700}
+.theme-picker .on{outline:3px solid var(--accent);outline-offset:2px}
+.navbar .container{display:flex;flex-wrap:wrap;align-items:center;gap:4px}
+.theme-agit #nav-profile,.theme-dossier #nav-profile{width:auto!important;display:inline-block}
+.theme-agit .section div,.theme-dossier .section div{border-radius:0!important}
+.theme-agit .section .container>div{border:3px solid #111;box-shadow:8px 8px 0 #d41f1f;background:#fbf6ea}

@@ -6,16 +6,18 @@
   <title>Вадимопедия — Все Вадимы Мира</title>
   
   <!-- Шрифты -->
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&family=Georgia&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=PT+Sans:wght@400;700&family=PT+Mono&display=swap" rel="stylesheet">
   
   <!-- Leaflet CSS (для карты событий в летописи) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   
   <!-- Основные стили -->
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="themes.css" />
   <link rel="icon" href="favicon.ico" type="image/x-icon">
 </head>
 <body>
+<script>document.body.className="theme-"+(localStorage.getItem("theme")||"agit")</script>
 
   <!-- Контейнер для всплывающих уведомлений -->
   <div id="notification-container"></div>
@@ -25,7 +27,7 @@
   <!-- ============================================ -->
   <header>
     <div class="container">
-      <h1>🌍 Вадимопедия</h1>
+      <h1>Вадимо<span class="t2">педия</span></h1>
       <p>Все Вадимы мира — за всю историю</p>
     </div>
   </header>
@@ -49,10 +51,10 @@
   <!-- ============================================ -->
   <div class="auth-corner-buttons" id="auth-buttons">
     <button class="auth-corner-btn register-btn" id="btn-show-register">
-      <span>✨</span> Стать Вадимом
+      <span></span> Стать Вадимом
     </button>
     <button class="auth-corner-btn login-btn" id="btn-show-login">
-      <span>🔑</span> Войти
+      <span></span> Войти
     </button>
   </div>
 
@@ -93,13 +95,13 @@
   <!-- ============================================ -->
   <section id="section-events" class="section">
     <div class="container">
-      <h2>📜 Лента событий</h2>
+      <h2>Лента событий</h2>
       <p>Все значимые события из жизни Вадимов</p>
       
       <!-- Форма добавления события (скрыта для гостей, управляется через JS) -->
       <div id="add-event-form-container" style="display: none;">
         <div class="add-section-inline">
-          <h3>➕ Добавить событие</h3>
+          <h3>Добавить событие</h3>
           <form id="form-add-event">
             <div class="form-input-group">
               <label for="event-text">Текст события</label>
@@ -115,11 +117,11 @@
             </div>
             <div class="form-input-group" style="display: flex; align-items: center; gap: 10px;">
               <input type="checkbox" id="event-is-lore" style="width: auto; margin: 0;">
-              <label for="event-is-lore" style="margin: 0; cursor: pointer;">⭐ Это значимое событие для летописи</label>
+              <label for="event-is-lore" style="margin: 0; cursor: pointer;">Это значимое событие для летописи</label>
             </div>
             <div class="form-input-group" style="display: flex; align-items: center; gap: 10px;">
               <input type="checkbox" id="event-as-chronicler" style="width: auto; margin: 0;">
-              <label for="event-as-chronicler" style="margin: 0; cursor: pointer;">📜 Опубликовать от имени Летописца (после проверки админом)</label>
+              <label for="event-as-chronicler" style="margin: 0; cursor: pointer;">Опубликовать от имени Летописца (после проверки админом)</label>
             </div>
             <button type="submit" class="btn-primary" style="width: 100%; margin-top: 10px;">Добавить</button>
           </form>
@@ -136,7 +138,7 @@
   <!-- ============================================ -->
   <section id="section-chat" class="section">
     <div class="container">
-      <h2>💬 Чат Вадимов</h2>
+      <h2>Чат Вадимов</h2>
       <div class="chat-container">
         <div id="chat-messages" class="chat-messages"></div>
         <form id="form-chat-message" class="chat-input-form">
@@ -152,16 +154,16 @@
   <!-- ============================================ -->
   <section id="section-chronicle" class="section">
     <div class="container">
-      <h2>📖 Летопись Вадимопедии</h2>
+      <h2>Летопись Вадимопедии</h2>
       
       <!-- Кнопки управления летописью -->
       <div class="chronicle-controls">
-        <button class="btn-primary" id="btn-read-chronicle">📚 Читать</button>
-        <button class="btn-secondary" id="btn-timeline-chronicle">📅 Таймлайн</button>
-        <button class="btn-secondary" id="btn-map-chronicle">🗺️ Карта</button>
-        <button class="btn-secondary" id="btn-bookmarks-chronicle">🔖 Закладки</button>
+        <button class="btn-primary" id="btn-read-chronicle">Читать</button>
+        <button class="btn-secondary" id="btn-timeline-chronicle">Таймлайн</button>
+        <button class="btn-secondary" id="btn-map-chronicle">Карта</button>
+        <button class="btn-secondary" id="btn-bookmarks-chronicle">Закладки</button>
         <!-- Эта кнопка видна только админу (управляется через класс .admin-only в JS) -->
-        <button class="btn-secondary admin-only" id="btn-edit-chronicle" style="display: none;">✏️ Редактировать</button>
+        <button class="btn-secondary admin-only" id="btn-edit-chronicle" style="display: none;">Редактировать</button>
       </div>
       
       <!-- Контейнер для контента летописи (текст, таймлайн, карта или редактор) -->
@@ -174,7 +176,7 @@
   <!-- ============================================ -->
   <section id="section-profile" class="section">
     <div class="container">
-      <h2>👤 Мой профиль</h2>
+      <h2>Мой профиль</h2>
       <div id="profile-content">
         <!-- Сюда JS вставит карточку профиля или форму редактирования -->
       </div>
@@ -186,7 +188,7 @@
   <!-- ============================================ -->
   <section id="section-admin" class="section">
     <div class="container">
-      <h2>⚙️ Панель модератора</h2>
+      <h2>Панель модератора</h2>
       <div id="admin-content">
         <h3>Ожидают модерации</h3>
         <ul id="admin-pending-events">
@@ -269,5 +271,6 @@
   <!-- Основной скрипт приложения (он автоматически импортирует config.js, api.js, auth.js и ui.js) -->
   <script type="module" src="js/main.js"></script>
 
+<script>(function(){const p=document.getElementById('theme-picker');if(!p)return;const mark=()=>p.querySelectorAll('button').forEach(b=>b.classList.toggle('on',document.body.classList.contains('theme-'+b.dataset.t)));mark();p.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;localStorage.setItem('theme',b.dataset.t);document.body.className='theme-'+b.dataset.t;mark();});})();</script>
 </body>
 </html>

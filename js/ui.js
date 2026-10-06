@@ -1127,7 +1127,13 @@ export async function showEventModal(event, currentUserId, onReaction, onComment
     if (r.user_id === currentUserId) userReactions[r.reaction_type] = true;
   });
 
-  const reactionEmojis = { fire: '🔥', skull: '💀', theater: '🎭', crown: '' };
+  const I = d => `<svg class="ri" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round">${d}</svg>`;
+  const reactionEmojis = {
+    fire: I('<path d="M13 2c4 6 9 8 9 14a9 9 0 0 1-18 0c0-4 3-6 4-9 1 3 2 4 3 4 0-4 1-6 2-9z" fill="currentColor" fill-opacity=".25"/><path d="M13 13c2 2 3 3 3 5a3 3 0 0 1-6 0c0-2 2-3 3-5z" fill="currentColor"/>'),
+    skull: I('<path d="M5 12a8 8 0 0 1 16 0v4l-2 2v4H7v-4l-2-2z" fill="currentColor" fill-opacity=".2"/><circle cx="10" cy="13" r="2" fill="currentColor"/><circle cx="16" cy="13" r="2" fill="currentColor"/><path d="M11 22v-3M15 22v-3"/>'),
+    theater: I('<circle cx="13" cy="13" r="10.5"/><text x="13" y="18" font-size="13" font-weight="900" text-anchor="middle" fill="currentColor" stroke="none" font-family="Oswald,Impact,sans-serif">В</text>'),
+    crown: I('<path d="M3 20 5 8l5 5 3-8 3 8 5-5 2 12z" fill="currentColor" fill-opacity=".25"/><path d="M3 23h20"/>')
+  };
 
   const modal = document.createElement('div');
   modal.className = 'modal';
@@ -1205,15 +1211,15 @@ export async function showEventModal(event, currentUserId, onReaction, onComment
           if (bType === type) {
             if (result.action === 'added') {
               b.classList.add('active');
-              b.textContent = `${reactionEmojis[type]} ${count + 1}`;
+              b.innerHTML = `${reactionEmojis[type]} ${count + 1}`;
             } else {
               b.classList.remove('active');
-              b.textContent = count > 1 ? `${reactionEmojis[type]} ${count - 1}` : reactionEmojis[type];
+              b.innerHTML = count > 1 ? `${reactionEmojis[type]} ${count - 1}` : reactionEmojis[type];
             }
           } else {
             if (b.classList.contains('active')) {
                b.classList.remove('active');
-               b.textContent = count > 1 ? `${reactionEmojis[bType]} ${count - 1}` : reactionEmojis[bType];
+               b.innerHTML = count > 1 ? `${reactionEmojis[bType]} ${count - 1}` : reactionEmojis[bType];
             }
           }
         });
