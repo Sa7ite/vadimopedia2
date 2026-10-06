@@ -72,14 +72,15 @@ async function searchOpenMeteo(q) {
   if (!res.ok) throw new Error('open-meteo ' + res.status);
   const hit = (await res.json()).results?.[0];
   if (!hit) return null;
-  return { name: hit.name, fullName: [hit.name, hit.admin1, hit.country].filter(Boolean).join(', '), lat: hit.latitude, lon: hit.longitude };
+  return { name: hit.name, fullName: [...new Set([hit.name, hit.admin1, hit.country].filter(Boolean))].join(', '), lat: hit.latitude, lon: hit.longitude };
 }
 
 async function searchNominatim(q) {
-  const res = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&accept-language=ru&q=${encodeURIComponent(q)}`);
+  const res = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&featureType=settlement&accept-language=ru&q=${encodeURIComponent(q)}`);
   if (!res.ok) throw new Error('nominatim ' + res.status);
   const hit = (await res.json())[0];
-  if (!hit) return null;
+  // только населённые пункты, регионы и страны — не магазины и не улицы
+  if (!hit || !['place', 'boundary'].includes(hit.category)) return null;
   return { name: hit.name || q, fullName: hit.display_name, lat: +hit.lat, lon: +hit.lon };
 }
 

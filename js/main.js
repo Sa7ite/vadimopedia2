@@ -185,7 +185,7 @@ function setupForms() {
 
       try {
         await addEvent(eventText, city, isLore, eventDate, isAutoApprove, coords);
-        if (isAutoApprove) {
+        if (isAutoApprove || !isLore) {
           showNotification('✅ Событие добавлено и опубликовано!', 'success');
         } else {
           showNotification('📖 Событие добавлено! Ожидает модерации.', 'success');
