@@ -173,6 +173,7 @@ function setupForms() {
       const eventText = document.getElementById('event-text').value.trim();
       const city = document.getElementById('event-city').value.trim();
       const isLore = document.getElementById('event-is-lore').checked;
+      const asChronicler = document.getElementById('event-as-chronicler')?.checked || false;
       const eventDateEl = document.getElementById('event-date');
       const eventDate = eventDateEl ? eventDateEl.value.trim() : null;
 
@@ -197,9 +198,11 @@ function setupForms() {
       const isAutoApprove = currentProfile && (currentProfile.role === 'admin' || currentProfile.role === 'moderator');
 
       try {
-        await addEvent(eventText, city, isLore, eventDate, isAutoApprove, coords);
-        if (isAutoApprove || !isLore) {
-          showNotification('✅ Событие добавлено и опубликовано!', 'success');
+        await addEvent(eventText, city, isLore, eventDate, isAutoApprove, coords, asChronicler);
+        if (asChronicler && !isAutoApprove) {
+          showNotification('📜 Отправлено на проверку. После одобрения появится от имени Летописца.', 'success');
+        } else if (isAutoApprove || !isLore) {
+          showNotification(asChronicler ? '✅ Опубликовано от имени Летописца!' : '✅ Событие добавлено и опубликовано!', 'success');
         } else {
           showNotification('📖 Событие добавлено! Ожидает модерации.', 'success');
         }

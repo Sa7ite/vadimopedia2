@@ -43,6 +43,12 @@ export function validateDate(input) {
   const s = input.trim().toLowerCase().replace(/\s*(г\.?|года?)\s*$/, '').replace(/\s+/g, ' ');
   let m;
   if ((m = s.match(/^(\d{1,5})$/))) return checkParts(null, null, +m[1]);
+  // период: 2035–2040
+  if ((m = s.match(/^(\d{1,5})\s*[–—-]\s*(\d{1,5})$/)) && m[1].length >= 3 && m[2].length >= 3) {
+    const err = checkParts(null, null, +m[1]) || checkParts(null, null, +m[2]);
+    if (err) return err;
+    return +m[1] <= +m[2] ? null : 'Начало периода позже конца';
+  }
   if ((m = s.match(/^(\d{1,2})[./](\d{1,5})$/))) return checkParts(null, +m[1], +m[2]);
   if ((m = s.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{1,5})$/))) return checkParts(+m[1], +m[2], +m[3]);
   if ((m = s.match(/^(\d{1,5})-(\d{1,2})-(\d{1,2})$/))) return checkParts(+m[3], +m[2], +m[1]);
@@ -54,7 +60,7 @@ export function validateDate(input) {
     const month = monthFromWord(m[2]);
     return month ? checkParts(+m[1], month, +m[3]) : `Не понимаю месяц «${m[2]}»`;
   }
-  return 'Непонятный формат даты. Примеры: «2024», «март 2024», «15 марта 2024», «15.03.2024»';
+  return 'Непонятный формат даты. Примеры: «2024», «2035–2040», «март 2024», «15 марта 2024», «15.03.2024»';
 }
 
 export function isValidDate(input) {

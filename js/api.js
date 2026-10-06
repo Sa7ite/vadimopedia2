@@ -88,7 +88,7 @@ export async function getEventById(eventId) {
 }
 
 // ИСПРАВЛЕНИЕ 3: Добавлен параметр isAutoApprove
-export async function addEvent(eventText, city, isLoreSignificant, eventDate, isAutoApprove = false, coords = {}) {
+export async function addEvent(eventText, city, isLoreSignificant, eventDate, isAutoApprove = false, coords = {}, asChronicler = false) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Пользователь не авторизован');
 
@@ -102,7 +102,8 @@ export async function addEvent(eventText, city, isLoreSignificant, eventDate, is
       is_approved: isAutoApprove, // ИСПРАВЛЕНИЕ: автоодобрение для админов
       event_date: eventDate || null,
       lat: coords.lat ?? null,
-      lon: coords.lon ?? null
+      lon: coords.lon ?? null,
+      as_chronicler: asChronicler
     }]);
 
   if (error) { console.error('Ошибка добавления события:', error); throw error; }
@@ -151,9 +152,10 @@ export async function updateEvent(eventId, updates) {
 }
 
 export async function approveEvent(eventId) {
-  const { data, error } = await supabase.from('events').update({ is_approved: true }).eq('id', eventId).select();
+  // одобрение через серверную функцию: она же переводит событие на Летописца, если автор просил
+  const { error } = await supabase.rpc('approve_event', { p_event_id: Number(eventId) });
   if (error) throw error;
-  return data;
+  return true;
 }
 
 export async function rejectEvent(eventId) {

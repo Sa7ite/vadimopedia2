@@ -616,6 +616,7 @@ export function renderPendingEvents(events, onApprove, onReject) {
       ${event.city ? `<span class="badge">📍 ${event.city}</span>` : ''}
       ${event.event_date ? `<span class="badge">📅 ${event.event_date}</span>` : ''}
       ${event.is_lore_significant ? '<span class="badge badge-lore">⭐ Значимое для летописи</span>' : ''}
+      ${event.as_chronicler ? '<span class="badge badge-lore">📜 Просит опубликовать от имени Летописца</span>' : ''}
       <div class="pending-event-actions">
         <button class="btn-approve" data-id="${event.id}">Одобрить</button>
         <button class="btn-reject" data-id="${event.id}">Отклонить</button>
