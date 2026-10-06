@@ -14,6 +14,8 @@
   <!-- Основные стили -->
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="themes.css" />
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#d41f1f">
   <link rel="icon" href="favicon.ico" type="image/x-icon">
 </head>
 <body>
@@ -84,6 +86,7 @@
           <div class="stat"><strong>1</strong> истина</div>
         </div>
         
+        <div id="vadim-of-day" class="vadim-of-day" style="display:none"></div>
         <blockquote>«Я не просто Вадим. Я — Вадим Школов. А это уже уровень.»</blockquote>
         <button class="cta-btn" id="btn-go-events">Посмотреть события</button>
       </div>
@@ -97,6 +100,7 @@
     <div class="container">
       <h2>Лента событий</h2>
       <p>Все значимые события из жизни Вадимов</p>
+      <input id="events-search" class="events-search" type="search" placeholder="Поиск: имя, место, год…">
       
       <!-- Форма добавления события (скрыта для гостей, управляется через JS) -->
       <div id="add-event-form-container" style="display: none;">
@@ -272,5 +276,7 @@
   <script type="module" src="js/main.js"></script>
 
 <script>(function(){const p=document.getElementById('theme-picker');if(!p)return;const mark=()=>p.querySelectorAll('button').forEach(b=>b.classList.toggle('on',document.body.classList.contains('theme-'+b.dataset.t)));mark();p.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;localStorage.setItem('theme',b.dataset.t);document.body.className='theme-'+b.dataset.t;mark();});})();</script>
+<div id="read-progress"></div>
+<script src="extras.js"></script>
 </body>
 </html>

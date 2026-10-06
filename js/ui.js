@@ -1148,6 +1148,7 @@ export async function showEventModal(event, currentUserId, onReaction, onComment
         <div class="event-detail-meta">
           <span>👤 ${event.profiles?.full_name || 'Аноним'}</span>
           ${event.event_date ? `<span>📅 ${event.event_date}</span>` : ''}
+          <button class="btn-secondary share-btn" data-share="${encodeURIComponent((event.event_date ? event.event_date + ' — ' : '') + event.event_text)}">Поделиться</button>
           ${event.city ? `<span> ${event.city}</span>` : ''}
         </div>
       </div>

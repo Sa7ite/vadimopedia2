@@ -64,6 +64,7 @@ async function initApp() {
   onAuthStateChange(async (event, session) => {
     if (session) {
       currentProfile = await getProfileWithTitles(session.user.id);
+      getChronicle().then(c => window.vpChronicleCheck?.(c)).catch(() => {});
       window.handleSaveProfile = handleSaveProfile;
       updateUIForUser(session.user, currentProfile, () => renderEditProfileForm(currentProfile, handleSaveProfile));
       await loadEvents();
@@ -100,6 +101,8 @@ function openSectionFromHash() {
 }
 
 async function loadUserCount() {
+  getChronicle().then(c => window.vpChronicleCheck?.(c)).catch(() => {});
+  getApprovedEvents(500).then(ev => window.vpVadimOfDay?.(ev, handleShowEventModal)).catch(() => {});
   const count = await getUserCount();
   const el = document.getElementById('stat-users');
   if (el) el.textContent = count;
@@ -254,6 +257,7 @@ async function handleSaveProfile() {
     showNotification('Профиль обновлен!', 'success');
     
     currentProfile = await getProfileWithTitles(user.id);
+    getChronicle().then(c => window.vpChronicleCheck?.(c)).catch(() => {});
     renderProfile(currentProfile, () => renderEditProfileForm(currentProfile, handleSaveProfile));
   } catch (error) { 
     showNotification(`Ошибка: ${error.message}`, 'error'); 
@@ -340,6 +344,7 @@ async function setupChronicle() {
 
   if (chronicleViewMode === 'read') {
     renderChronicle(chronicleData, handleShowEventModal);
+    window.vpChronicleSeen?.(chronicleData);
   }
 
   const btnRead = document.getElementById('btn-read-chronicle');
@@ -415,7 +420,9 @@ async function handleSaveChronicle(content) {
 
 async function handleGenerateChronicle() {
   try {
-    const pendingEvents = await getLoreSignificantEventsNotInChronicle();
+    const allPending = await getLoreSignificantEventsNotInChronicle();
+    const pendingEvents = allPending.slice(0, 10);
+    if (allPending.length > 10) showNotification(`За раз вплетаю 10 событий из ${allPending.length}. Остальные — следующим нажатием.`, 'info');
     if (pendingEvents.length === 0) {
       showNotification('Нет новых значимых событий для добавления', 'error');
       return;

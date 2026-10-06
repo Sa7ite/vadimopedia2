@@ -23,12 +23,12 @@ export async function getProfileWithTitles(userId) {
 }
 
 export async function getUserCount() {
-  const { count, error } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
+  const { count, error } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).neq('id', '0c0c0c0c-1e70-4c0c-8c0c-000000000001').not('full_name', 'like', 'Агент%');
   if (error) return 0;
   return count || 0;
 }
 
-export async function getApprovedEvents(limit = 50) {
+export async function getApprovedEvents(limit = 500) {
   const { data, error } = await supabase
     .from('events')
     .select('*, profiles (full_name, avatar_url)')

@@ -57,3 +57,11 @@ body.theme-dossier{background:#2b2a27 radial-gradient(circle at 30% 10%,#3a3833,
 .theme-agit #nav-profile,.theme-dossier #nav-profile{width:auto!important;display:inline-block}
 .theme-agit .section div,.theme-dossier .section div{border-radius:0!important}
 .theme-agit .section .container>div{border:3px solid #111;box-shadow:8px 8px 0 #d41f1f;background:#fbf6ea}
+.events-search{width:100%;padding:12px 14px;margin:12px 0 18px;font:inherit;border:3px solid var(--line);background:var(--surface)}
+.vadim-of-day{margin:22px auto;max-width:640px;padding:16px 20px;background:var(--surface);color:var(--text);border:3px solid var(--line);box-shadow:8px 8px 0 var(--accent);text-align:left}
+.vod-label{font:700 .85rem var(--head);text-transform:uppercase;color:var(--accent);letter-spacing:1px}.vod-meta{font-size:.85rem;color:var(--muted);margin-top:6px}
+.nav-link.has-new:after{content:' ●';color:var(--accent)}
+.theme-dossier .nav-link.has-new:after{content:'] ●'}
+#read-progress{position:fixed;top:0;left:0;height:5px;background:var(--accent);z-index:9999;display:none;width:0}
+.chronicle-new{background:var(--accent-soft);box-shadow:-6px 0 0 var(--accent);transition:background 2s}
+.share-btn{padding:4px 10px;font-size:.85rem;cursor:pointer}
