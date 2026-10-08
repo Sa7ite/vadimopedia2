@@ -65,3 +65,51 @@ body.theme-dossier{background:#2b2a27 radial-gradient(circle at 30% 10%,#3a3833,
 #read-progress{position:fixed;top:0;left:0;height:5px;background:var(--accent);z-index:9999;display:none;width:0}
 .chronicle-new{background:var(--accent-soft);box-shadow:-6px 0 0 var(--accent);transition:background 2s}
 .share-btn{padding:4px 10px;font-size:.85rem;cursor:pointer}
+
+/* ====== T1.1: исправления дефектов (D2, D4, D5, D6, D7, моб. вид) ====== */
+/* D2: без красных полос слева у плашек */
+#events-list li,#vadim-list li,.bookmark-card,.chat-message,.chat-message.deleted,.event-item,.full-history blockquote,.hero-content blockquote,
+.history-epoch,.history-epoch .sub-epoch,.history-epoch blockquote,.notification,.notification-error,.notification-info,.notification-success,
+.notification-warning,.pending-event-card,.pending-event-item,.profile-bio,.timeline-event .event-card,.title-request-item,.user-event-item,
+.vadimism-content blockquote,.description,.theme-agit .chronicle-chapter{border-left-width:0!important;border-left-style:none!important}
+.theme-agit #events-list>li,.theme-agit .card,.theme-agit .chat-container{border-left:3px solid #111!important}
+.chronicle-new{box-shadow:none;outline:2px dashed var(--accent);outline-offset:4px}
+.notification{border:2px solid var(--text);border-radius:0}
+/* D3: свои иконки */
+.ic{width:1.05em;height:1.05em;vertical-align:-.15em;flex:none}
+.badge .ic,.event-meta .ic{margin-right:2px}
+/* D4: время и «удалить» в чате не наслаиваются */
+.chat-message{border-radius:0}
+.chat-message-header{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;justify-content:flex-start}
+.chat-message-header .chat-time{margin-left:auto}
+.btn-delete-message{position:static;opacity:.7;font-size:.8rem;padding:2px 6px;min-height:0;color:var(--muted);text-decoration:underline}
+/* D5: второстепенные кнопки читаемы в обеих темах */
+.btn-secondary,.theme-agit .btn-secondary,.theme-dossier .btn-secondary{background:var(--surface)!important;color:var(--text)!important;border:2px solid var(--text)!important;border-radius:0}
+.btn-secondary:hover{background:var(--text)!important;color:var(--surface)!important}
+/* D6: титулы стопкой, липкая панель не перекрывает список */
+.profile-titles{list-style:none;margin:8px 0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:.95rem}
+.profile-titles li{display:flex;align-items:center;gap:6px}
+.titles-modal .form-actions,.modal-content .form-actions{position:static}
+.titles-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+/* D7: предпросмотр свёрнут и не мешает редактору */
+.editor-preview{position:static!important;max-height:none!important;border-top:2px solid var(--line)!important;margin-top:16px}
+.editor-preview summary{cursor:pointer;font-weight:700;padding:8px 0}
+.chronicle-editor{max-width:1100px}
+.pending-events-panel{border-left:0!important}
+/* D8: блок настроек в профиле */
+.profile-settings{margin-top:20px;padding-top:14px;border-top:2px solid var(--line)}
+/* Кнопки входа: без градиентов и скруглений, не наезжают на текст на телефоне */
+.auth-corner-btn{background:var(--text)!important;color:var(--surface)!important;border:2px solid var(--text)!important;border-radius:0!important;box-shadow:none!important}
+.auth-corner-btn.register-btn{background:var(--accent)!important;border-color:var(--accent)!important;color:#fff!important}
+/* Моб. вид: без горизонтальной прокрутки */
+html,body{overflow-x:hidden}
+.hero-stats{flex-wrap:wrap;justify-content:center}
+@media (max-width:600px){
+  .auth-corner-buttons{position:static;flex-direction:row;justify-content:center;margin:10px auto}
+  .hero-stats .stat{flex:1 1 40%}
+  .theme-agit header h1{font-size:2.6rem}
+}
+/* T1.1 круг 2: профиль без вложенной пустой рамки, главная без пустого места, гостю без пустых счётчиков */
+#profile-content .profile-card{max-width:none;margin:0;border:0!important;box-shadow:none!important;background:transparent!important;padding:24px}
+.hero{padding:24px 0 40px}
+body.guest .hero-stats{display:none}

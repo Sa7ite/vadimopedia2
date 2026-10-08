@@ -30,6 +30,10 @@ window.vpVadimOfDay=(ev,open)=>{const box=$('#vadim-of-day');if(!box||!ev||!ev.l
   box.querySelector('.vod-meta').textContent=[e.event_date,e.city].filter(Boolean).join(' · ');
   box.querySelector('.vod-text').textContent=e.event_text.length>220?e.event_text.slice(0,220)+'…':e.event_text;
   box.style.display='block';box.style.cursor='pointer';box.onclick=()=>open&&open(e);};
+// D8: переключатель темы в профиле
+window.vpMarkTheme=()=>document.querySelectorAll('.theme-picker button').forEach(b=>b.classList.toggle('on',document.body.classList.contains('theme-'+b.dataset.t)));
+document.addEventListener('click',e=>{const b=e.target.closest('.theme-picker button');if(!b)return;
+  localStorage.setItem('theme',b.dataset.t);document.body.classList.remove('theme-agit','theme-dossier');document.body.classList.add('theme-'+b.dataset.t);window.vpMarkTheme();});
 // PWA
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 })();

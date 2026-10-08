@@ -53,10 +53,10 @@
   <!-- ============================================ -->
   <div class="auth-corner-buttons" id="auth-buttons">
     <button class="auth-corner-btn register-btn" id="btn-show-register">
-      <span></span> Стать Вадимом
+      Стать Вадимом
     </button>
     <button class="auth-corner-btn login-btn" id="btn-show-login">
-      <span></span> Войти
+      Войти
     </button>
   </div>
 
@@ -66,18 +66,6 @@
   <section id="section-home" class="section active">
     <div class="hero">
       <div class="hero-content">
-        <svg viewBox="0 0 1200 400" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:auto; border-radius:20px; max-height:400px;">
-          <defs>
-            <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#6a11cb" />
-              <stop offset="100%" stop-color="#2575fc" />
-            </linearGradient>
-          </defs>
-          <rect width="1200" height="400" fill="url(#grad)" rx="20" />
-          <path d="M580 120 L600 80 L620 120 L650 100 L630 130 L660 140 L620 150 L630 180 L600 160 L570 180 L580 150 L540 140 L570 130 L550 100 Z" fill="gold" />
-          <text x="600" y="240" font-family="Montserrat, sans-serif" font-size="50" font-weight="900" fill="white" text-anchor="middle">Вадим — это не имя.</text>
-          <text x="600" y="300" font-family="Montserrat, sans-serif" font-size="50" font-weight="900" fill="white" text-anchor="middle">Это судьба.</text>
-        </svg>
         
         <div class="hero-stats">
           <div class="stat"><strong id="stat-events">0</strong> событий</div>
@@ -275,7 +263,7 @@
   <!-- Основной скрипт приложения (он автоматически импортирует config.js, api.js, auth.js и ui.js) -->
   <script type="module" src="js/main.js"></script>
 
-<script>(function(){const p=document.getElementById('theme-picker');if(!p)return;const mark=()=>p.querySelectorAll('button').forEach(b=>b.classList.toggle('on',document.body.classList.contains('theme-'+b.dataset.t)));mark();p.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;localStorage.setItem('theme',b.dataset.t);document.body.className='theme-'+b.dataset.t;mark();});})();</script>
+
 <div id="read-progress"></div>
 <script src="extras.js"></script>
 </body>

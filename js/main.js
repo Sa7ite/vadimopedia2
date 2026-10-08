@@ -75,6 +75,7 @@ async function initApp() {
       if (!presenceChannel) presenceChannel = connectToPresence(session.user.id, updateOnlineCount);
     } else {
       currentProfile = null;
+      loadUserCount(null);
       updateUIForGuest();
       await loadEvents();
       updateOnlineCount(0);
@@ -103,7 +104,8 @@ function openSectionFromHash() {
 async function loadUserCount(session) {
   // гости (без входа) данные базы не читают: показываем приглашение войти
   if (session === undefined) ({ data: { session } } = await supabase.auth.getSession());
-  if (!session) { const u = document.getElementById('stat-users'); if (u) u.textContent = '—'; return; }
+  document.body.classList.toggle('guest', !session);
+  if (!session) return;
   getChronicle().then(c => window.vpChronicleCheck?.(c)).catch(() => {});
   getApprovedEvents(500).then(ev => window.vpVadimOfDay?.(ev, handleShowEventModal)).catch(() => {});
   const count = await getUserCount();
@@ -206,11 +208,11 @@ function setupForms() {
       try {
         await addEvent(eventText, city, isLore, eventDate, isAutoApprove, coords, asChronicler);
         if (asChronicler && !isAutoApprove) {
-          showNotification('📜 Отправлено на проверку. После одобрения появится от имени Летописца.', 'success');
+          showNotification('Отправлено на проверку. После одобрения появится от имени Летописца.', 'success');
         } else if (isAutoApprove || !isLore) {
-          showNotification(asChronicler ? '✅ Опубликовано от имени Летописца!' : '✅ Событие добавлено и опубликовано!', 'success');
+          showNotification(asChronicler ? 'Опубликовано от имени Летописца!' : 'Событие добавлено и опубликовано!', 'success');
         } else {
-          showNotification('📖 Событие добавлено! Ожидает модерации.', 'success');
+          showNotification('Событие добавлено! Ожидает модерации.', 'success');
         }
         formAddEvent.reset();
         await loadEvents();
@@ -431,15 +433,15 @@ async function handleSaveChronicle(content) {
 async function handleGenerateChronicle() {
   try {
     const allPending = await getLoreSignificantEventsNotInChronicle();
-    const pendingEvents = allPending.slice(0, 10);
-    if (allPending.length > 10) showNotification(`За раз вплетаю 10 событий из ${allPending.length}. Остальные — следующим нажатием.`, 'info');
+    const pendingEvents = allPending.slice(0, 5);
+    if (allPending.length > 5) showNotification(`За раз вплетаю 5 событий из ${allPending.length}. Остальные — следующим нажатием.`, 'info');
     if (pendingEvents.length === 0) {
       showNotification('Нет новых значимых событий для добавления', 'error');
       return;
     }
     const btn = document.getElementById('btn-generate-chronicle');
     if (btn) { btn.disabled = true; btn.textContent = 'Летописец пишет...'; }
-    showNotification(`Летописец вплетает событий: ${pendingEvents.length}. Обычно это 20–60 секунд.`, 'info');
+    showNotification(`Летописец вплетает событий: ${pendingEvents.length}. Обычно это 15–40 секунд, максимум около двух минут.`, 'info');
     const textarea = document.getElementById('chronicle-textarea');
     const baseText = textarea ? textarea.value : (chronicleData?.content || '');
     let result;
@@ -501,7 +503,7 @@ async function handleAddComment(eventId, commentText) {
     const { checkAndAwardAchievements } = await import('./api.js');
     const newAchievements = await checkAndAwardAchievements(currentProfile.id);
     if (newAchievements.length > 0) {
-      showNotification(`🏆 Достижение: ${newAchievements.join(', ')}`, 'success');
+      showNotification(`Достижение: ${newAchievements.join(', ')}`, 'success');
     }
   }
   return comment;
