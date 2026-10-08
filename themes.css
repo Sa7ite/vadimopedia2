@@ -174,3 +174,22 @@ body.guest .hero-stats{display:none}
 .reaction-btn:disabled { opacity: .5; cursor: not-allowed; }
 .reactions-hint, .witness-list { margin: 8px 0 0; font-size: .95em; }
 .witness-list .ic { width: 1.1em; height: 1.1em; vertical-align: -3px; }
+
+/* T2.2: улики */
+.btn-evidence.active { background: var(--ink, #1a1a1a); color: var(--paper, #fffdf5); }
+.btn-evidence .ic, .btn-bookmark .ic { width: 1.2em; height: 1.2em; vertical-align: -3px; }
+.bookmark-section { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn-evidence-message { background: transparent; border: 0; padding: 2px 4px; color: inherit; opacity: .55; cursor: pointer; line-height: 0; }
+.btn-evidence-message:hover, .btn-evidence-message:focus-visible { opacity: 1; }
+.btn-evidence-message .ic { width: 18px; height: 18px; }
+.profile-evidence { margin: 18px 0; border: 2px dashed currentColor; padding: 0 14px; }
+.profile-evidence > summary { cursor: pointer; padding: 12px 0; font-weight: 700; }
+.profile-evidence > summary .ic { width: 1.2em; height: 1.2em; vertical-align: -3px; }
+.evidence-items { list-style: none; padding: 0; margin: 0 0 14px; display: grid; gap: 10px; }
+.evidence-item { border: 1px solid rgba(128,128,128,.5); padding: 10px 12px; background: rgba(255,255,255,.35); }
+.evidence-item.is-deleted p { opacity: .8; }
+.evidence-meta { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: .85em; font-family: monospace; }
+.evidence-deleted { color: #b3141b; font-weight: 700; text-transform: uppercase; }
+.evidence-item p { margin: 6px 0; white-space: pre-wrap; }
+.evidence-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.evidence-foot button { padding: 4px 10px; margin: 0; }

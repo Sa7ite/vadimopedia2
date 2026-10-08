@@ -706,3 +706,29 @@ export async function getAuditLog(limit = 50) {
   }
   return data.map(r => ({ ...r, actor_name: names[r.actor_id] || 'система' }));
 }
+
+// ============================================
+// T2.2: улики (видит только владелец; снимок делает база)
+// ============================================
+export async function addEvidence(targetType, targetId) {
+  const { data, error } = await supabase.rpc('add_evidence', { p_target_type: targetType, p_target_id: String(targetId) });
+  if (error) throw error;
+  return data;
+}
+
+export async function removeEvidence(targetType, targetId) {
+  const { data: { user } } = await supabase.auth.getUser();
+  const { error } = await supabase.from('evidence').delete().match({ owner_id: user.id, target_type: targetType, target_id: String(targetId) });
+  if (error) throw error;
+}
+
+export async function hasEvidence(targetType, targetId) {
+  const { data } = await supabase.from('evidence').select('id').match({ target_type: targetType, target_id: String(targetId) }).maybeSingle();
+  return !!data;
+}
+
+export async function getMyEvidence() {
+  const { data, error } = await supabase.from('evidence').select('*').order('created_at', { ascending: false });
+  if (error) throw error;
+  return data;
+}
