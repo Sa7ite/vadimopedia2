@@ -122,7 +122,7 @@ export async function getPersons() {
 }
 
 export async function getCampaigns() {
-  const { data, error } = await supabase.from('campaigns').select('id, name').order('sort_order').order('name');
+  const { data, error } = await supabase.from('campaigns').select('id, name, sort_order').order('sort_order').order('name');
   if (error) { console.error('Ошибка загрузки кампаний:', error); return []; }
   return data;
 }
@@ -658,4 +658,62 @@ export async function getEventOfYearVotes(year) {
 
   if (error) { console.error('Ошибка получения голосов:', error); return []; }
   return data;
+}
+// ============================================
+// T1.7: настройки, справочники, журнал (пишет только админ — проверяет база)
+// ============================================
+export async function getSettings() {
+  const { data, error } = await supabase.from('settings').select('key, value, label, updated_at').order('key');
+  if (error) throw error;
+  return data;
+}
+
+export async function getSettingValue(key, fallback) {
+  const { data } = await supabase.from('settings').select('value').eq('key', key).maybeSingle();
+  return data ? data.value : fallback;
+}
+
+export async function updateSetting(key, value) {
+  const { data, error } = await supabase.from('settings').update({ value }).eq('key', key).select();
+  if (error) throw error;
+  if (!data.length) throw new Error('Нет прав на изменение настроек');
+}
+
+export async function savePerson(person) {
+  const row = { name: person.name, aliases: person.aliases || [] };
+  const q = person.id
+    ? supabase.from('persons').update(row).eq('id', person.id)
+    : supabase.from('persons').insert([{ ...row, sort_order: 100 }]);
+  const { error } = await q;
+  if (error) throw error;
+}
+
+export async function deletePerson(id) {
+  const { error } = await supabase.from('persons').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export async function saveCampaign(campaign) {
+  const q = campaign.id
+    ? supabase.from('campaigns').update({ name: campaign.name, sort_order: campaign.sort_order }).eq('id', campaign.id)
+    : supabase.from('campaigns').insert([{ name: campaign.name, sort_order: campaign.sort_order ?? 100 }]);
+  const { error } = await q;
+  if (error) throw error;
+}
+
+export async function deleteCampaign(id) {
+  const { error } = await supabase.from('campaigns').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export async function getAuditLog(limit = 50) {
+  const { data, error } = await supabase.from('audit_log').select('*').order('created_at', { ascending: false }).limit(limit);
+  if (error) throw error;
+  const ids = [...new Set(data.map(r => r.actor_id).filter(Boolean))];
+  const names = {};
+  if (ids.length) {
+    const { data: profs } = await supabase.from('profiles').select('id, full_name').in('id', ids);
+    (profs || []).forEach(p => { names[p.id] = p.full_name; });
+  }
+  return data.map(r => ({ ...r, actor_name: names[r.actor_id] || 'система' }));
 }

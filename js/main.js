@@ -14,8 +14,9 @@ import {
   toggleReaction, addEventComment, deleteEventComment,
   toggleBookmark, getBookmarks,
   getEventsByUser, getEventById,
-  getPersons, getCampaigns, setEventParticipants
+  getPersons, getCampaigns, setEventParticipants, getSettingValue
 } from './api.js';
+import { setupAdminPanel } from './admin.js';
 import { registerUser, loginUser, logoutUser, onAuthStateChange } from './auth.js';
 import { validateDate, geocodePlace } from './validation.js';
 import {
@@ -56,6 +57,7 @@ async function initApp() {
       await loadPendingEvents();
       setupAdminTitleRequests();
     }
+    setupAdminPanel(currentProfile?.role === 'admin', () => { loadEventLists(true).then(renderAddEventTags); });
     presenceChannel = connectToPresence(session.user.id, updateOnlineCount);
   } else {
     updateUIForGuest();
@@ -75,11 +77,13 @@ async function initApp() {
         await loadPendingEvents();
         setupAdminTitleRequests();
       }
+      setupAdminPanel(currentProfile?.role === 'admin', () => { loadEventLists(true).then(renderAddEventTags); });
       if (!presenceChannel) presenceChannel = connectToPresence(session.user.id, updateOnlineCount);
     } else {
       currentProfile = null;
       loadUserCount(null);
       updateUIForGuest();
+      setupAdminPanel(false);
       await loadEvents();
       updateOnlineCount(0);
       if (chatChannel) { unsubscribeFromChatMessages(chatChannel); chatChannel = null; }
@@ -440,8 +444,10 @@ async function handleSaveChronicle(content) {
 async function handleGenerateChronicle() {
   try {
     const allPending = await getLoreSignificantEventsNotInChronicle();
-    const pendingEvents = allPending.slice(0, 5);
-    if (allPending.length > 5) showNotification(`За раз вплетаю 5 событий из ${allPending.length}. Остальные — следующим нажатием.`, 'info');
+    // ai.batch_size из настроек; сервер ИИ принимает не больше 5 за раз
+    const batch = Math.min(5, Math.max(1, Number(await getSettingValue('ai.batch_size', 5)) || 5));
+    const pendingEvents = allPending.slice(0, batch);
+    if (allPending.length > batch) showNotification(`За раз вплетаю ${batch} из ${allPending.length}. Остальные — следующим нажатием.`, 'info');
     if (pendingEvents.length === 0) {
       showNotification('Нет новых значимых событий для добавления', 'error');
       return;
