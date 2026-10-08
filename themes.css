@@ -120,3 +120,17 @@ body.guest .hero-stats{display:none}
 .rules-content{max-width:640px;text-align:left}
 .rules-list{padding-left:22px;line-height:1.6}.rules-list li{margin-bottom:8px}
 #modal-rules{z-index:10001}
+
+/* T1.6: кампания и участники события */
+.event-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 6px 0; font-size: .9em; }
+.event-tags .event-people { opacity: .85; }
+.event-tags .event-people svg { width: 1em; height: 1em; vertical-align: -2px; }
+.badge-campaign { border: 1px solid currentColor; background: transparent; }
+.people-picker { border: 1px solid var(--border-color, rgba(128,128,128,.4)); border-radius: 6px; padding: 8px 10px; display: flex; flex-wrap: wrap; gap: 6px 8px; }
+.people-picker legend { padding: 0 4px; font-size: .9em; }
+.people-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border: 1px solid var(--border-color, rgba(128,128,128,.4)); border-radius: 999px; cursor: pointer; font-size: .9em; margin: 0; }
+.people-chip input { width: auto; margin: 0; }
+.people-chip:has(input:checked) { background: var(--accent-color, #8b1a1a); color: #fff; border-color: transparent; }
+.people-picker .people-chip:has(input:checked), .people-picker .people-chip:has(input:checked) * { color: #fff !important; }
+.people-chip input { accent-color: #fff; }
+.form-input-group select, #modal-edit-event select { width: 100%; padding: 12px 14px; font: inherit; font-size: 1rem; border: 2px solid currentColor; border-radius: 0; background: var(--input-bg, #fffdf5); color: inherit; }

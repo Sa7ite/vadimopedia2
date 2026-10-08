@@ -579,6 +579,7 @@ export function renderEvents(events, currentUserRole, currentUserId, onDeleteEve
         <span class="event-date">${date}</span>
       </div>
       <p class="event-text">${escapeHtml(event.event_text)}</p>
+      ${eventTagsLine(event)}
       ${event.city ? `<span class="badge">${icon('pin')} ${escapeHtml(event.city)}</span>` : ''}
       ${loreBadge}
       ${chronicleBadge}
@@ -1167,6 +1168,7 @@ export async function showEventModal(event, currentUserId, onReaction, onComment
           <button class="btn-secondary share-btn" data-share="${encodeURIComponent((event.event_date ? event.event_date + ' — ' : '') + event.event_text)}">Поделиться</button>
           ${event.city ? `<span> ${escapeHtml(event.city)}</span>` : ''}
         </div>
+        ${eventTagsLine(event)}
       </div>
 
       <div class="reactions-section">
@@ -1303,8 +1305,40 @@ export async function showEventModal(event, currentUserId, onReaction, onComment
 
 }
 
+// T1.6: кампания и участники события
+export function eventTagsLine(event) {
+  const people = (event.participants || []).map(p => p.person?.name).filter(Boolean);
+  const parts = [];
+  if (event.campaign?.name) parts.push(`<span class="badge badge-campaign">${escapeHtml(event.campaign.name)}</span>`);
+  if (people.length) parts.push(`<span class="event-people">${icon('user')} ${people.map(escapeHtml).join(', ')}</span>`);
+  return parts.length ? `<div class="event-tags">${parts.join(' ')}</div>` : '';
+}
+
+export function eventTagsPickerHtml(prefix, persons = [], campaigns = [], event = {}) {
+  const selPeople = new Set((event.participants || []).map(p => p.person?.id));
+  const campId = event.campaign?.id || event.campaign_id || '';
+  return `
+    <div class="form-input-group">
+      <label for="${prefix}-campaign">Кампания (необязательно)</label>
+      <select id="${prefix}-campaign">
+        <option value="">— не указана —</option>
+        ${campaigns.map(c => `<option value="${c.id}" ${c.id === campId ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('')}
+      </select>
+    </div>
+    ${persons.length ? `<fieldset class="form-input-group people-picker" id="${prefix}-people">
+      <legend>Участники (необязательно)</legend>
+      ${persons.map(p => `<label class="people-chip"><input type="checkbox" value="${p.id}" ${selPeople.has(p.id) ? 'checked' : ''}> ${escapeHtml(p.name)}</label>`).join('')}
+    </fieldset>` : ''}`;
+}
+
+export function readEventTags(root, prefix) {
+  const campaignId = root.querySelector(`#${prefix}-campaign`)?.value || null;
+  const personIds = [...root.querySelectorAll(`#${prefix}-people input:checked`)].map(i => i.value);
+  return { campaignId, personIds };
+}
+
 // Новая функция: модалка редактирования события
-export function showEditEventModal(event, onSave, isValidDate, isValidCity) {
+export function showEditEventModal(event, onSave, isValidDate, isValidCity, lists = {}) {
   const modal = document.createElement('div');
   modal.className = 'modal';
   modal.style.display = 'flex';
@@ -1326,8 +1360,9 @@ export function showEditEventModal(event, onSave, isValidDate, isValidCity) {
       </div>
       <div class="form-input-group">
         <label for="edit-event-date">Дата события</label>
-        <input type="text" id="edit-event-date" value="${escapeHtml(event.event_date || '')}" placeholder="Например: 15 марта 2024">
+        <input type="text" id="edit-event-date" value="${escapeHtml(event.event_date || '')}" placeholder="Например: 15 марта 2024, 07.2049 или 2049">
       </div>
+      ${eventTagsPickerHtml('edit-event', lists.persons, lists.campaigns, event)}
       <div class="form-actions">
         <button class="btn-primary" id="btn-save-event">Сохранить</button>
         <button class="btn-secondary" id="btn-cancel-edit-event">Отмена</button>
@@ -1362,7 +1397,10 @@ export function showEditEventModal(event, onSave, isValidDate, isValidCity) {
     }
     
     try {
-      await onSave(event.id, { event_text: text, city: city || null, event_date: date || null });
+      const tags = readEventTags(modal, 'edit-event');
+      const updates = { event_text: text, city: city || null, event_date: date || null };
+      if (modal.querySelector('#edit-event-campaign')) updates.campaign_id = tags.campaignId;
+      await onSave(event.id, updates, modal.querySelector('#edit-event-people') ? tags.personIds : null);
       showNotification('Событие обновлено!', 'success');
       modal.remove();
     } catch (error) {

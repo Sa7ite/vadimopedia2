@@ -28,10 +28,12 @@ export async function getUserCount() {
   return count || 0;
 }
 
+const EVENT_SELECT = '*, profiles (full_name, avatar_url), campaign:campaigns (id, name), participants:event_participants (person:persons (id, name))';
+
 export async function getApprovedEvents(limit = 500) {
   const { data, error } = await supabase
     .from('events')
-    .select('*, profiles (full_name, avatar_url)')
+    .select(EVENT_SELECT)
     .eq('is_approved', true)
     .order('created_at', { ascending: false })
     .limit(limit);
@@ -43,7 +45,7 @@ export async function getApprovedEvents(limit = 500) {
 export async function getEventsByUser(userId, limit = 20) {
   const { data, error } = await supabase
     .from('events')
-    .select('*, profiles (full_name, avatar_url)')
+    .select(EVENT_SELECT)
     .eq('is_approved', true)
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
@@ -56,7 +58,7 @@ export async function getEventsByUser(userId, limit = 20) {
 export async function getPendingEvents() {
   const { data, error } = await supabase
     .from('events')
-    .select('*, profiles (full_name, avatar_url)')
+    .select(EVENT_SELECT)
     .eq('is_approved', false)
     .order('created_at', { ascending: false });
 
@@ -67,7 +69,7 @@ export async function getPendingEvents() {
 export async function getLoreSignificantEventsNotInChronicle() {
   const { data, error } = await supabase
     .from('events')
-    .select('*, profiles (full_name, avatar_url)')
+    .select(EVENT_SELECT)
     .eq('is_approved', true)
     .eq('is_lore_significant', true)
     .or('is_in_chronicle.is.null,is_in_chronicle.eq.false')
@@ -80,7 +82,7 @@ export async function getLoreSignificantEventsNotInChronicle() {
 export async function getEventById(eventId) {
   const { data, error } = await supabase
     .from('events')
-    .select('*, profiles (full_name, avatar_url)')
+    .select(EVENT_SELECT)
     .eq('id', eventId)
     .maybeSingle();
   if (error) { console.error('Ошибка получения события:', error); return null; }
@@ -88,11 +90,11 @@ export async function getEventById(eventId) {
 }
 
 // ИСПРАВЛЕНИЕ 3: Добавлен параметр isAutoApprove
-export async function addEvent(eventText, city, isLoreSignificant, eventDate, isAutoApprove = false, coords = {}, asChronicler = false) {
+export async function addEvent(eventText, city, isLoreSignificant, eventDate, isAutoApprove = false, coords = {}, asChronicler = false, campaignId = null, personIds = []) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Пользователь не авторизован');
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('events')
     .insert([{
       user_id: user.id,
@@ -103,11 +105,35 @@ export async function addEvent(eventText, city, isLoreSignificant, eventDate, is
       event_date: eventDate || null,
       lat: coords.lat ?? null,
       lon: coords.lon ?? null,
-      as_chronicler: asChronicler
-    }]);
+      as_chronicler: asChronicler,
+      campaign_id: campaignId || null
+    }]).select('id').single();
 
   if (error) { console.error('Ошибка добавления события:', error); throw error; }
-  return true;
+  if (personIds.length) await setEventParticipants(data.id, personIds);
+  return data.id;
+}
+
+// Справочники персонажей и кампаний (T1.6)
+export async function getPersons() {
+  const { data, error } = await supabase.from('persons').select('id, name, aliases').order('sort_order').order('name');
+  if (error) { console.error('Ошибка загрузки персонажей:', error); return []; }
+  return data;
+}
+
+export async function getCampaigns() {
+  const { data, error } = await supabase.from('campaigns').select('id, name').order('sort_order').order('name');
+  if (error) { console.error('Ошибка загрузки кампаний:', error); return []; }
+  return data;
+}
+
+// Заменяет список участников события
+export async function setEventParticipants(eventId, personIds) {
+  const { error: delError } = await supabase.from('event_participants').delete().eq('event_id', eventId);
+  if (delError) throw delError;
+  if (!personIds.length) return;
+  const { error } = await supabase.from('event_participants').insert(personIds.map(person_id => ({ event_id: eventId, person_id })));
+  if (error) throw error;
 }
 
 // ИСПРАВЛЕНИЕ 1 и 2: Новая функция редактирования события
@@ -493,7 +519,7 @@ export async function toggleReaction(eventId, reactionType) {
 export async function getEventComments(eventId) {
   const { data, error } = await supabase
     .from('event_comments')
-    .select('*, profiles (full_name, avatar_url)')
+    .select(EVENT_SELECT)
     .eq('event_id', eventId)
     .order('created_at', { ascending: true });
 
@@ -551,7 +577,7 @@ export async function getBookmarks() {
 
   const { data, error } = await supabase
     .from('bookmarks')
-    .select('event_id, events (*, profiles (full_name, avatar_url))')
+    .select(`event_id, events (${EVENT_SELECT})`)
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
 

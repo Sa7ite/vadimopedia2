@@ -13,7 +13,8 @@ import {
   getLoreSignificantEventsNotInChronicle,
   toggleReaction, addEventComment, deleteEventComment,
   toggleBookmark, getBookmarks,
-  getEventsByUser, getEventById
+  getEventsByUser, getEventById,
+  getPersons, getCampaigns, setEventParticipants
 } from './api.js';
 import { registerUser, loginUser, logoutUser, onAuthStateChange } from './auth.js';
 import { validateDate, geocodePlace } from './validation.js';
@@ -22,7 +23,7 @@ import {
   renderEvents, renderPendingEvents, renderProfile, renderEditProfileForm,
   renderChatMessages, showDeleteReasonModal, showUserProfile,
   renderChronicle, renderChronicleEditor, renderTimeline, renderMap, renderBookmarks,
-  showEventModal, showEditEventModal,
+  showEventModal, showEditEventModal, eventTagsPickerHtml, readEventTags,
   openModal, closeModal, setupModalCloseHandlers
 } from './ui.js';
 
@@ -50,6 +51,7 @@ async function initApp() {
     window.handleSaveProfile = handleSaveProfile;
     updateUIForUser(session.user, currentProfile, () => renderEditProfileForm(currentProfile, handleSaveProfile));
     await loadEvents();
+    renderAddEventTags();
     if (currentProfile && (currentProfile.role === 'admin' || currentProfile.role === 'moderator')) {
       await loadPendingEvents();
       setupAdminTitleRequests();
@@ -68,6 +70,7 @@ async function initApp() {
       window.handleSaveProfile = handleSaveProfile;
       updateUIForUser(session.user, currentProfile, () => renderEditProfileForm(currentProfile, handleSaveProfile));
       await loadEvents();
+      renderAddEventTags();
       if (currentProfile && (currentProfile.role === 'admin' || currentProfile.role === 'moderator')) {
         await loadPendingEvents();
         setupAdminTitleRequests();
@@ -213,7 +216,8 @@ function setupForms() {
       const isAutoApprove = currentProfile && (currentProfile.role === 'admin' || currentProfile.role === 'moderator');
 
       try {
-        await addEvent(eventText, city, isLore, eventDate, isAutoApprove, coords, asChronicler);
+        const tags = readEventTags(formAddEvent, 'event');
+        await addEvent(eventText, city, isLore, eventDate, isAutoApprove, coords, asChronicler, tags.campaignId, tags.personIds);
         if (asChronicler && !isAutoApprove) {
           showNotification('Отправлено на проверку. После одобрения появится от имени Летописца.', 'success');
         } else if (isAutoApprove || !isLore) {
@@ -327,12 +331,14 @@ async function handleDeleteEvent(eventId) {
 }
 
 // ИСПРАВЛЕНИЕ 1: Новая функция редактирования
-function handleEditEvent(event) {
-  showEditEventModal(event, async (eventId, updates) => {
+async function handleEditEvent(event) {
+  const lists = await loadEventLists();
+  showEditEventModal(event, async (eventId, updates, personIds) => {
     const coords = await resolvePlace(updates.city);
     await updateEvent(eventId, { ...updates, ...coords });
+    if (personIds) await setEventParticipants(eventId, personIds);
     await loadEvents();
-  }, isValidDate, null);
+  }, isValidDate, null, lists);
 }
 
 async function handleAuthorClick(userId) {
@@ -690,4 +696,21 @@ function eventDateKey(raw) {
   }
   if ((m = s.match(/^(\d{1,5})/))) return +m[1] * 10000;
   return -1;
+}
+
+// T1.6: списки персонажей и кампаний (кэш на сессию) и выбор в форме добавления
+let eventListsCache = null;
+async function loadEventLists(force = false) {
+  if (!eventListsCache || force) {
+    const [persons, campaigns] = await Promise.all([getPersons(), getCampaigns()]);
+    eventListsCache = { persons, campaigns };
+  }
+  return eventListsCache;
+}
+
+async function renderAddEventTags() {
+  const box = document.getElementById('event-tags-picker');
+  if (!box || !currentProfile) return;
+  const { persons, campaigns } = await loadEventLists();
+  box.innerHTML = eventTagsPickerHtml('event', persons, campaigns);
 }
