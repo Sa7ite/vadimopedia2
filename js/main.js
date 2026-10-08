@@ -9,7 +9,7 @@ import {
   subscribeToChatMessages, unsubscribeFromChatMessages,
   connectToPresence, disconnectFromPresence,
   getTitleRequests, approveTitleRequest, rejectTitleRequest,
-  getChronicle, updateChronicle, generateChronicleText, rollbackChronicle,
+  getChronicle, getChronicleEditor, saveChronicleDraft, publishChronicle, generateChronicleText, rollbackChronicle,
   getLoreSignificantEventsNotInChronicle,
   toggleReaction, addEventComment, deleteEventComment,
   toggleBookmark, getBookmarks,
@@ -429,26 +429,44 @@ async function setupChronicle() {
 }
 
 async function loadChronicleEditor() {
+  let editor;
+  try { editor = await getChronicleEditor(); }
+  catch (error) { showNotification(`Не удалось открыть редактор: ${error.message}`, 'error'); return; }
   const pendingEvents = await getLoreSignificantEventsNotInChronicle();
-  renderChronicleEditor(
-    chronicleData,
-    pendingEvents,
-    handleSaveChronicle,
-    handleGenerateChronicle,
-    handleRollbackChronicle
-  );
+  renderChronicleEditor(editor, pendingEvents, {
+    onSaveDraft: handleSaveChronicle,
+    onPublish: handlePublishChronicle,
+    onGenerate: handleGenerateChronicle,
+    onRollback: handleRollbackChronicle
+  });
 }
 
-async function handleSaveChronicle(content) {
+// T2.3: сохранить черновик (база проверяет разметку: каждое событие один раз)
+async function handleSaveChronicle(content, quiet = false) {
   try {
-    showNotification('Сохранение...', 'info');
-    chronicleData = await updateChronicle(content, generatedEventIds);
+    const id = await saveChronicleDraft(content, generatedEventIds.length ? `ИИ: события ${generatedEventIds.join(', ')}` : null);
+    if (!quiet) {
+      showNotification('Черновик сохранён. Читатели увидят его после публикации.', 'success');
+      await loadChronicleEditor();
+    }
+    return id;
+  } catch (error) {
+    showNotification(`Ошибка сохранения: ${error.message}`, 'error');
+    return null;
+  }
+}
+
+async function handlePublishChronicle(content) {
+  const id = await handleSaveChronicle(content, true);
+  if (!id) return;
+  try {
+    chronicleData = await publishChronicle(id);
     generatedEventIds = [];
-    showNotification('Летопись сохранена!', 'success');
+    showNotification('Летопись опубликована!', 'success');
     chronicleViewMode = 'read';
     renderChronicle(chronicleData, handleShowEventModal);
   } catch (error) {
-    showNotification(`Ошибка сохранения: ${error.message}`, 'error');
+    showNotification(`Ошибка публикации: ${error.message}`, 'error');
   }
 }
 
@@ -472,7 +490,7 @@ async function handleGenerateChronicle() {
     try {
       result = await generateChronicleText(baseText, pendingEvents);
     } finally {
-      if (btn) { btn.disabled = false; btn.textContent = 'Сгенерировать с ИИ'; }
+      if (btn) { btn.disabled = false; btn.textContent = 'Дописать с ИИ'; }
     }
     generatedEventIds = result.usedIds.length ? result.usedIds : pendingEvents.map(e => e.id);
     if (textarea) {
@@ -481,7 +499,7 @@ async function handleGenerateChronicle() {
     }
     const missed = pendingEvents.filter(e => !result.usedIds.includes(e.id));
     if (missed.length) showNotification(`ИИ не отметил событий: ${missed.length}. Проверь текст или сгенерируй ещё раз.`, 'error');
-    showNotification('Текст сгенерирован! Проверьте и сохраните.', 'success');
+    showNotification('Текст дописан. Проверьте, сохраните черновик или опубликуйте.', 'success');
   } catch (error) {
     showNotification(`Ошибка генерации: ${error.message}`, 'error');
   }

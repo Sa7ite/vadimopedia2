@@ -855,30 +855,38 @@ export function renderChronicle(chronicle, onEventClick) {
   });
 }
 
-export function renderChronicleEditor(chronicle, pendingEvents, onSave, onGenerate, onRollback) {
+export function renderChronicleEditor(editor, pendingEvents, handlers) {
   const content = document.getElementById('chronicle-content');
   if (!content) return;
+  const draft = editor?.draft;
+  const published = editor?.published;
+  const fmt = d => new Date(d).toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' });
+  const status = draft
+    ? `Открыт <b>черновик</b> от ${fmt(draft.created_at)} — читатели его не видят, пока вы не опубликуете.`
+    : `Открыт <b>опубликованный</b> текст${published?.published_at ? ` (от ${fmt(published.published_at)})` : ''}. Изменения сначала сохраняются черновиком.`;
 
   content.innerHTML = `
     <div class="chronicle-editor">
       <div class="editor-header">
         <h2>${icon('pencil')} Редактор летописи</h2>
         <div class="editor-actions">
-          <button class="btn-primary" id="btn-generate-chronicle">Сгенерировать с ИИ</button>
-          <button class="btn-secondary" id="btn-rollback-chronicle">${icon('undo')} Откатить</button>
-          <button class="btn-primary" id="btn-save-chronicle"> Сохранить</button>
+          <button class="btn-primary" id="btn-generate-chronicle">Дописать с ИИ</button>
+          <button class="btn-secondary" id="btn-save-chronicle">Сохранить черновик</button>
+          <button class="btn-primary" id="btn-publish-chronicle">Опубликовать</button>
+          <button class="btn-secondary" id="btn-rollback-chronicle" ${editor?.archived_count ? '' : 'disabled title="Нет прошлых версий"'}>${icon('undo')} Откатить</button>
         </div>
       </div>
-      
+      <p class="editor-status" id="editor-status">${status}</p>
+
       <div class="pending-events-panel">
-        <h3> Значимые события, готовые к добавлению (${pendingEvents.length})</h3>
+        <h3>Новые значимые события, ещё не вошедшие в летопись (${pendingEvents.length})</h3>
         ${pendingEvents.length === 0 ? '<p>Нет новых значимых событий</p>' : `
           <div class="pending-events-list">
             ${pendingEvents.map(e => `
               <div class="pending-event-card" data-id="${e.id}">
                 <strong>${escapeHtml(e.event_text)}</strong>
                 <div class="event-meta">
-                  <span>${icon('user')} ${escapeHtml(e.profiles?.full_name || 'Аноним')}</span>
+                  <span>№ ${e.id}</span>
                   ${e.event_date ? `<span>${icon('calendar')} ${escapeHtml(e.event_date)}</span>` : ''}
                   ${e.city ? `<span>${icon('pin')} ${escapeHtml(e.city)}</span>` : ''}
                 </div>
@@ -887,36 +895,37 @@ export function renderChronicleEditor(chronicle, pendingEvents, onSave, onGenera
           </div>
         `}
       </div>
-      
-      <textarea id="chronicle-textarea" rows="20" placeholder="Текст летописи...">${escapeHtml(chronicle?.content || '')}</textarea>
-      
-      <details class="editor-preview">
-        <summary>${icon('eye')} Предпросмотр</summary>
+
+      <p class="editor-hint">Главы начинаются с «## ». Абзацы разделяются пустой строкой. Событие отмечается так: [[номер|фраза]] — каждое ровно один раз.</p>
+      <textarea id="chronicle-textarea" rows="20" placeholder="Текст летописи...">${escapeHtml(draft?.content ?? published?.content ?? '')}</textarea>
+
+      <details class="editor-preview" open>
+        <summary>${icon('eye')} Предпросмотр <small>(новые абзацы подсвечены)</small></summary>
         <div id="chronicle-preview" class="chronicle-text"></div>
       </details>
     </div>
   `;
 
-  document.getElementById('btn-save-chronicle').addEventListener('click', () => {
-    const text = document.getElementById('chronicle-textarea').value;
-    onSave(text);
-  });
-
-  document.getElementById('btn-generate-chronicle').addEventListener('click', () => {
-    onGenerate();
-  });
-
-  document.getElementById('btn-rollback-chronicle').addEventListener('click', () => {
-    if (confirm('Откатить к предыдущей версии? Текущие изменения будут потеряны.')) {
-      onRollback();
-    }
-  });
-
   const textarea = document.getElementById('chronicle-textarea');
   const preview = document.getElementById('chronicle-preview');
-  const updatePreview = () => { preview.innerHTML = formatChronicleHtml(textarea.value); };
+  const publishedParas = new Set((published?.content || '').split(/\n{2,}/).map(t => t.trim()));
+  const updatePreview = () => {
+    preview.innerHTML = formatChronicleHtml(textarea.value);
+    const fresh = textarea.value.split(/\n{2,}/).map(t => t.trim()).filter(t => t && !t.startsWith('## ') && !publishedParas.has(t));
+    const freshPlain = new Set(fresh.map(t => t.replace(/\[\[\d+\|([^\]]*)\]\]/g, '$1').slice(0, 80)));
+    preview.querySelectorAll('p').forEach(p => { if (freshPlain.has(p.textContent.trim().slice(0, 80))) p.classList.add('chronicle-new'); });
+  };
   textarea.addEventListener('input', updatePreview);
   updatePreview();
+
+  document.getElementById('btn-save-chronicle').addEventListener('click', () => handlers.onSaveDraft(textarea.value));
+  document.getElementById('btn-publish-chronicle').addEventListener('click', () => {
+    if (confirm('Опубликовать этот текст? Читатели увидят его сразу. Прошлая версия сохранится для отката.')) handlers.onPublish(textarea.value);
+  });
+  document.getElementById('btn-generate-chronicle').addEventListener('click', () => handlers.onGenerate());
+  document.getElementById('btn-rollback-chronicle').addEventListener('click', () => {
+    if (confirm('Вернуть предыдущую опубликованную версию? Текущая опубликованная будет снята.')) handlers.onRollback();
+  });
 }
 
 // ============================================
