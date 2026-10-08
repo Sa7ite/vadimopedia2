@@ -276,7 +276,7 @@ async function loadEvents() {
     if (st) st.textContent = '—';
     return;
   }
-  const events = await getApprovedEvents();
+  const events = (await getApprovedEvents()).sort((a, b) => eventDateKey(b.event_date) - eventDateKey(a.event_date));
   const onAuthorClick = currentProfile ? handleAuthorClick : null;
   const onEditEvent = currentProfile ? handleEditEvent : null;
   renderEvents(events, currentProfile?.role, currentProfile?.id, handleDeleteEvent, onAuthorClick, onEditEvent);
@@ -535,10 +535,10 @@ async function setupAdminTitleRequests() {
       ${pendingRequests.length === 0 ? '<p>Нет запросов</p>' : pendingRequests.map(req => `
         <div class="title-request-item" data-request-id="${req.id}">
           <div class="request-header">
-            <strong>${req.profiles?.full_name || 'Неизвестно'}</strong>
-            <span>запросил титул: ${req.titles?.title_name || ''}</span>
+            <strong>${esc(req.profiles?.full_name || 'Неизвестно')}</strong>
+            <span>запросил титул: ${esc(req.titles?.title_name || '')}</span>
           </div>
-          <p class="request-reason">Причина: ${req.reason}</p>
+          <p class="request-reason">Причина: ${esc(req.reason)}</p>
           <div class="request-actions">
             <button class="btn-approve-request" data-id="${req.id}">Одобрить</button>
             <button class="btn-reject-request" data-id="${req.id}">Отклонить</button>
@@ -668,3 +668,23 @@ async function handleDeleteConfirm(messageId, reason, deleteType) {
 }
 
 document.addEventListener('DOMContentLoaded', initApp);
+
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+// Ключ сортировки по дате события (год*10000 + месяц*100 + день); без даты — в конец ленты
+const MONTHS = ['янв', 'фев', 'мар', 'апр', 'ма', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+function eventDateKey(raw) {
+  if (!raw) return -1;
+  const s = String(raw).toLowerCase().trim();
+  let m;
+  if ((m = s.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{1,5})/))) return +m[3] * 10000 + +m[2] * 100 + +m[1];
+  if ((m = s.match(/^(\d{1,5})-(\d{1,2})-(\d{1,2})/))) return +m[1] * 10000 + +m[2] * 100 + +m[3];
+  if ((m = s.match(/^(\d{1,2})[./](\d{1,5})$/))) return +m[2] * 10000 + +m[1] * 100;
+  if ((m = s.match(/^(?:(\d{1,2})\s+)?([а-яё]+)\s+(\d{1,5})/))) {
+    const w = m[2];
+    const i = w.startsWith('ма') && !w.startsWith('мар') ? 4 : MONTHS.findIndex((st, k) => k !== 4 && w.startsWith(st));
+    return +m[3] * 10000 + (i + 1) * 100 + (m[1] ? +m[1] : 0);
+  }
+  if ((m = s.match(/^(\d{1,5})/))) return +m[1] * 10000;
+  return -1;
+}

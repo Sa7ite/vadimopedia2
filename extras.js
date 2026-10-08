@@ -26,7 +26,8 @@ addEventListener('scroll',()=>{const sec=$('#section-chronicle'),bar=$('#read-pr
 // Вадим дня
 window.vpVadimOfDay=(ev,open)=>{const box=$('#vadim-of-day');if(!box||!ev||!ev.length)return;
   const d=new Date(),k=(d.getFullYear()*372+d.getMonth()*31+d.getDate())*2654435761>>>0,e=ev[k%ev.length];
-  box.innerHTML=`<div class="vod-label">Событие дня</div><div class="vod-text"></div><div class="vod-meta">${[e.event_date,e.city].filter(Boolean).join(' · ')}</div>`;
+  box.innerHTML=`<div class="vod-label">Событие дня</div><div class="vod-text"></div><div class="vod-meta"></div>`;
+  box.querySelector('.vod-meta').textContent=[e.event_date,e.city].filter(Boolean).join(' · ');
   box.querySelector('.vod-text').textContent=e.event_text.length>220?e.event_text.slice(0,220)+'…':e.event_text;
   box.style.display='block';box.style.cursor='pointer';box.onclick=()=>open&&open(e);};
 // PWA

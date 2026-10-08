@@ -104,13 +104,13 @@ export function renderProfile(profile, onEditClick) {
       <div class="profile-header">
         <img src="${avatarUrl}" alt="Аватар" class="profile-avatar">
         <div class="profile-info">
-          <h3>${profile.full_name || 'Без имени'}</h3>
+          <h3>${escapeHtml(profile.full_name || 'Без имени')}</h3>
           ${titlesText ? `<div class="profile-titles">${titlesText}</div>` : ''}
-          <p class="profile-location">📍 ${profile.city || 'Локация не указана'}</p>
+          <p class="profile-location">📍 ${escapeHtml(profile.city || 'Локация не указана')}</p>
           <p class="profile-role">🎭 Роль: ${profile.role}</p>
         </div>
       </div>
-      ${profile.bio ? `<div class="profile-bio"><h4>О себе</h4><p>${profile.bio}</p></div>` : ''}
+      ${profile.bio ? `<div class="profile-bio"><h4>О себе</h4><p>${escapeHtml(profile.bio)}</p></div>` : ''}
       <div class="profile-actions">
         <button class="btn-primary" id="btn-edit-profile">Редактировать профиль</button>
         <button class="btn-secondary" id="btn-manage-titles">Управление титулами</button>
@@ -164,8 +164,8 @@ async function showTitlesManager(profile) {
             const isActive = tempActiveTitles.includes(title.id);
             return `
               <div class="title-card ${isActive ? 'selected' : ''}" data-title-id="${title.id}" data-type="common">
-                <div class="title-name">${title.title_name}</div>
-                <div class="title-desc">${title.description || ''}</div>
+                <div class="title-name">${escapeHtml(title.title_name)}</div>
+                <div class="title-desc">${escapeHtml(title.description || '')}</div>
                 <button class="btn-delete-title" data-title-id="${title.id}">🗑️ Удалить</button>
               </div>
             `;
@@ -179,8 +179,8 @@ async function showTitlesManager(profile) {
             const isActive = tempActiveTitles.includes(title.id);
             return `
               <div class="title-card special ${isActive ? 'selected' : ''}" data-title-id="${title.id}" data-type="special">
-                <div class="title-name">${title.title_name}</div>
-                <div class="title-desc">${title.description || ''}</div>
+                <div class="title-name">${escapeHtml(title.title_name)}</div>
+                <div class="title-desc">${escapeHtml(title.description || '')}</div>
                 <button class="btn-delete-title" data-title-id="${title.id}">🗑️ Удалить</button>
               </div>
             `;
@@ -215,8 +215,8 @@ async function showTitlesManager(profile) {
             const isSpecial = ut.titles.title_type === 'special';
             return `
               <div class="title-card ${isActive ? 'selected' : ''} ${isSpecial ? 'special' : ''}" data-title-id="${ut.title_id}" data-type="${ut.titles.title_type}" data-unlocked="true">
-                <div class="title-name">${ut.titles.title_name}</div>
-                <div class="title-desc">${ut.titles.description || ''}</div>
+                <div class="title-name">${escapeHtml(ut.titles.title_name)}</div>
+                <div class="title-desc">${escapeHtml(ut.titles.description || '')}</div>
                 <div class="title-status">${isActive ? '✅ Надет' : '⬜ Снят'}</div>
               </div>
             `;
@@ -230,8 +230,8 @@ async function showTitlesManager(profile) {
           <div class="titles-grid">
             ${availableCommon.map(title => `
               <div class="title-card" data-title-id="${title.id}" data-type="common" data-unlocked="false">
-                <div class="title-name">${title.title_name}</div>
-                <div class="title-desc">${title.description || ''}</div>
+                <div class="title-name">${escapeHtml(title.title_name)}</div>
+                <div class="title-desc">${escapeHtml(title.description || '')}</div>
               </div>
             `).join('')}
           </div>
@@ -244,8 +244,8 @@ async function showTitlesManager(profile) {
           <div class="titles-grid">
             ${availableSpecial.map(title => `
               <div class="title-card requestable" data-title-id="${title.id}">
-                <div class="title-name">${title.title_name}</div>
-                <div class="title-desc">${title.description || ''}</div>
+                <div class="title-name">${escapeHtml(title.title_name)}</div>
+                <div class="title-desc">${escapeHtml(title.description || '')}</div>
                 <button class="btn-request-title" data-title-id="${title.id}">Запросить</button>
               </div>
             `).join('')}
@@ -439,13 +439,13 @@ export async function showUserProfile(userId, currentUserId) {
         <div class="profile-header">
           <img src="${avatarUrl}" alt="Аватар" class="profile-avatar">
           <div class="profile-info">
-            <h3>${profile.full_name || 'Без имени'}</h3>
+            <h3>${escapeHtml(profile.full_name || 'Без имени')}</h3>
             ${titlesText ? `<div class="profile-titles">${titlesText}</div>` : ''}
-            <p class="profile-location">📍 ${profile.city || 'Локация не указана'}</p>
+            <p class="profile-location">📍 ${escapeHtml(profile.city || 'Локация не указана')}</p>
             <p class="profile-role">🎭 Роль: ${profile.role}</p>
           </div>
         </div>
-        ${profile.bio ? `<div class="profile-bio"><h4>О себе</h4><p>${profile.bio}</p></div>` : ''}
+        ${profile.bio ? `<div class="profile-bio"><h4>О себе</h4><p>${escapeHtml(profile.bio)}</p></div>` : ''}
       </div>
       <div class="user-events-section">
         <h3>События пользователя (${userEvents.length})</h3>
@@ -456,9 +456,9 @@ export async function showUserProfile(userId, currentUserId) {
               <div class="user-event-item">
                 <div class="user-event-header">
                   <span class="event-date">${date}</span>
-                  ${event.city ? `<span class="badge">📍 ${event.city}</span>` : ''}
+                  ${event.city ? `<span class="badge">📍 ${escapeHtml(event.city)}</span>` : ''}
                 </div>
-                <p class="event-text">${event.event_text}</p>
+                <p class="event-text">${escapeHtml(event.event_text)}</p>
               </div>
             `;
           }).join('')}
@@ -492,15 +492,15 @@ export function renderEditProfileForm(profile, onSave) {
       <form id="form-edit-profile">
         <div class="form-input-group">
           <label for="edit-name">Имя</label>
-          <input type="text" id="edit-name" value="${profile.full_name || ''}" required>
+          <input type="text" id="edit-name" value="${escapeHtml(profile.full_name || '')}" required>
         </div>
         <div class="form-input-group">
           <label for="edit-location">Локация</label>
-          <input type="text" id="edit-location" value="${profile.city || ''}">
+          <input type="text" id="edit-location" value="${escapeHtml(profile.city || '')}">
         </div>
         <div class="form-input-group">
           <label for="edit-bio">О себе</label>
-          <textarea id="edit-bio" rows="4">${profile.bio || ''}</textarea>
+          <textarea id="edit-bio" rows="4">${escapeHtml(profile.bio || '')}</textarea>
         </div>
         <div class="form-actions">
           <button type="submit" class="btn-primary">Сохранить</button>
@@ -536,7 +536,10 @@ export function renderEvents(events, currentUserRole, currentUserId, onDeleteEve
 
   events.forEach(event => {
     const li = document.createElement('li');
-    const date = new Date(event.created_at).toLocaleDateString('ru-RU');
+    // D9: в ленте показываем дату события; если её нет — дату добавления с пометкой
+    const date = event.event_date
+      ? escapeHtml(event.event_date)
+      : new Date(event.created_at).toLocaleDateString('ru-RU') + ' <small>(добавлено)</small>';
     const deleteButton = isAdmin ? `<button class="btn-delete-event" data-id="${event.id}">Удалить</button>` : '';
     
     const isAuthor = String(event.user_id) === String(currentUserId);
@@ -547,8 +550,8 @@ export function renderEvents(events, currentUserRole, currentUserId, onDeleteEve
     const authorName = event.profiles?.full_name || 'Аноним';
     const authorId = event.user_id;
     const clickableAuthor = onAuthorClick && authorId 
-      ? `<span class="clickable-author" data-user-id="${authorId}">${authorName}</span>` 
-      : `<strong>${authorName}</strong>`;
+      ? `<span class="clickable-author" data-user-id="${authorId}">${escapeHtml(authorName)}</span>` 
+      : `<strong>${escapeHtml(authorName)}</strong>`;
     const loreBadge = event.is_lore_significant 
       ? `<span class="badge badge-lore"> Значимое</span>` 
       : '';
@@ -561,9 +564,8 @@ export function renderEvents(events, currentUserRole, currentUserId, onDeleteEve
         ${clickableAuthor}
         <span class="event-date">${date}</span>
       </div>
-      <p class="event-text">${event.event_text}</p>
-      ${event.city ? `<span class="badge">📍 ${event.city}</span>` : ''}
-      ${event.event_date ? `<span class="badge">📅 ${event.event_date}</span>` : ''}
+      <p class="event-text">${escapeHtml(event.event_text)}</p>
+      ${event.city ? `<span class="badge">📍 ${escapeHtml(event.city)}</span>` : ''}
       ${loreBadge}
       ${chronicleBadge}
       ${editButton}
@@ -609,12 +611,12 @@ export function renderPendingEvents(events, onApprove, onReject) {
     const date = new Date(event.created_at).toLocaleDateString('ru-RU');
     li.innerHTML = `
       <div class="pending-event-header">
-        <strong>${event.profiles?.full_name || 'Аноним'}</strong>
+        <strong>${escapeHtml(event.profiles?.full_name || 'Аноним')}</strong>
         <span class="event-date">${date}</span>
       </div>
-      <p class="event-text">${event.event_text}</p>
-      ${event.city ? `<span class="badge">📍 ${event.city}</span>` : ''}
-      ${event.event_date ? `<span class="badge">📅 ${event.event_date}</span>` : ''}
+      <p class="event-text">${escapeHtml(event.event_text)}</p>
+      ${event.city ? `<span class="badge">📍 ${escapeHtml(event.city)}</span>` : ''}
+      ${event.event_date ? `<span class="badge">📅 ${escapeHtml(event.event_date)}</span>` : ''}
       ${event.is_lore_significant ? '<span class="badge badge-lore">⭐ Значимое для летописи</span>' : ''}
       ${event.as_chronicler ? '<span class="badge badge-lore">📜 Просит опубликовать от имени Летописца</span>' : ''}
       <div class="pending-event-actions">
@@ -668,8 +670,8 @@ export function renderChatMessages(messages, currentUserId, currentUserRole, onD
     const authorName = msg.profiles?.full_name || 'Аноним';
     const authorId = msg.user_id;
     const clickableAuthor = onAuthorClick && authorId
-      ? `<span class="clickable-author" data-user-id="${authorId}">${authorName}</span>`
-      : `<strong class="chat-author ${isOwnMessage ? 'own' : ''}">${authorName}</strong>`;
+      ? `<span class="clickable-author" data-user-id="${authorId}">${escapeHtml(authorName)}</span>`
+      : `<strong class="chat-author ${isOwnMessage ? 'own' : ''}">${escapeHtml(authorName)}</strong>`;
     
     if (msg.is_deleted) {
       div.innerHTML = `
@@ -679,7 +681,7 @@ export function renderChatMessages(messages, currentUserId, currentUserRole, onD
         </div>
         <div class="chat-message-text deleted-text">
           Сообщение удалено
-          ${msg.delete_reason ? `<br><em>Причина: ${msg.delete_reason}</em>` : ''}
+          ${msg.delete_reason ? `<br><em>Причина: ${escapeHtml(msg.delete_reason)}</em>` : ''}
         </div>
       `;
     } else {
@@ -690,7 +692,7 @@ export function renderChatMessages(messages, currentUserId, currentUserRole, onD
           <span class="chat-time">${time}</span>
           ${deleteBtn}
         </div>
-        <div class="chat-message-text">${msg.message_text}</div>
+        <div class="chat-message-text">${escapeHtml(msg.message_text)}</div>
       `;
     }
     
@@ -839,11 +841,11 @@ export function renderChronicleEditor(chronicle, pendingEvents, onSave, onGenera
           <div class="pending-events-list">
             ${pendingEvents.map(e => `
               <div class="pending-event-card" data-id="${e.id}">
-                <strong>${e.event_text}</strong>
+                <strong>${escapeHtml(e.event_text)}</strong>
                 <div class="event-meta">
-                  <span>👤 ${e.profiles?.full_name || 'Аноним'}</span>
-                  ${e.event_date ? `<span>📅 ${e.event_date}</span>` : ''}
-                  ${e.city ? `<span>📍 ${e.city}</span>` : ''}
+                  <span>👤 ${escapeHtml(e.profiles?.full_name || 'Аноним')}</span>
+                  ${e.event_date ? `<span>📅 ${escapeHtml(e.event_date)}</span>` : ''}
+                  ${e.city ? `<span>📍 ${escapeHtml(e.city)}</span>` : ''}
                 </div>
               </div>
             `).join('')}
@@ -851,7 +853,7 @@ export function renderChronicleEditor(chronicle, pendingEvents, onSave, onGenera
         `}
       </div>
       
-      <textarea id="chronicle-textarea" rows="20" placeholder="Текст летописи...">${chronicle?.content || ''}</textarea>
+      <textarea id="chronicle-textarea" rows="20" placeholder="Текст летописи...">${escapeHtml(chronicle?.content || '')}</textarea>
       
       <div class="editor-preview">
         <h3>👁️ Предпросмотр</h3>
@@ -922,11 +924,11 @@ export function renderTimeline(events, onEventClick) {
                 <div class="timeline-event" data-id="${e.id}">
                   <div class="event-dot"></div>
                   <div class="event-card">
-                    <strong>${e.event_text}</strong>
+                    <strong>${escapeHtml(e.event_text)}</strong>
                     <div class="event-meta">
-                      <span>👤 ${e.profiles?.full_name || 'Аноним'}</span>
-                      ${e.event_date ? `<span>📅 ${e.event_date}</span>` : ''}
-                      ${e.city ? `<span>📍 ${e.city}</span>` : ''}
+                      <span>👤 ${escapeHtml(e.profiles?.full_name || 'Аноним')}</span>
+                      ${e.event_date ? `<span>📅 ${escapeHtml(e.event_date)}</span>` : ''}
+                      ${e.city ? `<span>📍 ${escapeHtml(e.city)}</span>` : ''}
                     </div>
                   </div>
                 </div>
@@ -970,8 +972,8 @@ export function renderMap(events, onEventClick) {
         <ul>
           ${eventsWithCity.map(e => `
             <li class="map-event-item" data-id="${e.id}">
-              <strong>${e.city}</strong> — ${e.event_text}
-              <span class="event-author">(${e.profiles?.full_name || 'Аноним'})</span>
+              <strong>${escapeHtml(e.city)}</strong> — ${escapeHtml(e.event_text)}
+              <span class="event-author">(${escapeHtml(e.profiles?.full_name || 'Аноним')})</span>
             </li>
           `).join('')}
         </ul>
@@ -1045,8 +1047,8 @@ export function renderMap(events, onEventClick) {
         <strong>${city}</strong><br>
         ${cityEvts.map(e => `
           <div style="margin: 5px 0;">
-            ${e.event_text}<br>
-            <em>— ${e.profiles?.full_name || 'Аноним'}</em>
+            ${escapeHtml(e.event_text)}<br>
+            <em>— ${escapeHtml(e.profiles?.full_name || 'Аноним')}</em>
           </div>
         `).join('')}
       `);
@@ -1088,13 +1090,13 @@ export function renderBookmarks(bookmarks, onEventClick) {
         ${bookmarks.map(e => `
           <div class="bookmark-card" data-id="${e.id}">
             <div class="bookmark-header">
-              <strong>${e.profiles?.full_name || 'Аноним'}</strong>
+              <strong>${escapeHtml(e.profiles?.full_name || 'Аноним')}</strong>
               <span class="event-date">${new Date(e.created_at).toLocaleDateString('ru-RU')}</span>
             </div>
-            <p class="event-text">${e.event_text}</p>
+            <p class="event-text">${escapeHtml(e.event_text)}</p>
             <div class="event-meta">
-              ${e.event_date ? `<span>📅 ${e.event_date}</span>` : ''}
-              ${e.city ? `<span>📍 ${e.city}</span>` : ''}
+              ${e.event_date ? `<span>📅 ${escapeHtml(e.event_date)}</span>` : ''}
+              ${e.city ? `<span>📍 ${escapeHtml(e.city)}</span>` : ''}
             </div>
           </div>
         `).join('')}
@@ -1144,12 +1146,12 @@ export async function showEventModal(event, currentUserId, onReaction, onComment
     <div class="modal-content event-modal">
       <span class="close-modal" data-modal="modal-event-detail">&times;</span>
       <div class="event-detail-header">
-        <h3>${event.event_text}</h3>
+        <h3>${escapeHtml(event.event_text)}</h3>
         <div class="event-detail-meta">
-          <span>👤 ${event.profiles?.full_name || 'Аноним'}</span>
-          ${event.event_date ? `<span>📅 ${event.event_date}</span>` : ''}
+          <span>👤 ${escapeHtml(event.profiles?.full_name || 'Аноним')}</span>
+          ${event.event_date ? `<span>📅 ${escapeHtml(event.event_date)}</span>` : ''}
           <button class="btn-secondary share-btn" data-share="${encodeURIComponent((event.event_date ? event.event_date + ' — ' : '') + event.event_text)}">Поделиться</button>
-          ${event.city ? `<span> ${event.city}</span>` : ''}
+          ${event.city ? `<span> ${escapeHtml(event.city)}</span>` : ''}
         </div>
       </div>
 
@@ -1176,11 +1178,11 @@ export async function showEventModal(event, currentUserId, onReaction, onComment
           ${comments.length === 0 ? '<p class="empty-state">Пока нет комментариев</p>' : comments.map(c => `
             <div class="comment-item" data-id="${c.id}">
               <div class="comment-header">
-                <strong>${c.profiles?.full_name || 'Аноним'}</strong>
+                <strong>${escapeHtml(c.profiles?.full_name || 'Аноним')}</strong>
                 <span class="comment-date">${new Date(c.created_at).toLocaleDateString('ru-RU')}</span>
                 ${c.user_id === currentUserId ? `<button class="btn-delete-comment" data-id="${c.id}">🗑️</button>` : ''}
               </div>
-              <p class="comment-text">${c.comment_text}</p>
+              <p class="comment-text">${escapeHtml(c.comment_text)}</p>
             </div>
           `).join('')}
         </div>
@@ -1258,7 +1260,7 @@ export async function showEventModal(event, currentUserId, onReaction, onComment
           <span class="comment-date">${new Date(comment.created_at).toLocaleDateString('ru-RU')}</span>
           <button class="btn-delete-comment" data-id="${comment.id}">️</button>
         </div>
-        <p class="comment-text">${comment.comment_text}</p>
+        <p class="comment-text">${escapeHtml(comment.comment_text)}</p>
       `;
       commentsList.appendChild(commentEl);
       commentEl.querySelector('.btn-delete-comment').addEventListener('click', async () => {
@@ -1302,15 +1304,15 @@ export function showEditEventModal(event, onSave, isValidDate, isValidCity) {
       </div>
       <div class="form-input-group">
         <label for="edit-event-text">Текст события</label>
-        <textarea id="edit-event-text" rows="3">${event.event_text}</textarea>
+        <textarea id="edit-event-text" rows="3">${escapeHtml(event.event_text)}</textarea>
       </div>
       <div class="form-input-group">
         <label for="edit-event-city">Место</label>
-        <input type="text" id="edit-event-city" value="${event.city || ''}" placeholder="Город, например: Коломна">
+        <input type="text" id="edit-event-city" value="${escapeHtml(event.city || '')}" placeholder="Город, например: Коломна">
       </div>
       <div class="form-input-group">
         <label for="edit-event-date">Дата события</label>
-        <input type="text" id="edit-event-date" value="${event.event_date || ''}" placeholder="Например: 15 марта 2024">
+        <input type="text" id="edit-event-date" value="${escapeHtml(event.event_date || '')}" placeholder="Например: 15 марта 2024">
       </div>
       <div class="form-actions">
         <button class="btn-primary" id="btn-save-event">Сохранить</button>
