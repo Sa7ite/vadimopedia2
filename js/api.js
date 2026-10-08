@@ -395,56 +395,29 @@ export async function getChronicleVersions() {
   return data;
 }
 
-export async function updateChronicle(content, usedEventIds = []) {
-  const { data: current } = await supabase.from('chronicle').select('*').single();
-  if (current) {
-    await supabase.from('chronicle_versions').insert([{
-      chronicle_id: current.id,
-      content: current.content,
-      version: current.version
-    }]);
-  }
-
-  const { data, error } = await supabase
-    .from('chronicle')
-    .update({
-      content: content,
-      version: (current?.version || 0) + 1,
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', current?.id || 1)
-    .select();
-
+// T2.3: летопись хранится главами и абзацами; черновик → публикация → откат (всё проверяет база)
+export async function getChronicleEditor() {
+  const { data, error } = await supabase.rpc('get_chronicle_editor');
   if (error) throw error;
+  return data;
+}
 
-  // отмечаем события, которые вошли в летопись
-  if (usedEventIds.length) {
-    const { error: markError } = await supabase.from('events').update({ is_in_chronicle: true }).in('id', usedEventIds);
-    if (markError) console.error('Не удалось отметить события как вписанные:', markError);
-  }
-  return data[0];
+export async function saveChronicleDraft(content, note = null) {
+  const { data, error } = await supabase.rpc('save_chronicle_draft', { p_content: content, p_note: note });
+  if (error) throw error;
+  return data;
+}
+
+export async function publishChronicle(editionId) {
+  const { error } = await supabase.rpc('publish_chronicle', { p_edition: editionId });
+  if (error) throw error;
+  return getChronicle();
 }
 
 export async function rollbackChronicle() {
-  const { data: versions } = await supabase
-    .from('chronicle_versions')
-    .select('*')
-    .order('version', { ascending: false })
-    .limit(1);
-
-  if (!versions || versions.length === 0) throw new Error('Нет предыдущих версий');
-
-  const lastVersion = versions[0];
-
-  const { data, error } = await supabase.from('chronicle').update({
-    content: lastVersion.content,
-    version: lastVersion.version,
-    updated_at: new Date().toISOString()
-  }).eq('id', lastVersion.chronicle_id).select();
+  const { error } = await supabase.rpc('rollback_chronicle');
   if (error) throw error;
-
-  await supabase.from('chronicle_versions').delete().eq('id', lastVersion.id);
-  return data[0];
+  return getChronicle();
 }
 
 export async function generateChronicleText(currentContent, newEvents) {
