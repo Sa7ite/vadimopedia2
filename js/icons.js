@@ -14,6 +14,9 @@ const P = {
   eye: '<path d="M2.5 12s3.5-6.5 9.5-6.5S21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/>',
   map: '<path d="M3.5 6.5l5.5-2 6 2 5.5-2v13l-5.5 2-6-2-5.5 2z"/><path d="M9 4.5v13M15 6.5v13"/>',
   bookmark: '<path d="M6.5 3.5h11v17l-5.5-4-5.5 4z"/>',
+  like: '<path d="M7.5 10.5v9.5H4v-9.5zM7.5 10.5l3.5-7c1.6 0 2.5 1 2.5 2.6V9h5.2c1 0 1.8 1 1.6 2l-1.4 7.2c-.2 1-1 1.8-2 1.8H7.5"/>',
+  dislike: '<path d="M7.5 13.5V4H4v9.5zM7.5 13.5l3.5 7c1.6 0 2.5-1 2.5-2.6V15h5.2c1 0 1.8-1 1.6-2l-1.4-7.2c-.2-1-1-1.8-2-1.8H7.5"/>',
+  witness: '<path d="M2.5 12s3.5-6.5 9.5-6.5S21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/><path d="M12 2v2M5 4.5l1.3 1.5M19 4.5l-1.3 1.5"/>',
 };
 export function icon(name, label = '') {
   const a = label ? `role="img" aria-label="${label}"` : 'aria-hidden="true"';

@@ -14,7 +14,7 @@ import {
   toggleReaction, addEventComment, deleteEventComment,
   toggleBookmark, getBookmarks,
   getEventsByUser, getEventById,
-  getPersons, getCampaigns, setEventParticipants, getSettingValue
+  getPersons, getCampaigns, setEventParticipants, getSettingValue, getReactionCounts
 } from './api.js';
 import { setupAdminPanel } from './admin.js';
 import { registerUser, loginUser, logoutUser, onAuthStateChange } from './auth.js';
@@ -29,6 +29,7 @@ import {
 } from './ui.js';
 
 let currentProfile = null;
+let feedEvents = [];
 let chatChannel = null;
 let chatMessages = [];
 let chatRefreshInterval = null;
@@ -114,7 +115,11 @@ async function loadUserCount(session) {
   document.body.classList.toggle('guest', !session);
   if (!session) return;
   getChronicle().then(c => window.vpChronicleCheck?.(c)).catch(() => {});
-  getApprovedEvents(500).then(ev => window.vpVadimOfDay?.(ev, handleShowEventModal)).catch(() => {});
+  // «Событие дня»: из популярных (нравится − не нравится > 0), если таких нет — из всех одобренных
+  Promise.all([getApprovedEvents(500), getReactionCounts()]).then(([ev, rc]) => {
+    const popular = ev.filter(e => (rc[String(e.id)]?.score || 0) > 0);
+    window.vpVadimOfDay?.(popular.length ? popular : ev, handleShowEventModal);
+  }).catch(() => {});
   const count = await getUserCount();
   const el = document.getElementById('stat-users');
   if (el) el.textContent = count;
@@ -287,7 +292,13 @@ async function loadEvents() {
     if (st) st.textContent = '—';
     return;
   }
-  const events = (await getApprovedEvents()).sort((a, b) => eventDateKey(b.event_date) - eventDateKey(a.event_date));
+  const [allEvents, counts] = await Promise.all([getApprovedEvents(), getReactionCounts()]);
+  allEvents.forEach(e => { e.rc = counts[String(e.id)] || { likes: 0, dislikes: 0, witnesses: 0, score: 0 }; });
+  const byDate = (a, b) => eventDateKey(b.event_date) - eventDateKey(a.event_date);
+  // T2.1: «Популярное» — счёт = нравится − не нравится, при равенстве — по дате
+  const sortMode = document.getElementById('events-sort')?.value || 'date';
+  const events = allEvents.sort(sortMode === 'popular' ? (a, b) => (b.rc.score - a.rc.score) || byDate(a, b) : byDate);
+  feedEvents = events;
   const onAuthorClick = currentProfile ? handleAuthorClick : null;
   const onEditEvent = currentProfile ? handleEditEvent : null;
   renderEvents(events, currentProfile?.role, currentProfile?.id, handleDeleteEvent, onAuthorClick, onEditEvent);
@@ -720,3 +731,17 @@ async function renderAddEventTags() {
   const { persons, campaigns } = await loadEventLists();
   box.innerHTML = eventTagsPickerHtml('event', persons, campaigns);
 }
+
+// T2.1: открыть событие из ленты, сортировка, обновление счётчиков после реакции
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('#events-list .event-open');
+  if (!btn) return;
+  const ev = feedEvents.find(x => String(x.id) === String(btn.dataset.id));
+  if (ev) handleShowEventModal(ev);
+});
+document.getElementById('events-sort')?.addEventListener('change', () => loadEvents());
+let reactionsReloadTimer = null;
+window.addEventListener('vp:reactions-changed', () => {
+  clearTimeout(reactionsReloadTimer);
+  reactionsReloadTimer = setTimeout(() => { if (currentProfile) loadEvents(); }, 400);
+});

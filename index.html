@@ -88,7 +88,13 @@
     <div class="container">
       <h2>Лента событий</h2>
       <p>Все значимые события из жизни Вадимов</p>
-      <input id="events-search" class="events-search" type="search" placeholder="Поиск: имя, место, год…">
+      <div class="events-toolbar">
+        <input id="events-search" class="events-search" type="search" placeholder="Поиск: имя, место, год…" aria-label="Поиск по событиям">
+        <select id="events-sort" aria-label="Порядок событий">
+          <option value="date">По дате события</option>
+          <option value="popular">Популярное</option>
+        </select>
+      </div>
       
       <!-- Форма добавления события (скрыта для гостей, управляется через JS) -->
       <div id="add-event-form-container" style="display: none;">
