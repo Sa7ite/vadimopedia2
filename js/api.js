@@ -438,7 +438,7 @@ export async function generateChronicleText(currentContent, newEvents) {
     throw new Error(`Ошибка ИИ: ${msg}`);
   }
   if (!data?.text) throw new Error('ИИ вернул пустой ответ');
-  return { text: data.text, usedIds: data.usedIds || [], model: data.model };
+  return { text: data.text, usedIds: data.usedIds || [], model: data.model, reviewFlags: data.review_flags || [], notes: data.notes || [] };
 }
 
 // ============================================
