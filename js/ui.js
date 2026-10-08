@@ -583,6 +583,9 @@ export function renderEvents(events, currentUserRole, currentUserId, onDeleteEve
       ${event.city ? `<span class="badge">${icon('pin')} ${escapeHtml(event.city)}</span>` : ''}
       ${loreBadge}
       ${chronicleBadge}
+      <button class="event-open" data-id="${event.id}" title="Открыть: реакции и комментарии">
+        <span>${icon('like')} ${event.rc?.likes || 0}</span><span>${icon('dislike')} ${event.rc?.dislikes || 0}</span><span>${icon('witness')} ${event.rc?.witnesses || 0}</span><span class="event-open-label">Открыть</span>
+      </button>
       ${editButton}
       ${deleteButton}
     `;
@@ -1131,27 +1134,35 @@ export function renderBookmarks(bookmarks, onEventClick) {
 // МОДАЛКА СОБЫТИЯ (реакции БЕЗ МИГАНИЯ)
 // ============================================
 
+const REACTIONS = [
+  { type: 'like', label: 'Нравится' },
+  { type: 'dislike', label: 'Не нравится' },
+  { type: 'witness', label: 'Я свидетель' }
+];
+
+function reactionsHtml(reactions, currentUserId, isOwnEvent) {
+  const count = t => reactions.filter(r => r.type === t).length;
+  const mine = t => reactions.some(r => r.type === t && String(r.user_id) === String(currentUserId));
+  const witnesses = reactions.filter(r => r.type === 'witness').map(r => r.profiles?.full_name || 'Аноним');
+  return `
+    <h4>Реакции</h4>
+    <div class="reactions-list">
+      ${REACTIONS.map(({ type, label }) => `
+        <button class="reaction-btn ${mine(type) ? 'active' : ''}" data-type="${type}" aria-pressed="${mine(type)}" ${isOwnEvent ? 'disabled' : ''} title="${label}">
+          ${icon(type)} <span>${label}</span> <b class="reaction-count">${count(type) || ''}</b>
+        </button>`).join('')}
+    </div>
+    ${isOwnEvent ? '<p class="reactions-hint">Это ваше событие — реакции на своё ставить нельзя.</p>' : ''}
+    ${witnesses.length ? `<p class="witness-list">${icon('witness')} Очевидцы: ${witnesses.map(escapeHtml).join(', ')}</p>` : ''}`;
+}
+
 export async function showEventModal(event, currentUserId, onReaction, onComment, onBookmark, onDeleteComment) {
   const { getEventReactions, getEventComments } = await import('./api.js');
   
   const reactions = await getEventReactions(event.id);
   const comments = await getEventComments(event.id);
 
-  const reactionCounts = { fire: 0, skull: 0, theater: 0, crown: 0 };
-  const userReactions = {};
-  reactions.forEach(r => {
-    reactionCounts[r.reaction_type]++;
-    if (r.user_id === currentUserId) userReactions[r.reaction_type] = true;
-  });
-
-  const I = d => `<svg class="ri" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round">${d}</svg>`;
-  const reactionEmojis = {
-    fire: I('<path d="M13 2c4 6 9 8 9 14a9 9 0 0 1-18 0c0-4 3-6 4-9 1 3 2 4 3 4 0-4 1-6 2-9z" fill="currentColor" fill-opacity=".25"/><path d="M13 13c2 2 3 3 3 5a3 3 0 0 1-6 0c0-2 2-3 3-5z" fill="currentColor"/>'),
-    skull: I('<path d="M5 12a8 8 0 0 1 16 0v4l-2 2v4H7v-4l-2-2z" fill="currentColor" fill-opacity=".2"/><circle cx="10" cy="13" r="2" fill="currentColor"/><circle cx="16" cy="13" r="2" fill="currentColor"/><path d="M11 22v-3M15 22v-3"/>'),
-    theater: I('<circle cx="13" cy="13" r="10.5"/><text x="13" y="18" font-size="13" font-weight="900" text-anchor="middle" fill="currentColor" stroke="none" font-family="Oswald,Impact,sans-serif">В</text>'),
-    crown: I('<path d="M3 20 5 8l5 5 3-8 3 8 5-5 2 12z" fill="currentColor" fill-opacity=".25"/><path d="M3 23h20"/>')
-  };
-
+  const isOwnEvent = currentUserId && (String(event.user_id) === String(currentUserId) || String(event.submitted_by) === String(currentUserId));
   const modal = document.createElement('div');
   modal.className = 'modal';
   modal.style.display = 'flex';
@@ -1171,16 +1182,7 @@ export async function showEventModal(event, currentUserId, onReaction, onComment
         ${eventTagsLine(event)}
       </div>
 
-      <div class="reactions-section">
-        <h4>Реакции</h4>
-        <div class="reactions-list">
-          ${Object.entries(reactionEmojis).map(([type, emoji]) => `
-            <button class="reaction-btn ${userReactions[type] ? 'active' : ''}" data-type="${type}">
-              ${emoji} ${reactionCounts[type] > 0 ? reactionCounts[type] : ''}
-            </button>
-          `).join('')}
-        </div>
-      </div>
+      <div class="reactions-section" id="reactions-section">${reactionsHtml(reactions, currentUserId, isOwnEvent)}</div>
 
       <div class="bookmark-section">
         <button class="btn-bookmark" id="btn-toggle-bookmark">
@@ -1215,37 +1217,20 @@ export async function showEventModal(event, currentUserId, onReaction, onComment
   modal.querySelector('.close-modal').addEventListener('click', () => modal.remove());
   modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
 
-  // ТОЧЕЧНОЕ обновление реакций БЕЗ пересоздания модалки
-  modal.querySelectorAll('.reaction-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const type = btn.dataset.type;
-      try {
-        const result = await onReaction(event.id, type);
-        
-        const allBtns = modal.querySelectorAll('.reaction-btn');
-        allBtns.forEach(b => {
-          const bType = b.dataset.type;
-          let count = parseInt(b.textContent.replace(/\D/g,'')) || 0;
-          
-          if (bType === type) {
-            if (result.action === 'added') {
-              b.classList.add('active');
-              b.innerHTML = `${reactionEmojis[type]} ${count + 1}`;
-            } else {
-              b.classList.remove('active');
-              b.innerHTML = count > 1 ? `${reactionEmojis[type]} ${count - 1}` : reactionEmojis[type];
-            }
-          } else {
-            if (b.classList.contains('active')) {
-               b.classList.remove('active');
-               b.innerHTML = count > 1 ? `${reactionEmojis[bType]} ${count - 1}` : reactionEmojis[bType];
-            }
-          }
-        });
-      } catch (error) {
-        showNotification(`Ошибка: ${error.message}`, 'error');
-      }
-    });
+  // T2.1: реакции — после нажатия перечитываем их из базы (счётчики и список очевидцев)
+  const reactBox = modal.querySelector('#reactions-section');
+  reactBox.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.reaction-btn');
+    if (!btn || btn.disabled) return;
+    btn.disabled = true;
+    try {
+      await onReaction(event.id, btn.dataset.type);
+      reactBox.innerHTML = reactionsHtml(await getEventReactions(event.id), currentUserId, isOwnEvent);
+      window.dispatchEvent(new CustomEvent('vp:reactions-changed'));
+    } catch (error) {
+      showNotification(`Ошибка: ${error.message}`, 'error');
+      btn.disabled = false;
+    }
   });
 
   modal.querySelector('#btn-toggle-bookmark').addEventListener('click', async () => {

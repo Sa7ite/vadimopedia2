@@ -158,3 +158,19 @@ body.guest .hero-stats{display:none}
   .admin-table tr { padding: 8px 0; border-bottom: 1px solid rgba(128,128,128,.4); }
   .admin-table td { border: 0; padding: 3px 0; }
 }
+
+/* T2.1: реакции */
+.events-toolbar { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; }
+.events-toolbar .events-search { flex: 1 1 240px; margin: 0; }
+.events-toolbar select { flex: 0 0 auto; padding: 10px 12px; font: inherit; border: 2px solid currentColor; background: var(--input-bg, #fffdf5); color: inherit; }
+.event-open { display: inline-flex; align-items: center; gap: 12px; margin: 8px 8px 0 0; padding: 6px 12px; font: inherit; font-size: .9em; background: transparent; color: inherit; border: 1px solid currentColor; cursor: pointer; }
+.event-open span { display: inline-flex; align-items: center; gap: 4px; }
+.event-open .ic { width: 1.15em; height: 1.15em; }
+.event-open-label { font-weight: 700; text-decoration: underline; }
+.reactions-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.reaction-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; font: inherit; border: 2px solid currentColor; background: transparent; color: inherit; cursor: pointer; }
+.reaction-btn .ic { width: 1.3em; height: 1.3em; }
+.reaction-btn.active { background: var(--accent-color, #b3141b); border-color: var(--accent-color, #b3141b); color: #fff; }
+.reaction-btn:disabled { opacity: .5; cursor: not-allowed; }
+.reactions-hint, .witness-list { margin: 8px 0 0; font-size: .95em; }
+.witness-list .ic { width: 1.1em; height: 1.1em; vertical-align: -3px; }

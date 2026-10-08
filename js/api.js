@@ -474,52 +474,41 @@ export async function generateChronicleText(currentContent, newEvents) {
 
 export async function getEventReactions(eventId) {
   const { data, error } = await supabase
-    .from('event_reactions')
-    .select('reaction_type, user_id, profiles (full_name)')
-    .eq('event_id', eventId);
-
+    .from('reactions')
+    .select('type, user_id, profiles (full_name)')
+    .eq('target_type', 'event')
+    .eq('target_id', String(eventId));
   if (error) { console.error('Ошибка получения реакций:', error); return []; }
   return data;
 }
 
-export async function toggleReaction(eventId, reactionType) {
+// Поставить или снять реакцию. «Нравится» и «Не нравится» взаимоисключают друг друга (проверяет база)
+export async function toggleReaction(targetId, type, targetType = 'event') {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Пользователь не авторизован');
-
-  const { data: existing } = await supabase
-    .from('event_reactions')
-    .select('id')
-    .eq('event_id', eventId)
-    .eq('user_id', user.id)
-    .eq('reaction_type', reactionType)
-    .single();
-
+  const match = { target_type: targetType, target_id: String(targetId), user_id: user.id, type };
+  const { data: existing } = await supabase.from('reactions').select('id').match(match).maybeSingle();
   if (existing) {
-    const { error } = await supabase
-      .from('event_reactions')
-      .delete()
-      .eq('id', existing.id);
+    const { error } = await supabase.from('reactions').delete().eq('id', existing.id);
     if (error) throw error;
     return { action: 'removed' };
-  } else {
-    await supabase
-      .from('event_reactions')
-      .delete()
-      .eq('event_id', eventId)
-      .eq('user_id', user.id);
-
-    const { error } = await supabase
-      .from('event_reactions')
-      .insert([{ event_id: eventId, user_id: user.id, reaction_type: reactionType }]);
-    if (error) throw error;
-    return { action: 'added' };
   }
+  const { error } = await supabase.from('reactions').insert([match]);
+  if (error) throw error;
+  return { action: 'added' };
+}
+
+// Счётчики реакций всех событий: { [event_id]: { likes, dislikes, witnesses, score } }
+export async function getReactionCounts() {
+  const { data, error } = await supabase.from('event_reaction_counts').select('*');
+  if (error) { console.error('Ошибка счётчиков реакций:', error); return {}; }
+  return Object.fromEntries(data.map(r => [String(r.event_id), r]));
 }
 
 export async function getEventComments(eventId) {
   const { data, error } = await supabase
     .from('event_comments')
-    .select(EVENT_SELECT)
+    .select('*, profiles (full_name, avatar_url)')
     .eq('event_id', eventId)
     .order('created_at', { ascending: true });
 
@@ -612,7 +601,7 @@ export async function checkAndAwardAchievements(userId) {
   }
 
   const { count: reactionCount } = await supabase
-    .from('event_reactions')
+    .from('reactions')
     .select('*', { count: 'exact', head: true })
     .eq('user_id', userId);
 
