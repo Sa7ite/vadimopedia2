@@ -36,7 +36,8 @@ let chatRefreshInterval = null;
 let presenceChannel = null;
 let chronicleData = null;
 let chronicleViewMode = 'read';
-let generatedEventIds = []; // события, вплетённые ИИ в текущий черновик летописи
+let generatedEventIds = [];
+let generatedFlags = []; // T2.4: замечания ИИ для админа (противоречия и т.п.) // события, вплетённые ИИ в текущий черновик летописи
 
 async function initApp() {
   console.log('Вадимопедия загружается...');
@@ -444,7 +445,8 @@ async function loadChronicleEditor() {
 // T2.3: сохранить черновик (база проверяет разметку: каждое событие один раз)
 async function handleSaveChronicle(content, quiet = false) {
   try {
-    const id = await saveChronicleDraft(content, generatedEventIds.length ? `ИИ: события ${generatedEventIds.join(', ')}` : null);
+    const note = generatedEventIds.length ? `ИИ: события ${generatedEventIds.join(', ')}${generatedFlags.length ? '. Проверить: ' + generatedFlags.join('; ') : ''}` : null;
+    const id = await saveChronicleDraft(content, note);
     if (!quiet) {
       showNotification('Черновик сохранён. Читатели увидят его после публикации.', 'success');
       await loadChronicleEditor();
@@ -461,7 +463,7 @@ async function handlePublishChronicle(content) {
   if (!id) return;
   try {
     chronicleData = await publishChronicle(id);
-    generatedEventIds = [];
+    generatedEventIds = []; generatedFlags = [];
     showNotification('Летопись опубликована!', 'success');
     chronicleViewMode = 'read';
     renderChronicle(chronicleData, handleShowEventModal);
@@ -499,6 +501,8 @@ async function handleGenerateChronicle() {
     }
     const missed = pendingEvents.filter(e => !result.usedIds.includes(e.id));
     if (missed.length) showNotification(`ИИ не отметил событий: ${missed.length}. Проверь текст или сгенерируй ещё раз.`, 'error');
+    generatedFlags = result.reviewFlags;
+    if (generatedFlags.length) showNotification(`Проверьте: ${generatedFlags.join('; ')}`, 'info');
     showNotification('Текст дописан. Проверьте, сохраните черновик или опубликуйте.', 'success');
   } catch (error) {
     showNotification(`Ошибка генерации: ${error.message}`, 'error');
