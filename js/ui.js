@@ -896,6 +896,8 @@ export function renderChronicleEditor(editor, pendingEvents, handlers) {
         `}
       </div>
 
+      <section id="insert-review" class="insert-review" hidden aria-live="polite"></section>
+
       <p class="editor-hint">Главы начинаются с «## ». Абзацы разделяются пустой строкой. Событие отмечается так: [[номер|фраза]] — каждое ровно один раз.</p>
       <textarea id="chronicle-textarea" rows="20" placeholder="Текст летописи...">${escapeHtml(draft?.content ?? published?.content ?? '')}</textarea>
 
@@ -926,6 +928,57 @@ export function renderChronicleEditor(editor, pendingEvents, handlers) {
   document.getElementById('btn-rollback-chronicle').addEventListener('click', () => {
     if (confirm('Вернуть предыдущую опубликованную версию? Текущая опубликованная будет снята.')) handlers.onRollback();
   });
+}
+
+// T2.5: различия по словам (наибольшая общая подпоследовательность). Возвращает [было, стало] в HTML
+export function diffWordsHtml(before, after) {
+  const a = String(before || '').split(/(\s+)/).filter(Boolean);
+  const b = String(after || '').split(/(\s+)/).filter(Boolean);
+  if (a.length * b.length > 400000) return [escapeHtml(before), escapeHtml(after)];  // слишком длинно — без подсветки
+  const dp = Array.from({ length: a.length + 1 }, () => new Uint16Array(b.length + 1));
+  for (let i = a.length - 1; i >= 0; i--) for (let j = b.length - 1; j >= 0; j--)
+    dp[i][j] = a[i] === b[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+  let i = 0, j = 0, l = '', r = '';
+  while (i < a.length || j < b.length) {
+    if (i < a.length && j < b.length && a[i] === b[j]) { l += escapeHtml(a[i]); r += escapeHtml(b[j]); i++; j++; }
+    else if (j < b.length && (i >= a.length || dp[i][j + 1] >= dp[i + 1][j])) { r += /^\s+$/.test(b[j]) ? b[j] : `<ins>${escapeHtml(b[j])}</ins>`; j++; }
+    else { l += /^\s+$/.test(a[i]) ? a[i] : `<del>${escapeHtml(a[i])}</del>`; i++; }
+  }
+  return [l, r];
+}
+
+// T2.5: панель «было / стало» для вставки события в середину. Без «Принять» текст редактора не меняется
+export function renderInsertReview(result, { onAccept, onReject }) {
+  const box = document.getElementById('insert-review');
+  if (!box) return;
+  // разметку [[номер|фраза]] показываем читаемо: «фраза [№ номер]»
+  const plain = t => String(t || '').replace(/\[\[(\d+)\|([^\]]*)\]\]/g, '$2 [№\u00a0$1]');
+  const newAt = result.window.findIndex(w => w.id === 'new');
+  // неизменённые соседи — только край у места вставки
+  const edge = (t, i) => { const x = plain(t); return x.length <= 240 ? x : i < newAt ? '…' + x.slice(-220) : x.slice(0, 220) + '…'; };
+  const rows = result.window.map((w, i) => {
+    if (w.id === 'new') return `<div class="ir-row ir-new"><div class="ir-cell ir-empty">не было</div><div class="ir-cell"><b class="ir-tag">Новый абзац</b> <ins>${escapeHtml(plain(w.after))}</ins></div></div>`;
+    if (w.after == null) return `<div class="ir-row ir-same"><div class="ir-cell"><b class="ir-tag">${w.id} · без изменений</b> ${escapeHtml(edge(w.before, i))}</div></div>`;
+    const [l, r] = diffWordsHtml(plain(w.before), plain(w.after));
+    return `<div class="ir-row"><div class="ir-cell"><b class="ir-tag">${w.id} · было</b> ${l}</div><div class="ir-cell"><b class="ir-tag">${w.id} · стало</b> ${r}</div></div>`;
+  }).join('');
+  const changed = result.window.filter(w => w.id !== 'new' && w.after != null).length;
+  box.innerHTML = `
+    <h3>Вставка события № ${escapeHtml(result.usedIds.join(', '))} в середину летописи</h3>
+    <p class="ir-summary">${result.changesMeaning ? 'ИИ считает, что событие <b>меняет смысл</b> соседних абзацев.' : 'Смысл соседних абзацев не меняется, правятся только связки.'}
+      Изменено соседних абзацев: ${changed}.${result.note ? ` Пояснение ИИ: «${escapeHtml(result.note)}».` : ''}</p>
+    ${result.needsReview ? `<p class="ir-warn">${icon('alert')} Нужна проверка: ИИ не стал менять соседние абзацы. Прочитайте место вставки сами.</p>` : ''}
+    <div class="ir-head"><span>Было</span><span>Стало</span></div>
+    <div class="ir-rows">${rows}</div>
+    <div class="ir-actions">
+      <button class="btn-primary" id="btn-insert-accept">Принять вставку</button>
+      <button class="btn-secondary" id="btn-insert-reject">Отклонить</button>
+    </div>`;
+  box.hidden = false;
+  box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const close = () => { box.hidden = true; box.innerHTML = ''; };
+  box.querySelector('#btn-insert-accept').addEventListener('click', () => { close(); onAccept(); });
+  box.querySelector('#btn-insert-reject').addEventListener('click', () => { close(); onReject(); });
 }
 
 // ============================================
