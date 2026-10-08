@@ -124,6 +124,10 @@ export function renderProfile(profile, onEditClick) {
         <button class="btn-secondary" id="btn-manage-titles">Управление титулами</button>
         <button class="btn-danger" id="btn-logout">Выйти</button>
       </div>
+      <details class="profile-evidence" id="profile-evidence">
+        <summary>${icon('evidence')} Улики <small>(видите только вы)</small></summary>
+        <div id="evidence-list"><p>Загрузка…</p></div>
+      </details>
       <div class="profile-settings">
         <h4>Оформление</h4>
         <div class="theme-picker" id="theme-picker">
@@ -137,6 +141,7 @@ export function renderProfile(profile, onEditClick) {
 
   const btnEditProfile = document.getElementById('btn-edit-profile');
   if (btnEditProfile && onEditClick) btnEditProfile.addEventListener('click', () => onEditClick());
+  document.getElementById('profile-evidence')?.addEventListener('toggle', e => { if (e.target.open) renderEvidenceList(); });
 
   const btnManageTitles = document.getElementById('btn-manage-titles');
   if (btnManageTitles) btnManageTitles.addEventListener('click', () => showTitlesManager(profile));
@@ -706,8 +711,9 @@ export function renderChatMessages(messages, currentUserId, currentUserRole, onD
       div.innerHTML = `
         <div class="chat-message-header">
           ${clickableAuthor}
-          ${titlesText ? `<span class="chat-titles">[${titlesText}]</span>` : ''}
+          ${titlesText ? `<span class="chat-titles">[${escapeHtml(titlesText)}]</span>` : ''}
           <span class="chat-time">${time}</span>
+          <button class="btn-evidence-message" data-id="${msg.id}" title="Сохранить в улики (видите только вы)" aria-label="В улики">${icon('evidence')}</button>
           ${deleteBtn}
         </div>
         <div class="chat-message-text">${escapeHtml(msg.message_text)}</div>
@@ -715,6 +721,17 @@ export function renderChatMessages(messages, currentUserId, currentUserRole, onD
     }
     
     chatMessagesEl.appendChild(div);
+  });
+
+  chatMessagesEl.querySelectorAll('.btn-evidence-message').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      try {
+        const { addEvidence } = await import('./api.js');
+        const id = await addEvidence('message', btn.dataset.id);
+        showNotification(id ? 'Сообщение сохранено в ваши улики' : 'Это сообщение уже в уликах', 'success');
+      } catch (error) { showNotification(`Ошибка: ${error.message}`, 'error'); }
+    });
   });
 
   chatMessagesEl.querySelectorAll('.btn-delete-message').forEach(btn => {
@@ -1156,12 +1173,42 @@ function reactionsHtml(reactions, currentUserId, isOwnEvent) {
     ${witnesses.length ? `<p class="witness-list">${icon('witness')} Очевидцы: ${witnesses.map(escapeHtml).join(', ')}</p>` : ''}`;
 }
 
+// T2.2: список улик в своём профиле
+export async function renderEvidenceList() {
+  const box = document.getElementById('evidence-list');
+  if (!box) return;
+  const { getMyEvidence, removeEvidence } = await import('./api.js');
+  let items;
+  try { items = await getMyEvidence(); } catch (err) { box.innerHTML = `<p>Не удалось загрузить: ${escapeHtml(err.message)}</p>`; return; }
+  if (!items.length) { box.innerHTML = '<p class="empty-state">Пока пусто. Нажмите «Улика» в событии или значок папки у сообщения в чате.</p>'; return; }
+  box.innerHTML = `<ul class="evidence-items">${items.map(ev => `
+    <li class="evidence-item ${ev.original_deleted ? 'is-deleted' : ''}">
+      <div class="evidence-meta">
+        <span>${ev.target_type === 'event' ? 'Событие' : 'Сообщение'}</span>
+        <strong>${escapeHtml(ev.snapshot_author || 'Аноним')}</strong>
+        <span>${escapeHtml(ev.snapshot_date || new Date(ev.original_created_at || ev.created_at).toLocaleDateString('ru-RU'))}</span>
+        ${ev.original_deleted ? '<span class="evidence-deleted">оригинал удалён</span>' : ''}
+      </div>
+      <p>${escapeHtml(ev.snapshot_text)}</p>
+      <div class="evidence-foot">
+        <small>Хранится до ${new Date(ev.expires_at).toLocaleDateString('ru-RU')}</small>
+        <button class="btn-secondary btn-remove-evidence" data-type="${ev.target_type}" data-id="${escapeHtml(ev.target_id)}">Убрать</button>
+      </div>
+    </li>`).join('')}</ul>`;
+  box.querySelectorAll('.btn-remove-evidence').forEach(btn => btn.addEventListener('click', async () => {
+    try { await removeEvidence(btn.dataset.type, btn.dataset.id); renderEvidenceList(); }
+    catch (err) { showNotification(`Ошибка: ${err.message}`, 'error'); }
+  }));
+}
+
 export async function showEventModal(event, currentUserId, onReaction, onComment, onBookmark, onDeleteComment) {
   const { getEventReactions, getEventComments } = await import('./api.js');
   
   const reactions = await getEventReactions(event.id);
   const comments = await getEventComments(event.id);
 
+  const { hasEvidence, addEvidence, removeEvidence } = await import('./api.js');
+  let hasEv = await hasEvidence('event', event.id);
   const isOwnEvent = currentUserId && (String(event.user_id) === String(currentUserId) || String(event.submitted_by) === String(currentUserId));
   const modal = document.createElement('div');
   modal.className = 'modal';
@@ -1187,6 +1234,9 @@ export async function showEventModal(event, currentUserId, onReaction, onComment
       <div class="bookmark-section">
         <button class="btn-bookmark" id="btn-toggle-bookmark">
           ${icon('bookmark')} Добавить в закладки
+        </button>
+        <button class="btn-bookmark btn-evidence ${hasEv ? 'active' : ''}" id="btn-toggle-evidence" aria-pressed="${hasEv}" title="Тайно сохранить снимок в свои улики">
+          ${icon('evidence')} <span>${hasEv ? 'В уликах' : 'Улика'}</span>
         </button>
       </div>
 
@@ -1231,6 +1281,17 @@ export async function showEventModal(event, currentUserId, onReaction, onComment
       showNotification(`Ошибка: ${error.message}`, 'error');
       btn.disabled = false;
     }
+  });
+
+  modal.querySelector('#btn-toggle-evidence').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    try {
+      if (hasEv) await removeEvidence('event', event.id); else await addEvidence('event', event.id);
+      hasEv = !hasEv;
+      btn.classList.toggle('active', hasEv); btn.setAttribute('aria-pressed', hasEv);
+      btn.querySelector('span').textContent = hasEv ? 'В уликах' : 'Улика';
+      showNotification(hasEv ? 'Снимок сохранён в ваши улики. Его видите только вы.' : 'Убрано из улик', 'success');
+    } catch (error) { showNotification(`Ошибка: ${error.message}`, 'error'); }
   });
 
   modal.querySelector('#btn-toggle-bookmark').addEventListener('click', async () => {
