@@ -23,7 +23,7 @@ import {
   showSection, showNotification, updateUIForUser, updateUIForGuest,
   renderEvents, renderPendingEvents, renderProfile, renderEditProfileForm,
   renderChatMessages, showDeleteReasonModal, showUserProfile,
-  renderChronicle, renderChronicleEditor, renderTimeline, renderMap, renderBookmarks,
+  renderChronicle, renderChronicleEditor, renderInsertReview, renderTimeline, renderMap, renderBookmarks,
   showEventModal, showEditEventModal, eventTagsPickerHtml, readEventTags,
   openModal, closeModal, setupModalCloseHandlers
 } from './ui.js';
@@ -474,35 +474,53 @@ async function handlePublishChronicle(content) {
 
 async function handleGenerateChronicle() {
   try {
-    const allPending = await getLoreSignificantEventsNotInChronicle();
+    const textarea = document.getElementById('chronicle-textarea');
+    const baseText = textarea ? textarea.value : (chronicleData?.content || '');
+    // события, уже вплетённые в текст редактора (но ещё не опубликованные), второй раз не отправляем
+    const inText = new Set([...baseText.matchAll(/\[\[(\d+)\|/g)].map(m => Number(m[1])));
+    const allPending = (await getLoreSignificantEventsNotInChronicle()).filter(e => !inText.has(Number(e.id)));
     // ai.batch_size из настроек; сервер ИИ принимает не больше 5 за раз
     const batch = Math.min(5, Math.max(1, Number(await getSettingValue('ai.batch_size', 5)) || 5));
     const pendingEvents = allPending.slice(0, batch);
-    if (allPending.length > batch) showNotification(`За раз вплетаю ${batch} из ${allPending.length}. Остальные — следующим нажатием.`, 'info');
     if (pendingEvents.length === 0) {
       showNotification('Нет новых значимых событий для добавления', 'error');
       return;
     }
+    if (allPending.length > batch) showNotification(`За раз беру ${batch} из ${allPending.length}. Остальные — следующим нажатием.`, 'info');
     const btn = document.getElementById('btn-generate-chronicle');
     if (btn) { btn.disabled = true; btn.textContent = 'Летописец пишет...'; }
-    showNotification(`Летописец вплетает событий: ${pendingEvents.length}. Обычно это 15–40 секунд, максимум около двух минут.`, 'info');
-    const textarea = document.getElementById('chronicle-textarea');
-    const baseText = textarea ? textarea.value : (chronicleData?.content || '');
+    showNotification(`Летописец работает с событиями: ${pendingEvents.length}. Обычно это 15–40 секунд, максимум около двух минут.`, 'info');
     let result;
     try {
       result = await generateChronicleText(baseText, pendingEvents);
     } finally {
       if (btn) { btn.disabled = false; btn.textContent = 'Дописать с ИИ'; }
     }
-    generatedEventIds = result.usedIds.length ? result.usedIds : pendingEvents.map(e => e.id);
-    if (textarea) {
-      textarea.value = result.text;
-      textarea.dispatchEvent(new Event('input'));
+    const acceptText = () => {
+      if (textarea) { textarea.value = result.text; textarea.dispatchEvent(new Event('input')); }
+      generatedEventIds = [...new Set([...generatedEventIds, ...result.usedIds])];
+      generatedFlags = [...generatedFlags, ...result.reviewFlags];
+    };
+    // T2.5: вставка в середину — сначала админ сравнивает «было / стало» и подтверждает
+    if (result.mode === 'insert') {
+      renderInsertReview(result, {
+        onAccept: () => {
+          if (textarea && textarea.value !== baseText && !confirm('Текст в редакторе изменился, пока ИИ работал. Вставка заменит эти правки. Продолжить?')) {
+            showNotification('Вставка не применена, ваши правки сохранены в редакторе.', 'info');
+            return;
+          }
+          acceptText();
+          showNotification(`Вставка принята в текст редактора. Проверьте, сохраните черновик или опубликуйте.${result.remaining ? ' Остальные события — следующим нажатием «Дописать с ИИ».' : ''}`, 'success');
+        },
+        onReject: () => showNotification('Вставка отклонена, текст не изменён.', 'info')
+      });
+      if (result.reviewFlags.length) showNotification(`Проверьте: ${result.reviewFlags.join('; ')}`, 'info');
+      return;
     }
+    acceptText();
     const missed = pendingEvents.filter(e => !result.usedIds.includes(e.id));
     if (missed.length) showNotification(`ИИ не отметил событий: ${missed.length}. Проверь текст или сгенерируй ещё раз.`, 'error');
-    generatedFlags = result.reviewFlags;
-    if (generatedFlags.length) showNotification(`Проверьте: ${generatedFlags.join('; ')}`, 'info');
+    if (result.reviewFlags.length) showNotification(`Проверьте: ${result.reviewFlags.join('; ')}`, 'info');
     showNotification('Текст дописан. Проверьте, сохраните черновик или опубликуйте.', 'success');
   } catch (error) {
     showNotification(`Ошибка генерации: ${error.message}`, 'error');

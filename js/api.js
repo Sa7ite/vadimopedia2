@@ -438,7 +438,12 @@ export async function generateChronicleText(currentContent, newEvents) {
     throw new Error(`Ошибка ИИ: ${msg}`);
   }
   if (!data?.text) throw new Error('ИИ вернул пустой ответ');
-  return { text: data.text, usedIds: data.usedIds || [], model: data.model, reviewFlags: data.review_flags || [], notes: data.notes || [] };
+  return {
+    text: data.text, usedIds: data.usedIds || [], model: data.model, reviewFlags: data.review_flags || [], notes: data.notes || [],
+    // T2.5: вставка в середину — окно «было / стало» и решение ИИ о смысле
+    mode: data.mode || 'append', window: data.window || [], changesMeaning: !!data.changes_meaning, needsReview: !!data.needs_review,
+    note: data.note || '', remaining: data.remaining || 0
+  };
 }
 
 // ============================================
