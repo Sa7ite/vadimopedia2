@@ -64,7 +64,7 @@ async function initApp() {
   onAuthStateChange(async (event, session) => {
     if (session) {
       currentProfile = await getProfileWithTitles(session.user.id);
-      getChronicle().then(c => window.vpChronicleCheck?.(c)).catch(() => {});
+      loadUserCount(session);
       window.handleSaveProfile = handleSaveProfile;
       updateUIForUser(session.user, currentProfile, () => renderEditProfileForm(currentProfile, handleSaveProfile));
       await loadEvents();
@@ -100,7 +100,10 @@ function openSectionFromHash() {
   if (!link.classList.contains('active')) link.click();
 }
 
-async function loadUserCount() {
+async function loadUserCount(session) {
+  // гости (без входа) данные базы не читают: показываем приглашение войти
+  if (session === undefined) ({ data: { session } } = await supabase.auth.getSession());
+  if (!session) { const u = document.getElementById('stat-users'); if (u) u.textContent = '—'; return; }
   getChronicle().then(c => window.vpChronicleCheck?.(c)).catch(() => {});
   getApprovedEvents(500).then(ev => window.vpVadimOfDay?.(ev, handleShowEventModal)).catch(() => {});
   const count = await getUserCount();
@@ -266,6 +269,13 @@ async function handleSaveProfile() {
 
 // ИСПРАВЛЕНИЕ 1: Передаём currentUserId в renderEvents
 async function loadEvents() {
+  if (!currentProfile) {
+    const list = document.getElementById('events-list');
+    if (list) list.innerHTML = '<li class="empty-state">Картотека доступна участникам. Войдите или станьте Вадимом, чтобы читать события.</li>';
+    const st = document.getElementById('stat-events');
+    if (st) st.textContent = '—';
+    return;
+  }
   const events = await getApprovedEvents();
   const onAuthorClick = currentProfile ? handleAuthorClick : null;
   const onEditEvent = currentProfile ? handleEditEvent : null;
