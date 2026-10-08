@@ -20,11 +20,11 @@ export async function registerUser(email, password, fullName, city) {
   });
 
   if (error) {
-    showNotification(`❌ Ошибка регистрации: ${error.message}`, 'error');
+    showNotification(`Ошибка регистрации: ${error.message}`, 'error');
     return null;
   }
 
-  showNotification('✅ Регистрация успешна! Проверьте почту для подтверждения.', 'success');
+  showNotification('Регистрация успешна! Проверьте почту для подтверждения.', 'success');
   return data;
 }
 
@@ -36,11 +36,11 @@ export async function loginUser(email, password) {
   });
 
   if (error) {
-    showNotification(`❌ Ошибка входа: ${error.message}`, 'error');
+    showNotification(`Ошибка входа: ${error.message}`, 'error');
     return null;
   }
 
-  showNotification('✅ Добро пожаловать!', 'success');
+  showNotification('Добро пожаловать!', 'success');
   return data;
 }
 
@@ -48,10 +48,10 @@ export async function loginUser(email, password) {
 export async function logoutUser() {
   const { error } = await supabase.auth.signOut();
   if (error) {
-    showNotification(`❌ Ошибка выхода: ${error.message}`, 'error');
+    showNotification(`Ошибка выхода: ${error.message}`, 'error');
     return;
   }
-  showNotification('👋 До свидания!', 'info');
+  showNotification('До свидания!', 'info');
 }
 
 // Отслеживание изменения сессии (автоматически вызывается при входе/выходе)

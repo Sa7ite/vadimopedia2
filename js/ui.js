@@ -1,3 +1,4 @@
+import { icon } from './icons.js';
 // ============================================
 // МОДУЛЬ ИНТЕРФЕЙСА
 // ============================================
@@ -89,7 +90,14 @@ function formatTitles(userTitles) {
   if (!userTitles || !Array.isArray(userTitles) || userTitles.length === 0) return '';
   const activeTitles = userTitles.filter(ut => ut && ut.titles && ut.is_active !== false);
   if (activeTitles.length === 0) return '';
-  return activeTitles.map(ut => ut.titles.title_name).join(', ');
+  return activeTitles.map(ut => escapeHtml(ut.titles.title_name)).join(', ');
+}
+
+// D6: в профиле титулы выводятся стопкой, по одному в строке
+function formatTitlesList(userTitles) {
+  const active = (userTitles || []).filter(ut => ut && ut.titles && ut.is_active !== false);
+  if (!active.length) return '';
+  return `<ul class="profile-titles">${active.map(ut => `<li>${icon('star')} ${escapeHtml(ut.titles.title_name)}</li>`).join('')}</ul>`;
 }
 
 export function renderProfile(profile, onEditClick) {
@@ -97,7 +105,7 @@ export function renderProfile(profile, onEditClick) {
   if (!profileContent || !profile) return;
 
   const avatarUrl = getAvatarUrl(profile);
-  const titlesText = formatTitles(profile.user_titles);
+  const titlesText = formatTitlesList(profile.user_titles);
 
   profileContent.innerHTML = `
     <div class="profile-card">
@@ -105,9 +113,9 @@ export function renderProfile(profile, onEditClick) {
         <img src="${avatarUrl}" alt="Аватар" class="profile-avatar">
         <div class="profile-info">
           <h3>${escapeHtml(profile.full_name || 'Без имени')}</h3>
-          ${titlesText ? `<div class="profile-titles">${titlesText}</div>` : ''}
-          <p class="profile-location">📍 ${escapeHtml(profile.city || 'Локация не указана')}</p>
-          <p class="profile-role">🎭 Роль: ${profile.role}</p>
+          ${titlesText}
+          <p class="profile-location">${icon('pin')} ${escapeHtml(profile.city || 'Локация не указана')}</p>
+          <p class="profile-role">${icon('badge')} Роль: ${profile.role}</p>
         </div>
       </div>
       ${profile.bio ? `<div class="profile-bio"><h4>О себе</h4><p>${escapeHtml(profile.bio)}</p></div>` : ''}
@@ -116,8 +124,16 @@ export function renderProfile(profile, onEditClick) {
         <button class="btn-secondary" id="btn-manage-titles">Управление титулами</button>
         <button class="btn-danger" id="btn-logout">Выйти</button>
       </div>
+      <div class="profile-settings">
+        <h4>Оформление</h4>
+        <div class="theme-picker" id="theme-picker">
+          <button type="button" data-t="dossier">Секретное досье</button>
+          <button type="button" data-t="agit">Агитпроп</button>
+        </div>
+      </div>
     </div>
   `;
+  window.vpMarkTheme?.();
 
   const btnEditProfile = document.getElementById('btn-edit-profile');
   if (btnEditProfile && onEditClick) btnEditProfile.addEventListener('click', () => onEditClick());
@@ -158,7 +174,7 @@ async function showTitlesManager(profile) {
   if (isAdmin) {
     titlesHTML = `
       <div class="titles-section">
-        <h3>🏆 Базовые титулы</h3>
+        <h3>${icon('trophy')} Базовые титулы</h3>
         <div class="titles-grid">
           ${commonTitles.map(title => {
             const isActive = tempActiveTitles.includes(title.id);
@@ -166,14 +182,14 @@ async function showTitlesManager(profile) {
               <div class="title-card ${isActive ? 'selected' : ''}" data-title-id="${title.id}" data-type="common">
                 <div class="title-name">${escapeHtml(title.title_name)}</div>
                 <div class="title-desc">${escapeHtml(title.description || '')}</div>
-                <button class="btn-delete-title" data-title-id="${title.id}">🗑️ Удалить</button>
+                <button class="btn-delete-title" data-title-id="${title.id}">${icon('trash')} Удалить</button>
               </div>
             `;
           }).join('')}
         </div>
       </div>
       <div class="titles-section">
-        <h3>⭐ Особые титулы</h3>
+        <h3>${icon('star')} Особые титулы</h3>
         <div class="titles-grid">
           ${specialTitles.map(title => {
             const isActive = tempActiveTitles.includes(title.id);
@@ -181,7 +197,7 @@ async function showTitlesManager(profile) {
               <div class="title-card special ${isActive ? 'selected' : ''}" data-title-id="${title.id}" data-type="special">
                 <div class="title-name">${escapeHtml(title.title_name)}</div>
                 <div class="title-desc">${escapeHtml(title.description || '')}</div>
-                <button class="btn-delete-title" data-title-id="${title.id}">🗑️ Удалить</button>
+                <button class="btn-delete-title" data-title-id="${title.id}">${icon('trash')} Удалить</button>
               </div>
             `;
           }).join('')}
@@ -217,7 +233,7 @@ async function showTitlesManager(profile) {
               <div class="title-card ${isActive ? 'selected' : ''} ${isSpecial ? 'special' : ''}" data-title-id="${ut.title_id}" data-type="${ut.titles.title_type}" data-unlocked="true">
                 <div class="title-name">${escapeHtml(ut.titles.title_name)}</div>
                 <div class="title-desc">${escapeHtml(ut.titles.description || '')}</div>
-                <div class="title-status">${isActive ? '✅ Надет' : '⬜ Снят'}</div>
+                <div class="title-status">${isActive ? 'Надет' : 'Снят'}</div>
               </div>
             `;
           }).join('')}
@@ -225,7 +241,7 @@ async function showTitlesManager(profile) {
       </div>
       ${availableCommon.length > 0 ? `
         <div class="titles-section">
-          <h3>🏆 Доступные базовые титулы</h3>
+          <h3>${icon('trophy')} Доступные базовые титулы</h3>
           <p class="request-hint">Нажмите, чтобы получить титул</p>
           <div class="titles-grid">
             ${availableCommon.map(title => `
@@ -239,7 +255,7 @@ async function showTitlesManager(profile) {
       ` : ''}
       ${availableSpecial.length > 0 ? `
         <div class="titles-section">
-          <h3>⭐ Особые титулы</h3>
+          <h3>${icon('star')} Особые титулы</h3>
           <p class="request-hint">Нажмите "Запросить", чтобы отправить запрос администратору</p>
           <div class="titles-grid">
             ${availableSpecial.map(title => `
@@ -307,7 +323,7 @@ async function showTitlesManager(profile) {
           tempActiveTitles.push(titleId);
           card.classList.add('selected');
           const statusEl = card.querySelector('.title-status');
-          if (statusEl) statusEl.textContent = '✅ Надет';
+          if (statusEl) statusEl.textContent = 'Надет';
         }
       } else {
         if (titleType === 'common' && currentCount >= 3) {
@@ -320,7 +336,7 @@ async function showTitlesManager(profile) {
         card.dataset.unlocked = 'true';
         const statusDiv = document.createElement('div');
         statusDiv.className = 'title-status';
-        statusDiv.textContent = '✅ Надет';
+        statusDiv.textContent = 'Надет';
         card.appendChild(statusDiv);
       }
       
@@ -441,8 +457,8 @@ export async function showUserProfile(userId, currentUserId) {
           <div class="profile-info">
             <h3>${escapeHtml(profile.full_name || 'Без имени')}</h3>
             ${titlesText ? `<div class="profile-titles">${titlesText}</div>` : ''}
-            <p class="profile-location">📍 ${escapeHtml(profile.city || 'Локация не указана')}</p>
-            <p class="profile-role">🎭 Роль: ${profile.role}</p>
+            <p class="profile-location">${icon('pin')} ${escapeHtml(profile.city || 'Локация не указана')}</p>
+            <p class="profile-role">${icon('badge')} Роль: ${profile.role}</p>
           </div>
         </div>
         ${profile.bio ? `<div class="profile-bio"><h4>О себе</h4><p>${escapeHtml(profile.bio)}</p></div>` : ''}
@@ -456,7 +472,7 @@ export async function showUserProfile(userId, currentUserId) {
               <div class="user-event-item">
                 <div class="user-event-header">
                   <span class="event-date">${date}</span>
-                  ${event.city ? `<span class="badge">📍 ${escapeHtml(event.city)}</span>` : ''}
+                  ${event.city ? `<span class="badge">${icon('pin')} ${escapeHtml(event.city)}</span>` : ''}
                 </div>
                 <p class="event-text">${escapeHtml(event.event_text)}</p>
               </div>
@@ -545,7 +561,7 @@ export function renderEvents(events, currentUserRole, currentUserId, onDeleteEve
     const isAuthor = String(event.user_id) === String(currentUserId);
     // ИСПРАВЛЕНИЕ 2: Админ редактирует только значимые, юзер - свои незначимые
     const canEdit = isAdmin ? event.is_lore_significant : (isAuthor && !event.is_lore_significant);
-    const editButton = canEdit ? `<button class="btn-edit-event" data-id="${event.id}">✏️ Редактировать</button>` : '';
+    const editButton = canEdit ? `<button class="btn-edit-event" data-id="${event.id}">${icon('pencil')} Редактировать</button>` : '';
     
     const authorName = event.profiles?.full_name || 'Аноним';
     const authorId = event.user_id;
@@ -556,7 +572,7 @@ export function renderEvents(events, currentUserRole, currentUserId, onDeleteEve
       ? `<span class="badge badge-lore"> Значимое</span>` 
       : '';
     const chronicleBadge = event.is_in_chronicle 
-      ? `<span class="badge badge-chronicle">✅ В летописи</span>` 
+      ? `<span class="badge badge-chronicle">${icon('check')} В летописи</span>` 
       : '';
     
     li.innerHTML = `
@@ -565,7 +581,7 @@ export function renderEvents(events, currentUserRole, currentUserId, onDeleteEve
         <span class="event-date">${date}</span>
       </div>
       <p class="event-text">${escapeHtml(event.event_text)}</p>
-      ${event.city ? `<span class="badge">📍 ${escapeHtml(event.city)}</span>` : ''}
+      ${event.city ? `<span class="badge">${icon('pin')} ${escapeHtml(event.city)}</span>` : ''}
       ${loreBadge}
       ${chronicleBadge}
       ${editButton}
@@ -615,10 +631,10 @@ export function renderPendingEvents(events, onApprove, onReject) {
         <span class="event-date">${date}</span>
       </div>
       <p class="event-text">${escapeHtml(event.event_text)}</p>
-      ${event.city ? `<span class="badge">📍 ${escapeHtml(event.city)}</span>` : ''}
-      ${event.event_date ? `<span class="badge">📅 ${escapeHtml(event.event_date)}</span>` : ''}
-      ${event.is_lore_significant ? '<span class="badge badge-lore">⭐ Значимое для летописи</span>' : ''}
-      ${event.as_chronicler ? '<span class="badge badge-lore">📜 Просит опубликовать от имени Летописца</span>' : ''}
+      ${event.city ? `<span class="badge">${icon('pin')} ${escapeHtml(event.city)}</span>` : ''}
+      ${event.event_date ? `<span class="badge">${icon('calendar')} ${escapeHtml(event.event_date)}</span>` : ''}
+      ${event.is_lore_significant ? `<span class="badge badge-lore">${icon('star')} Значимое для летописи</span>` : ''}
+      ${event.as_chronicler ? `<span class="badge badge-lore">${icon('scroll')} Просит опубликовать от имени Летописца</span>` : ''}
       <div class="pending-event-actions">
         <button class="btn-approve" data-id="${event.id}">Одобрить</button>
         <button class="btn-reject" data-id="${event.id}">Отклонить</button>
@@ -827,10 +843,10 @@ export function renderChronicleEditor(chronicle, pendingEvents, onSave, onGenera
   content.innerHTML = `
     <div class="chronicle-editor">
       <div class="editor-header">
-        <h2>✏️ Редактор летописи</h2>
+        <h2>${icon('pencil')} Редактор летописи</h2>
         <div class="editor-actions">
           <button class="btn-primary" id="btn-generate-chronicle">Сгенерировать с ИИ</button>
-          <button class="btn-secondary" id="btn-rollback-chronicle">↩️ Откатить</button>
+          <button class="btn-secondary" id="btn-rollback-chronicle">${icon('undo')} Откатить</button>
           <button class="btn-primary" id="btn-save-chronicle"> Сохранить</button>
         </div>
       </div>
@@ -843,9 +859,9 @@ export function renderChronicleEditor(chronicle, pendingEvents, onSave, onGenera
               <div class="pending-event-card" data-id="${e.id}">
                 <strong>${escapeHtml(e.event_text)}</strong>
                 <div class="event-meta">
-                  <span>👤 ${escapeHtml(e.profiles?.full_name || 'Аноним')}</span>
-                  ${e.event_date ? `<span>📅 ${escapeHtml(e.event_date)}</span>` : ''}
-                  ${e.city ? `<span>📍 ${escapeHtml(e.city)}</span>` : ''}
+                  <span>${icon('user')} ${escapeHtml(e.profiles?.full_name || 'Аноним')}</span>
+                  ${e.event_date ? `<span>${icon('calendar')} ${escapeHtml(e.event_date)}</span>` : ''}
+                  ${e.city ? `<span>${icon('pin')} ${escapeHtml(e.city)}</span>` : ''}
                 </div>
               </div>
             `).join('')}
@@ -855,10 +871,10 @@ export function renderChronicleEditor(chronicle, pendingEvents, onSave, onGenera
       
       <textarea id="chronicle-textarea" rows="20" placeholder="Текст летописи...">${escapeHtml(chronicle?.content || '')}</textarea>
       
-      <div class="editor-preview">
-        <h3>👁️ Предпросмотр</h3>
+      <details class="editor-preview">
+        <summary>${icon('eye')} Предпросмотр</summary>
         <div id="chronicle-preview" class="chronicle-text"></div>
-      </div>
+      </details>
     </div>
   `;
 
@@ -914,7 +930,7 @@ export function renderTimeline(events, onEventClick) {
 
   content.innerHTML = `
     <div class="timeline-container">
-      <h2>📅 Таймлайн событий</h2>
+      <h2>${icon('calendar')} Таймлайн событий</h2>
       <div class="timeline">
         ${years.map(year => `
           <div class="timeline-year">
@@ -926,9 +942,9 @@ export function renderTimeline(events, onEventClick) {
                   <div class="event-card">
                     <strong>${escapeHtml(e.event_text)}</strong>
                     <div class="event-meta">
-                      <span>👤 ${escapeHtml(e.profiles?.full_name || 'Аноним')}</span>
-                      ${e.event_date ? `<span>📅 ${escapeHtml(e.event_date)}</span>` : ''}
-                      ${e.city ? `<span>📍 ${escapeHtml(e.city)}</span>` : ''}
+                      <span>${icon('user')} ${escapeHtml(e.profiles?.full_name || 'Аноним')}</span>
+                      ${e.event_date ? `<span>${icon('calendar')} ${escapeHtml(e.event_date)}</span>` : ''}
+                      ${e.city ? `<span>${icon('pin')} ${escapeHtml(e.city)}</span>` : ''}
                     </div>
                   </div>
                 </div>
@@ -965,7 +981,7 @@ export function renderMap(events, onEventClick) {
 
   content.innerHTML = `
     <div class="map-container">
-      <h2>🗺️ Карта событий</h2>
+      <h2>${icon('map')} Карта событий</h2>
       <div id="map" style="height: 500px; border-radius: 12px;"></div>
       <div class="map-legend">
         <h3>События по городам:</h3>
@@ -1085,7 +1101,7 @@ export function renderBookmarks(bookmarks, onEventClick) {
 
   content.innerHTML = `
     <div class="bookmarks-container">
-      <h2>🔖 Мои закладки</h2>
+      <h2>${icon('bookmark')} Мои закладки</h2>
       <div class="bookmarks-list">
         ${bookmarks.map(e => `
           <div class="bookmark-card" data-id="${e.id}">
@@ -1095,8 +1111,8 @@ export function renderBookmarks(bookmarks, onEventClick) {
             </div>
             <p class="event-text">${escapeHtml(e.event_text)}</p>
             <div class="event-meta">
-              ${e.event_date ? `<span>📅 ${escapeHtml(e.event_date)}</span>` : ''}
-              ${e.city ? `<span>📍 ${escapeHtml(e.city)}</span>` : ''}
+              ${e.event_date ? `<span>${icon('calendar')} ${escapeHtml(e.event_date)}</span>` : ''}
+              ${e.city ? `<span>${icon('pin')} ${escapeHtml(e.city)}</span>` : ''}
             </div>
           </div>
         `).join('')}
@@ -1148,8 +1164,8 @@ export async function showEventModal(event, currentUserId, onReaction, onComment
       <div class="event-detail-header">
         <h3>${escapeHtml(event.event_text)}</h3>
         <div class="event-detail-meta">
-          <span>👤 ${escapeHtml(event.profiles?.full_name || 'Аноним')}</span>
-          ${event.event_date ? `<span>📅 ${escapeHtml(event.event_date)}</span>` : ''}
+          <span>${icon('user')} ${escapeHtml(event.profiles?.full_name || 'Аноним')}</span>
+          ${event.event_date ? `<span>${icon('calendar')} ${escapeHtml(event.event_date)}</span>` : ''}
           <button class="btn-secondary share-btn" data-share="${encodeURIComponent((event.event_date ? event.event_date + ' — ' : '') + event.event_text)}">Поделиться</button>
           ${event.city ? `<span> ${escapeHtml(event.city)}</span>` : ''}
         </div>
@@ -1168,7 +1184,7 @@ export async function showEventModal(event, currentUserId, onReaction, onComment
 
       <div class="bookmark-section">
         <button class="btn-bookmark" id="btn-toggle-bookmark">
-          🔖 Добавить в закладки
+          ${icon('bookmark')} Добавить в закладки
         </button>
       </div>
 
@@ -1180,7 +1196,7 @@ export async function showEventModal(event, currentUserId, onReaction, onComment
               <div class="comment-header">
                 <strong>${escapeHtml(c.profiles?.full_name || 'Аноним')}</strong>
                 <span class="comment-date">${new Date(c.created_at).toLocaleDateString('ru-RU')}</span>
-                ${c.user_id === currentUserId ? `<button class="btn-delete-comment" data-id="${c.id}">🗑️</button>` : ''}
+                ${c.user_id === currentUserId ? `<button class="btn-delete-comment" data-id="${c.id}">${icon('trash')} </button>` : ''}
               </div>
               <p class="comment-text">${escapeHtml(c.comment_text)}</p>
             </div>
@@ -1236,7 +1252,7 @@ export async function showEventModal(event, currentUserId, onReaction, onComment
     try {
       const result = await onBookmark(event.id);
       const btn = modal.querySelector('#btn-toggle-bookmark');
-      btn.textContent = result.action === 'added' ? '🔖 В закладках' : ' Добавить в закладки';
+      btn.textContent = result.action === 'added' ? 'В закладках' : 'Добавить в закладки';
     } catch (error) {
       showNotification(`Ошибка: ${error.message}`, 'error');
     }
