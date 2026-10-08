@@ -113,3 +113,10 @@ html,body{overflow-x:hidden}
 #profile-content .profile-card{max-width:none;margin:0;border:0!important;box-shadow:none!important;background:transparent!important;padding:24px}
 .hero{padding:24px 0 40px}
 body.guest .hero-stats{display:none}
+/* T1.3: правила и галочка */
+.rules-check{display:flex;gap:10px;align-items:flex-start;margin:6px 0 16px;font-size:.95rem;cursor:pointer;text-align:left}
+.rules-check input{width:20px;height:20px;flex:none;margin-top:2px}
+.rules-check a,footer a{color:inherit;text-decoration:underline}
+.rules-content{max-width:640px;text-align:left}
+.rules-list{padding-left:22px;line-height:1.6}.rules-list li{margin-bottom:8px}
+#modal-rules{z-index:10001}

@@ -314,25 +314,6 @@ export function disconnectFromPresence(channel) {
 // АВАТАР
 // ============================================
 
-export async function uploadAvatar(file, userId) {
-  if (file.size > 2 * 1024 * 1024) throw new Error('Файл слишком большой. Максимум 2 МБ');
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-  if (!allowedTypes.includes(file.type)) throw new Error('Недопустимый формат. Используйте JPG, PNG или WebP');
-
-  const compressedFile = await compressImage(file);
-  const fileName = `${userId}/${Date.now()}.jpg`;
-
-  const { error } = await supabase.storage.from('avatars').upload(fileName, compressedFile, { cacheControl: '3600', upsert: true });
-  if (error) throw new Error(`Ошибка загрузки: ${error.message}`);
-
-  // храним только одно фото: удаляем старые файлы пользователя
-  const { data: oldFiles } = await supabase.storage.from('avatars').list(userId);
-  const toRemove = (oldFiles || []).map(f => `${userId}/${f.name}`).filter(p => p !== fileName);
-  if (toRemove.length) await supabase.storage.from('avatars').remove(toRemove);
-
-  const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName);
-  return publicUrl;
-}
 
 function compressImage(file) {
   return new Promise((resolve, reject) => {
