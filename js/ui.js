@@ -79,10 +79,10 @@ export function updateUIForGuest() {
 }
 
 function getAvatarUrl(profile) {
-  if (profile.avatar_url) return profile.avatar_url;
+  // T1.4: фото профиля убраны; до появления аватара — инициалы в круге
   const words = (profile.full_name || 'Вадим').match(/[A-Za-zА-Яа-яЁё0-9]+/g) || ['В'];
   const initials = words.slice(0, 2).map(w => w[0]).join('').toUpperCase();
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150"><rect width="150" height="150" fill="#6a11cb"/><text x="75" y="75" font-family="Arial" font-size="60" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">${initials}</text></svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150"><circle cx="75" cy="75" r="73" fill="#efe6d2" stroke="#222" stroke-width="3"/><text x="75" y="78" font-family="PT Mono,Courier New,monospace" font-size="56" font-weight="bold" fill="#222" text-anchor="middle" dominant-baseline="middle">${initials}</text></svg>`;
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
@@ -502,8 +502,6 @@ export function renderEditProfileForm(profile, onSave) {
       <h3 class="edit-form-title">Редактирование профиля</h3>
       <div class="avatar-section">
         <img src="${avatarUrl}" alt="Аватар" class="profile-avatar" id="avatar-preview">
-        <input type="file" id="avatar-input" accept="image/jpeg,image/png,image/webp" style="display: none;">
-        <button type="button" class="btn-secondary" id="btn-change-avatar">Изменить фото</button>
       </div>
       <form id="form-edit-profile">
         <div class="form-input-group">

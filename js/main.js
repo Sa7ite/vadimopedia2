@@ -4,7 +4,7 @@
 import { supabase } from './config.js';
 import { 
   getProfileWithTitles, getUserCount, getApprovedEvents, getPendingEvents,
-  addEvent, updateEvent, uploadAvatar, updateProfile, approveEvent, rejectEvent, deleteEvent,
+  addEvent, updateEvent, updateProfile, approveEvent, rejectEvent, deleteEvent,
   getChatMessages, sendChatMessage, softDeleteChatMessage, hardDeleteChatMessage,
   subscribeToChatMessages, unsubscribeFromChatMessages,
   connectToPresence, disconnectFromPresence,
@@ -160,10 +160,17 @@ function setupForms() {
     });
   }
   
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('[data-open-rules]')) return;
+    e.preventDefault();
+    openModal('modal-rules');
+  });
+
   const formRegister = document.getElementById('form-register');
   if (formRegister) {
     formRegister.addEventListener('submit', async (e) => {
       e.preventDefault();
+      if (!document.getElementById('register-rules')?.checked) { showNotification('Нужно принять правила', 'error'); return; }
       await registerUser(
         document.getElementById('register-email').value,
         document.getElementById('register-password').value,
@@ -246,17 +253,11 @@ async function handleSaveProfile() {
   const name = document.getElementById('edit-name').value;
   const location = document.getElementById('edit-location').value;
   const bio = document.getElementById('edit-bio').value;
-  const avatarInput = document.getElementById('avatar-input');
-  const avatarFile = avatarInput.files[0];
   
   showNotification('Сохранение...', 'info');
   
   try {
-    let avatarUrl = null;
-    if (avatarFile) avatarUrl = await uploadAvatar(avatarFile, user.id);
-    
     const updates = { full_name: name, city: location, bio: bio };
-    if (avatarUrl) updates.avatar_url = avatarUrl;
     
     await updateProfile(user.id, updates);
     showNotification('Профиль обновлен!', 'success');

@@ -14,7 +14,8 @@ export async function registerUser(email, password, fullName, city) {
       emailRedirectTo: window.location.origin,
       data: {
         full_name: fullName,
-        city: city
+        city: city,
+        rules_accepted_at: new Date().toISOString()
       }
     }
   });
