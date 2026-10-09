@@ -832,3 +832,10 @@ export function subscribeNotifications(userId, onNew) {
     .subscribe();
 }
 export function unsubscribeNotifications(ch) { if (ch) supabase.removeChannel(ch); }
+
+// T3.2б: фракция каждого участника (для группировки картотеки по фракции автора)
+export async function getFactionOfUsers() {
+  const { data, error } = await supabase.from('faction_members').select('user_id, factions(name)');
+  if (error) return {};
+  return Object.fromEntries((data || []).filter(r => r.factions?.name).map(r => [String(r.user_id), r.factions.name]));
+}

@@ -24,6 +24,7 @@ import { renderCases, openCaseAgainst, checkDoorKnock } from './cases.js';
 import { renderQueue, renderMySubmissions, reportFlow } from './moderation.js';
 import { setupBell, teardownBell } from './bell.js';
 import { renderDesk } from './desk.js';
+import { getFactionOfUsers } from './api.js';
 import { getArrest, getMessageReactions, getMessageById, muteUser, getMyMute, getEventOfDay, getMentionables, getUserFaction, getFactions } from './api.js';
 import { registerUser, loginUser, logoutUser, onAuthStateChange } from './auth.js';
 import { validateDate, geocodePlace } from './validation.js';
@@ -354,7 +355,8 @@ async function loadEvents() {
     renderDesk(null);
     return;
   }
-  const [allEvents, counts, polls] = await Promise.all([getApprovedEvents(), getReactionCounts(), getYearPolls()]);
+  const [allEvents, counts, polls, factionOf] = await Promise.all([getApprovedEvents(), getReactionCounts(), getYearPolls(), getFactionOfUsers()]);
+  window.vpFactionOf = factionOf;
   // T2.8: значок «Событие года» у победителей
   const awards = Object.fromEntries(polls.filter(p => p.winner_event).map(p => [String(p.winner_event), p.year]));
   allEvents.forEach(e => { e.rc = counts[String(e.id)] || { likes: 0, dislikes: 0, witnesses: 0, score: 0 }; e.year_award = awards[String(e.id)] || null; });
@@ -959,6 +961,32 @@ document.addEventListener('click', (e) => {
   if (ev) handleShowEventModal(ev);
 });
 document.getElementById('events-sort')?.addEventListener('change', () => loadEvents());
+// T3.2б: переключатель группировки перерисовывает ящик без новых запросов
+function redrawEvents() {
+  if (!currentProfile || !feedEvents) return;
+  renderEvents(feedEvents, currentProfile.role, currentProfile.id, handleDeleteEvent, handleAuthorClick, handleEditEvent);
+  const q = document.getElementById('events-search');
+  if (q?.value) q.dispatchEvent(new Event('input', { bubbles: true }));
+}
+document.getElementById('ev-grouper')?.addEventListener('click', (e) => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  if (b.dataset.group) localStorage.setItem('vpGroup', b.dataset.group);
+  else if (b.id === 'ev-group-first') localStorage.setItem('vpGroupFirst', localStorage.getItem('vpGroupFirst') === 'years' ? 'groups' : 'years');
+  redrawEvents();
+});
+// стрелки по папкам, Enter открывает
+document.getElementById('events-list')?.addEventListener('keydown', (e) => {
+  const card = e.target.closest?.('.ev-card');
+  if (!card || e.target !== card) return;
+  if (e.key === 'Enter') { e.preventDefault(); card.querySelector('.event-open')?.click(); return; }
+  const dir = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+  if (!dir) return;
+  e.preventDefault();
+  const cards = [...document.querySelectorAll('#events-list > li.ev-card')].filter(li => li.style.display !== 'none');
+  const next = cards[cards.indexOf(card) + dir];
+  if (next) { next.focus(); next.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); }
+});
 let reactionsReloadTimer = null;
 window.addEventListener('vp:reactions-changed', () => {
   clearTimeout(reactionsReloadTimer);

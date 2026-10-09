@@ -605,3 +605,4 @@ body.guest .bell-wrap { display: none; }
 .titles-modal .title-card { padding: 10px 12px; margin: 0; }
 .titles-modal .title-name { font-weight: 700; font-size: 1.05rem; margin: 0 0 2px; }
 .titles-modal .title-desc { font-size: .85rem; color: var(--muted); }
+.ev-grouper{display:none!important}

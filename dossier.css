@@ -342,3 +342,16 @@ body.guest .dh-note:not(.g),body:not(.guest) .dh-note.g{display:none}
 .titles-modal .title-card { padding: 10px 12px; margin: 0; }
 .titles-modal .title-name { font-weight: 700; font-size: 1.05rem; margin: 0 0 2px; }
 .titles-modal .title-desc { font-size: .85rem; color: var(--muted); }
+/* T3.2б: бирки группировки на лицевой стенке ящика */
+.ev-grouper{display:flex;flex-wrap:wrap;align-items:center;gap:6px;flex:1 1 100%;margin-top:4px}
+.ev-grouper-l{font:13px var(--mono);color:#c9cfc9;letter-spacing:.06em;text-transform:uppercase;margin-right:4px}
+.ev-grouper button{min-height:34px;padding:3px 12px;background:var(--grain),var(--paper2);color:var(--ink);border:1.5px solid #0b0f0d;font:14px var(--mono);cursor:pointer;box-shadow:2px 2px 0 var(--sh)}
+.ev-grouper button[aria-pressed=true]{background:var(--tag);font-weight:700;box-shadow:inset 0 2px 0 rgba(0,0,0,.25);transform:translateY(1px)}
+.ev-grouper button:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
+.ev-grouper .ev-latch{margin-left:auto;background:var(--brass);color:#1a140a;border-color:#3a2a10}
+.ev-grouper .ev-latch::before{content:"";display:inline-block;width:8px;height:8px;margin-right:6px;border-radius:50%;background:#1a140a;vertical-align:1px}
+#events-list>li.ev-group span small{font-weight:400;opacity:.7}
+#events-list>li.ev-group.ev-sub{margin:28px 30% 0 0;height:30px;justify-content:flex-start;padding-left:14px;background:linear-gradient(#56645e,#45524c)}
+#events-list>li.ev-group.ev-sub span{font-size:13px;padding:0 10px;outline-width:2px}
+#events-list>li.ev-card:focus-visible{outline:3px solid var(--tag);outline-offset:3px}
+@media (max-width:600px){.ev-grouper .ev-latch{margin-left:0}#events-list>li.ev-group.ev-sub{margin-right:10%}}
