@@ -41,6 +41,7 @@
       <a href="#" class="nav-link" data-section="events">События</a>
       <a href="#" class="nav-link" data-section="chat">Чат</a>
       <a href="#" class="nav-link" data-section="chronicle">Летопись</a>
+      <a href="#" class="nav-link" data-section="cases" id="nav-cases" style="display: none;">Дела</a>
       <a href="#" class="nav-link" data-section="profile" id="nav-profile" style="display: none;">Профиль</a>
       <a href="#" class="nav-link" data-section="admin" id="nav-admin" style="display: none;">Админка</a>
     </div>
@@ -137,6 +138,11 @@
   <section id="section-chat" class="section">
     <div class="container">
       <h2>Чат Вадимов</h2>
+      <div class="chat-tabs" id="chat-tabs" role="tablist" hidden>
+        <button type="button" role="tab" data-ch="general" aria-selected="true">Общий</button>
+        <button type="button" role="tab" data-ch="cell" aria-selected="false">Камера</button>
+      </div>
+      <p class="case-jail" id="chat-jail" hidden></p>
       <div class="chat-container">
         <div id="chat-messages" class="chat-messages"></div>
         <form id="form-chat-message" class="chat-input-form">
@@ -166,6 +172,16 @@
       
       <!-- Контейнер для контента летописи (текст, таймлайн, карта или редактор) -->
       <div id="chronicle-content"></div>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- СЕКЦИЯ: ДЕЛА (T2.12) -->
+  <!-- ============================================ -->
+  <section id="section-cases" class="section">
+    <div class="container">
+      <h2>Дела</h2>
+      <div id="cases-content"></div>
     </div>
   </section>
 

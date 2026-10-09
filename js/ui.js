@@ -47,6 +47,8 @@ export function updateUIForUser(user, profile, onEditClick) {
 
   const navProfile = document.getElementById('nav-profile');
   if (navProfile) navProfile.style.display = 'block';
+  const navCases = document.getElementById('nav-cases');
+  if (navCases) navCases.style.display = 'block';
 
   const addEventForm = document.getElementById('add-event-form-container');
   if (addEventForm) addEventForm.style.display = 'block';
@@ -66,6 +68,8 @@ export function updateUIForGuest() {
 
   const navProfile = document.getElementById('nav-profile');
   if (navProfile) navProfile.style.display = 'none';
+  const navCases = document.getElementById('nav-cases');
+  if (navCases) navCases.style.display = 'none';
 
   const navAdmin = document.getElementById('nav-admin');
   if (navAdmin) navAdmin.style.display = 'none';
@@ -148,6 +152,7 @@ export function renderProfile(profile, onEditClick) {
   document.getElementById('profile-evidence')?.addEventListener('toggle', e => { if (e.target.open) renderEvidenceList(); });
   if (window.vpQuoteHandlers) renderQuoteShelf(document.getElementById('profile-quotes'), profile.id, { own: true, ...window.vpQuoteHandlers });
   renderAchievements(document.getElementById('profile-achievements'), profile.id);
+  renderJailChip(profileContent.querySelector('.profile-info'), profile.id);
   renderFactionBox(document.getElementById('profile-faction'), profile.id, true);
   profileContent.querySelector('[data-wallet]')?.addEventListener('click', () => showWallet(profile, window.vpWalletHandlers?.(profile) || {}));
 
@@ -497,6 +502,7 @@ export async function showUserProfile(userId, currentUserId) {
         </div>
       </div>
       <div class="form-actions">
+        ${profile.role !== 'admin' && String(userId) !== String(currentUserId) && profile.id !== '0c0c0c0c-1e70-4c0c-8c0c-000000000001' ? '<button class="btn-secondary" id="btn-open-case">Открыть дело</button>' : ''}
         <button class="btn-secondary" id="btn-close-profile">Закрыть</button>
       </div>
     </div>
@@ -505,6 +511,8 @@ export async function showUserProfile(userId, currentUserId) {
   document.body.appendChild(modal);
   renderAchievements(modal.querySelector('#user-achievements'), userId);
   renderFactionBox(modal.querySelector('#user-faction'), userId, false);
+  renderJailChip(modal.querySelector('.profile-info'), userId);
+  modal.querySelector('#btn-open-case')?.addEventListener('click', () => { modal.remove(); window.vpOpenCase?.(userId); });
   modal.querySelector('[data-wallet]')?.addEventListener('click', () => showWallet(profile, window.vpWalletHandlers?.(profile, () => modal.remove()) || {}));
   renderQuoteShelf(modal.querySelector('#user-quotes'), userId, { own: String(userId) === String(currentUserId), ...(window.vpQuoteHandlers || {}), onEventClick: (ev) => { modal.remove(); window.vpQuoteHandlers?.onEventClick(ev); } });
   modal.querySelector('.close-modal').addEventListener('click', () => modal.remove());
@@ -1526,7 +1534,7 @@ export async function renderEvidenceList() {
       <p>${escapeHtml(ev.snapshot_text)}</p>
       <div class="evidence-foot">
         <small>Хранится до ${new Date(ev.expires_at).toLocaleDateString('ru-RU')}</small>
-        <button class="btn-secondary btn-remove-evidence" data-type="${ev.target_type}" data-id="${escapeHtml(ev.target_id)}">Убрать</button>
+        ${ev.case_id ? `<small class="evidence-case">в деле № ${String(ev.case_id).padStart(4, '0')}</small>` : `<button class="btn-secondary btn-remove-evidence" data-type="${ev.target_type}" data-id="${escapeHtml(ev.target_id)}">Убрать</button>`}
       </div>
     </li>`).join('')}</ul>`;
   box.querySelectorAll('.btn-remove-evidence').forEach(btn => btn.addEventListener('click', async () => {
@@ -1834,4 +1842,13 @@ export async function renderFactionBox(box, userId, own) {
     el.innerHTML = m.length ? m.map(x => escapeHtml(x.profiles?.full_name || 'Без имени')).join(', ') : 'Пока никого';
     el.hidden = false;
   }));
+}
+
+// T2.12: штамп «В камере до …» в профиле
+export async function renderJailChip(box, userId) {
+  if (!box) return;
+  const { getArrest } = await import('./api.js');
+  const until = await getArrest(userId);
+  box.querySelector('.jail-chip')?.remove();
+  if (until) box.insertAdjacentHTML('beforeend', `<p class="jail-chip">${icon('alert')} В камере до ${new Date(until).toLocaleString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</p>`);
 }
