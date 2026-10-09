@@ -21,7 +21,7 @@ import {
 } from './api.js';
 import { setupAdminPanel } from './admin.js';
 import { renderCases, openCaseAgainst, checkDoorKnock } from './cases.js';
-import { getArrest } from './api.js';
+import { getArrest, getMessageReactions, getMessageById, muteUser, getMyMute, getEventOfDay, getMentionables, getUserFaction, getFactions } from './api.js';
 import { registerUser, loginUser, logoutUser, onAuthStateChange } from './auth.js';
 import { validateDate, geocodePlace } from './validation.js';
 import {
@@ -37,7 +37,10 @@ let currentProfile = null;
 let feedEvents = [];
 let chatChannel = null;
 let chatMessages = [];
-let chatChannelName = 'general'; // T2.12: общий чат или камера
+let chatChannelName = 'general'; // T2.12/T2.13: general | cell | faction:N
+let chatReplyTo = null;       // T2.13: сообщение, на которое отвечаем
+let chatReactions = {};       // реакции на сообщения текущего канала
+let chatPeople = [];          // [{id, full_name}] — для @упоминаний
 let chatRefreshInterval = null;
 let presenceChannel = null;
 let chronicleData = null;
@@ -142,9 +145,12 @@ async function loadUserCount(session) {
   document.body.classList.toggle('guest', !session);
   if (!session) return;
   getChronicle().then(c => window.vpChronicleCheck?.(c)).catch(() => {});
-  // «Событие дня»: из популярных (нравится − не нравится > 0), если таких нет — из всех одобренных
-  Promise.all([getApprovedEvents(500), getReactionCounts()]).then(([ev, rc]) => {
-    const popular = ev.filter(e => (rc[String(e.id)]?.score || 0) > 0);
+  // «Событие дня» (T2.13): одно на всех, выбирает база (event_of_day); запасной путь — по-старому
+  getEventOfDay().then(async id => {
+    const e = id ? await getEventById(id) : null;
+    if (e) return window.vpVadimOfDay?.([e], handleShowEventModal);
+    const [ev, rc] = await Promise.all([getApprovedEvents(500), getReactionCounts()]);
+    const popular = ev.filter(x => (rc[String(x.id)]?.score || 0) > 0);
     window.vpVadimOfDay?.(popular.length ? popular : ev, handleShowEventModal);
   }).catch(() => {});
   const count = await getUserCount();
@@ -276,13 +282,21 @@ function setupForms() {
   if (formChat) {
     formChat.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const messageText = document.getElementById('chat-message-text').value.trim();
-      if (!messageText) return;
+      const input = document.getElementById('chat-message-text');
+      const send = formChat.querySelector('button[type="submit"]');
+      const messageText = input.value.trim();
+      if (!messageText || send.disabled) return;
+      // @Имя → id упомянутых (база ещё раз проверит, что имя действительно в тексте)
+      const mentions = chatPeople.filter(p => p.full_name && p.id !== currentProfile?.id && messageText.includes('@' + p.full_name)).map(p => p.id);
+      send.disabled = true;
       try {
-        await sendChatMessage(messageText, chatChannelName);
-        document.getElementById('chat-message-text').value = '';
-      } catch (error) { 
-        showNotification(`Ошибка отправки: ${error.message}`, 'error'); 
+        await sendChatMessage(messageText, chatChannelName, chatReplyTo?.id || null, mentions);
+        input.value = '';
+        setChatReply(null);
+      } catch (error) {
+        showNotification(`Не отправлено: ${error.message}`, 'error');
+      } finally {
+        setTimeout(() => { if (!input.disabled) send.disabled = false; }, 1500);
       }
     });
   }
@@ -730,73 +744,131 @@ async function setupAdminTitleRequests() {
 // ЧАТ
 // ============================================
 
-// T2.12: вкладки «Общий / Камера»; арестованный пишет только в камеру, админ видит обе
+// T2.12/T2.13: вкладки «Общий / Фракция / Камера». Кто что видит и куда пишет — решает база
 async function setupChatChannel() {
-  const until = await getArrest(currentProfile.id);
   const isAdmin = currentProfile.role === 'admin';
+  const [until, mute, fm, all] = await Promise.all([
+    getArrest(currentProfile.id), getMyMute(currentProfile.id),
+    getUserFaction(currentProfile.id), isAdmin ? getFactions() : Promise.resolve([])
+  ]);
   const tabs = document.getElementById('chat-tabs');
   const jail = document.getElementById('chat-jail');
   const input = document.getElementById('chat-message-text');
   const send = document.querySelector('#form-chat-message button[type="submit"]');
-  if (!until && !isAdmin) chatChannelName = 'general';
-  else if (until && !tabs.dataset.bound) chatChannelName = 'cell';
-  tabs.hidden = !until && !isAdmin;
+  const list = [{ ch: 'general', label: 'Общий' }];
+  const facs = isAdmin ? all.map(f => ({ id: f.id, name: f.name })) : fm?.factions ? [{ id: fm.factions.id, name: fm.factions.name }] : [];
+  facs.forEach(f => list.push({ ch: 'faction:' + f.id, label: isAdmin ? f.name : 'Фракция «' + f.name + '»' }));
+  if (until || isAdmin) list.push({ ch: 'cell', label: 'Камера' });
+  if (until && !tabs.dataset.jailed) chatChannelName = 'cell'; // при аресте сразу в камеру (один раз)
+  tabs.dataset.jailed = until ? '1' : '';
+  if (!list.some(t => t.ch === chatChannelName)) chatChannelName = 'general';
+  tabs.hidden = list.length < 2;
+  tabs.innerHTML = list.map(t => `<button type="button" role="tab" data-ch="${t.ch}" aria-selected="${t.ch === chatChannelName}">${escapeText(t.label)}</button>`).join('');
   if (!tabs.dataset.bound) {
     tabs.dataset.bound = '1';
-    tabs.querySelectorAll('[data-ch]').forEach(b => b.addEventListener('click', () => { chatChannelName = b.dataset.ch; setupChat(); }));
+    tabs.addEventListener('click', e => { const b = e.target.closest('[data-ch]'); if (b && b.dataset.ch !== chatChannelName) { chatChannelName = b.dataset.ch; setChatReply(null); setupChat(); } });
   }
-  tabs.querySelectorAll('[data-ch]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.ch === chatChannelName)));
-  const blocked = !!until && chatChannelName === 'general';
-  jail.hidden = !until;
-  if (until) jail.textContent = `Вы под арестом до ${new Date(until).toLocaleString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}. В общий чат писать нельзя — камера открыта.`;
+  const blocked = !!mute || (!!until && chatChannelName === 'general');
+  const fmt = d => new Date(d).toLocaleString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+  jail.hidden = !until && !mute;
+  jail.textContent = mute ? `Вам запрещено писать в чат до ${fmt(mute.until)}${mute.reason ? ` — ${mute.reason}` : ''}. Читать можно.`
+    : until ? `Вы под арестом до ${fmt(until)}. В общий чат писать нельзя — камера и чат фракции открыты.` : '';
   input.disabled = blocked; if (send) send.disabled = blocked;
-  input.placeholder = blocked ? 'Под арестом — пишите в камеру' : chatChannelName === 'cell' ? 'Сообщение в камеру…' : 'Напишите сообщение...';
+  input.maxLength = 1000;
+  input.placeholder = mute ? 'Писать пока нельзя' : blocked ? 'Под арестом — пишите в камеру' : chatChannelName === 'cell' ? 'Сообщение в камеру…'
+    : chatChannelName.startsWith('faction:') ? 'Своим… (@Имя — упомянуть)' : 'Сообщение… (@Имя — упомянуть)';
+}
+function escapeText(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
+// полоса «Ответ на …» над полем ввода
+function setChatReply(msg) {
+  chatReplyTo = msg || null;
+  let bar = document.getElementById('chat-reply-bar');
+  const form = document.getElementById('form-chat-message');
+  if (!msg) { bar?.remove(); return; }
+  if (!bar) {
+    bar = document.createElement('div'); bar.id = 'chat-reply-bar'; bar.className = 'chat-reply-bar';
+    form.parentNode.insertBefore(bar, form);
+  }
+  const t = (msg.message_text || '').slice(0, 80);
+  bar.innerHTML = `<span>Ответ <b>${escapeText(msg.profiles?.full_name || 'Летописи')}</b>: ${escapeText(t)}${(msg.message_text || '').length > 80 ? '…' : ''}</span><button type="button" aria-label="Отменить ответ">×</button>`;
+  bar.querySelector('button').onclick = () => setChatReply(null);
+  document.getElementById('chat-message-text').focus();
+}
+
+function chatCtx(extra = {}) {
+  return {
+    reactions: chatReactions,
+    names: chatPeople.map(p => p.full_name).filter(Boolean),
+    onReact: async (id, type) => {
+      try { await toggleReaction(id, type, 'message'); await refreshChatReactions(); }
+      catch (e) { showNotification(`Ошибка: ${e.message}`, 'error'); }
+    },
+    onReply: (msg) => { if (msg && !document.getElementById('chat-message-text').disabled) setChatReply(msg); },
+    onMute: currentProfile?.role === 'admin' ? handleMute : null,
+    onSystem: (kind, ref) => {
+      if (kind === 'event' && ref) handleShowEventModal({ id: Number(ref) });
+      else if (kind === 'case') { showSection('cases'); renderCases(currentProfile); }
+      else if (kind === 'chronicle') document.querySelector('.nav-link[data-section="chronicle"]')?.click();
+    },
+    ...extra
+  };
+}
+function renderChat(extra) {
+  renderChatMessages(chatMessages, currentProfile.id, currentProfile.role, handleDeleteChatClick, handleAuthorClick, chatCtx(extra));
+}
+async function refreshChatReactions() {
+  chatReactions = await getMessageReactions(chatMessages.filter(m => m.kind !== 'system').map(m => m.id), currentProfile.id);
+  renderChat();
+}
+
+async function handleMute(userId, name) {
+  const v = prompt(`Запретить «${name}» писать в чат на сколько минут?\n0 — снять запрет.`, '60');
+  if (v === null) return;
+  const min = parseInt(v, 10);
+  if (!(min >= 0)) { showNotification('Нужно число минут', 'error'); return; }
+  const reason = min > 0 ? (prompt('Причина (увидит человек):', '') || '') : '';
+  try { await muteUser(userId, min, reason); showNotification(min ? `«${name}» молчит ${min} мин.` : `Запрет для «${name}» снят`, 'success'); }
+  catch (e) { showNotification(`Ошибка: ${e.message}`, 'error'); }
 }
 
 async function setupChat() {
   if (!currentProfile) return;
   await setupChatChannel();
+  if (!chatPeople.length) chatPeople = await getMentionables();
   chatMessages = await getChatMessages(100, chatChannelName);
-  renderChatMessages(chatMessages, currentProfile.id, currentProfile.role, handleDeleteChatClick, handleAuthorClick);
-  
+  chatReactions = await getMessageReactions(chatMessages.filter(m => m.kind !== 'system').map(m => m.id), currentProfile.id);
+  renderChat({ forceBottom: true });
+
   if (!chatRefreshInterval) {
-    chatRefreshInterval = setInterval(() => {
-      renderChatMessages(chatMessages, currentProfile.id, currentProfile.role, handleDeleteChatClick, handleAuthorClick);
-    }, 60000);
+    // раз в минуту: обновить «удалено» и реакции других
+    chatRefreshInterval = setInterval(() => { if (currentProfile) refreshChatReactions().catch(() => {}); }, 60000);
   }
-  
+
   if (!chatChannel) {
     chatChannel = subscribeToChatMessages((payload, eventType) => {
       if (eventType === 'INSERT') loadNewMessage(payload.id);
       else if (eventType === 'UPDATE') updateMessageInList(payload);
       else if (eventType === 'DELETE') {
         chatMessages = chatMessages.filter(msg => msg.id !== payload.id);
-        renderChatMessages(chatMessages, currentProfile.id, currentProfile.role, handleDeleteChatClick, handleAuthorClick);
+        renderChat();
       }
     });
   }
 }
 
 async function loadNewMessage(messageId) {
-  const { data } = await supabase
-    .from('chat_messages')
-    .select('*, profiles (full_name, avatar_url, role)')
-    .eq('id', messageId)
-    .single();
-  
-  if (data && (data.channel || 'general') === chatChannelName) {
-    const { data: titles } = await supabase
-      .from('user_titles')
-      .select('titles (title_name, icon)')
-      .eq('user_id', data.user_id)
-      .eq('is_active', true);
-    
+  const data = await getMessageById(messageId);
+  if (!data || (data.channel || 'general') !== chatChannelName || chatMessages.find(m => m.id === data.id)) return;
+  if (data.user_id) {
+    const { data: titles } = await supabase.from('user_titles').select('titles (title_name, icon)').eq('user_id', data.user_id).eq('is_active', true);
     data.user_titles = titles || [];
-    
-    if (!chatMessages.find(msg => msg.id === data.id)) {
-      chatMessages.push(data);
-      renderChatMessages(chatMessages, currentProfile.id, currentProfile.role, handleDeleteChatClick, handleAuthorClick);
-    }
+  }
+  chatMessages.push(data);
+  if (chatMessages.length > 200) chatMessages = chatMessages.slice(-200);
+  renderChat({ forceBottom: data.user_id === currentProfile.id });
+  if ((data.mentions || []).includes(currentProfile.id) && !document.getElementById('section-chat')?.classList.contains('active')) {
+    showNotification(`Вас упомянул(а) ${data.profiles?.full_name || 'кто-то'} в чате`, 'info');
   }
 }
 
@@ -804,7 +876,7 @@ function updateMessageInList(updatedMsg) {
   const index = chatMessages.findIndex(msg => msg.id === updatedMsg.id);
   if (index !== -1) {
     chatMessages[index] = { ...chatMessages[index], ...updatedMsg };
-    renderChatMessages(chatMessages, currentProfile.id, currentProfile.role, handleDeleteChatClick, handleAuthorClick);
+    renderChat();
   }
 }
 
