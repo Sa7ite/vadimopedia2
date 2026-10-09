@@ -412,3 +412,135 @@ body.guest .dh-note:not(.g),body:not(.guest) .dh-note.g{display:none}
 .blank-sheet .form-input-group[style] input[type=checkbox]{width:22px!important;height:22px;flex:0 0 22px;min-width:22px}
 .blank-sheet .form-input-group[style] label{font-weight:400}
 .blank-sheet fieldset label{font-weight:400}
+
+/* ---------- T3.4 Летопись: том с ушками глав (design.md 6.4, вариант 1) ---------- */
+#section-chronicle>.container{background:none;box-shadow:none;padding:0 40px;color:var(--paper)}
+#section-chronicle>.container>h2:first-child{border-bottom-color:rgba(218,219,208,.35);color:var(--paper);margin-left:48px}
+.chronicle-controls{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 0 48px;position:relative;z-index:1}
+#section-chronicle .chronicle-controls button{min-height:44px;padding:8px 18px 6px;border:0;border-radius:6px 6px 0 0;background:var(--grain),var(--card);color:var(--ink);font:400 17px/1.2 var(--serif);text-decoration:none;box-shadow:0 -1px 0 rgba(0,0,0,.15) inset;filter:none;clip-path:none;transform:translateY(4px);cursor:pointer;transition:transform .1s}
+#section-chronicle .chronicle-controls button:hover{transform:translateY(1px)}
+#section-chronicle .chronicle-controls button.on{background:var(--grain),var(--paper);transform:none;font-weight:700;box-shadow:none}
+#chronicle-content>:not(.tome){margin-left:48px;background:var(--grain),var(--paper);color:var(--ink);padding:32px 40px 40px;box-shadow:3px 4px 0 var(--sh)}
+#chronicle-content>.chronicle-empty{font-style:italic;color:var(--graphite)}
+.tome{display:grid;grid-template-columns:48px minmax(0,1fr) 34px;align-items:stretch;scroll-margin-top:calc(var(--bar-h) + 16px)}
+.tome-tabs{display:flex;flex-direction:column;gap:4px;padding-top:36px;max-height:80vh;overflow-y:auto;scrollbar-width:none}
+.tome-tab{position:relative;flex:none;width:38px;height:46px;margin-left:10px;padding:0;border:1px solid var(--card-d);border-right:0;border-radius:5px 0 0 5px;background:var(--grain),var(--card);color:var(--ink);font:400 17px/44px var(--serif);text-align:center;box-shadow:-2px 2px 0 var(--sh);cursor:pointer;transition:margin .15s,width .15s}
+.tome-tab:hover{margin-left:4px;width:44px}
+.tome-tab.on{margin-left:0;width:48px;background:var(--grain),#d9be80;font-weight:700}
+.tome-tab.has-new::after{content:'';position:absolute;top:-1px;left:6px;width:9px;height:16px;background:var(--tag);clip-path:polygon(0 0,100% 0,100% 100%,50% 75%,0 100%)}
+.tome-page{position:relative;min-height:70vh;background:linear-gradient(90deg,rgba(0,0,0,.14),transparent 22px),var(--grain),var(--paper);color:var(--ink);padding:44px 210px 44px 72px;box-shadow:3px 4px 0 var(--sh),0 0 0 1px rgba(0,0,0,.08)}
+.tome-kicker{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 18px;font:italic 16px/1.4 var(--serif);color:var(--graphite)}
+.tome-h{font-size:38px;line-height:1.15;margin:8px 0 26px}
+.tome-epi{max-width:62ch;margin:0 0 26px;padding-bottom:18px;border-bottom:1px solid rgba(29,35,48,.25);font-style:italic;color:#3a3f48}
+.tome-epi p{margin:0}
+.tome-text{font-size:19px;line-height:1.7}
+.tome-p{position:relative;max-width:62ch;margin:0;text-indent:2em}
+.tome-p.first{text-indent:0}
+.tome-p.first::first-letter{float:left;font-size:78px;line-height:.82;font-weight:700;padding:8px 10px 0 0;color:var(--ink);text-shadow:.6px .4px 0 rgba(29,35,48,.55),-.4px -.3px 0 rgba(29,35,48,.35)}
+.tome-p.is-new{text-decoration:underline;text-decoration-color:rgba(85,87,92,.28);text-decoration-thickness:1px;text-underline-offset:5px}
+.tome-p.is-new::before{content:'';position:absolute;left:-46px;top:6px;width:14px;height:44px;background:var(--tag);clip-path:polygon(0 0,100% 0,100% 100%,50% 82%,0 100%);box-shadow:none}
+.tome-app-w{vertical-align:baseline;position:relative;top:-.55em;line-height:0}
+.tome-app{position:relative;display:inline;text-decoration:none;padding:0 1px;margin-left:2px;border:0;background:none;color:var(--seal);font:400 14px/1 var(--serif);vertical-align:baseline;cursor:pointer;text-indent:0}
+.tome-app::before{content:'(прил.\00a0' attr(data-n) ')'}
+.tome-app::after{content:'';position:absolute;inset:-13px -4px}
+.tome-app:hover{text-decoration:underline dashed 1px;text-underline-offset:3px}
+.tome-side{position:absolute;right:-180px;top:2px;width:150px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-indent:0;text-decoration:none}
+.tome-margin{display:inline-flex;align-items:center;gap:4px;min-height:36px;padding:0 4px;border:0;background:none;color:var(--graphite);font:400 22px/1 var(--hand);transform:rotate(-3deg);cursor:pointer}
+.tome-margin .ic{width:26px;height:26px;color:var(--thread)}
+.tome-margin:hover{color:var(--pen)}.tome-margin:hover span{text-decoration:underline}
+.tome-newtag{display:inline-block;background:var(--tag);color:var(--ink);font:400 20px/1.2 var(--hand);padding:0 10px;transform:rotate(2deg);box-shadow:1px 2px 0 rgba(0,0,0,.2)}
+.tome-end{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;max-width:62ch;margin-top:34px;padding-top:18px;border-top:1px dashed rgba(29,35,48,.35)}
+.tome-stamp{margin-left:auto;--r:-4deg;font-size:17px}
+.tome-stack{display:flex;padding:22px 0}
+.tome-stack i{display:block;width:calc(4px + var(--left,0)*3px);max-width:34px;background:repeating-linear-gradient(90deg,#cfd0c4 0 2px,#a9aa9f 2px 3px);box-shadow:2px 2px 0 var(--sh);transition:width .3s}
+/* врезка «Говорят, что…» — записка, вклеенная в том */
+.tome .chronicle-callout,.chronicle-text .chronicle-callout{position:relative;max-width:54ch;margin:20px 0 22px 2em;padding:16px 20px 12px;background:var(--grain),var(--paper2);color:var(--ink);font-size:17px;line-height:1.5;text-indent:0;transform:rotate(-.8deg);box-shadow:2px 3px 0 rgba(0,0,0,.22)}
+.chronicle-callout::before{content:'';position:absolute;top:-10px;left:42%;width:88px;height:22px;background:rgba(227,214,170,.75);transform:rotate(-3deg)}
+.chronicle-callout .cc-title{display:block;font:400 26px/1.1 var(--hand);color:var(--pen);margin-bottom:4px}
+.chronicle-callout p{margin:0 0 8px}
+.chronicle-callout .cc-links{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:15px;color:var(--graphite)}
+.chronicle-callout .cc-links .ic{width:20px;height:20px;color:var(--thread)}
+.chronicle-callout .cc-links button{min-height:32px;padding:0 2px;border:0;background:none;color:var(--pen);font:inherit;text-decoration:underline;cursor:pointer}
+/* таймлайн — опись по годам */
+.timeline-container h2,.bookmarks-container h2,.theories-head h2,.editor-header h2{display:flex;align-items:center;gap:10px;font-size:30px}
+.timeline-year{display:grid;grid-template-columns:110px minmax(0,1fr);gap:18px;padding:14px 0;border-top:1.5px solid var(--ink)}
+.year-marker{font:700 30px/1.2 var(--serif);color:var(--seal)}
+.timeline-event{padding:8px 6px;border-bottom:1px dashed rgba(29,35,48,.3);cursor:pointer}
+.timeline-event:hover{background:rgba(198,166,99,.22)}
+.timeline-event .event-dot{display:none}
+.timeline-event strong,.bookmark-card .event-text{display:block;font-weight:400;font-size:18px;line-height:1.5}
+.timeline-event .event-meta,.bookmark-card .event-meta,.pending-event-card .event-meta{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:15px;color:var(--graphite)}
+.event-meta .ic{width:18px;height:18px;vertical-align:-3px}
+/* закладки — карточки картотеки */
+.bookmarks-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px}
+.bookmark-card{position:relative;padding:22px 18px 14px;background:var(--grain),var(--card);color:var(--ink);box-shadow:2px 3px 0 var(--sh);cursor:pointer}
+.bookmark-card::after{content:'';position:absolute;top:0;right:18px;width:14px;height:30px;background:var(--thread);clip-path:polygon(0 0,100% 0,100% 100%,50% 78%,0 100%)}
+.bookmark-card:hover{filter:brightness(1.05)}
+.bookmark-header{display:flex;justify-content:space-between;gap:10px;font-size:15px}
+.bookmark-header .event-date{color:#4a3c1c}
+/* теории в летописи — карточки на нитках (доска — T3.5) */
+.theories .th-lead{color:var(--graphite);max-width:70ch}
+.theory-new>summary{list-style:none;width:max-content;margin:6px 0 18px;cursor:pointer}
+.theory-new>summary::-webkit-details-marker{display:none}
+.theory-form{display:grid;gap:12px;max-width:640px;margin-bottom:24px}
+.th-form-foot{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.th-group{font-size:22px;margin:26px 0 12px}
+.theory-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
+.theory-card{position:relative;padding:20px 18px 14px;background:var(--grain),var(--paper2);color:var(--ink);box-shadow:2px 3px 0 var(--sh)}
+.theory-card:nth-child(odd){transform:rotate(-.6deg)}.theory-card:nth-child(even){transform:rotate(.5deg)}
+.theory-card.th-focus{box-shadow:0 0 0 3px var(--tag),2px 3px 0 var(--sh)}
+.theory-card .th-stamp{position:absolute;top:10px;right:12px;--r:6deg;color:var(--wax)}
+.th-pair{display:grid;grid-template-columns:1fr 26px 1fr;align-items:center;gap:6px;margin-bottom:10px}
+.th-event{min-height:44px;padding:6px 8px;border:0;background:var(--grain),var(--card);color:var(--ink);font:400 15px/1.35 var(--serif);text-align:left;cursor:pointer;box-shadow:1px 2px 0 rgba(0,0,0,.25)}
+.th-event:hover{filter:brightness(1.06)}
+.th-date{display:block;font-weight:700}
+.th-thread{display:block;height:var(--th,2px);background:var(--thread)}
+.th-note{font:400 23px/1.25 var(--hand);color:var(--pen);margin:6px 0}
+.th-meta{font-size:15px;color:var(--graphite);display:flex;align-items:center;gap:6px}.th-meta .ic{width:18px;height:18px}
+.th-actions{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin-top:10px}
+.th-vote{min-height:40px;padding:4px 12px;border:1.5px solid var(--ink);background:transparent;color:var(--ink);font:400 16px var(--serif);cursor:pointer}
+.th-vote.active{background:var(--ink);color:var(--paper)}
+.th-vote:disabled{opacity:.55;cursor:not-allowed}
+/* редактор летописи: поля подсвечены, правки двумя цветами */
+.chronicle-editor .editor-header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px}
+.chronicle-editor .editor-actions{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.chronicle-editor .editor-status,.chronicle-editor .editor-hint{color:var(--graphite)}
+.pending-events-panel{margin:16px 0;padding:16px 18px;background:rgba(198,166,99,.2)}
+.pending-events-panel h3{font-size:20px}
+.pending-events-list{display:grid;gap:8px}
+.pending-event-card strong{font-weight:400}
+#chronicle-textarea{width:100%;min-height:420px;padding:14px 18px 14px 56px;border:0;background:linear-gradient(90deg,transparent 40px,rgba(181,38,30,.35) 40px 41.5px,transparent 41.5px),repeating-linear-gradient(transparent 0 29px,rgba(43,76,140,.18) 29px 30px),var(--paper2);color:var(--pen);font:400 18px/30px var(--serif);resize:vertical}
+.editor-diff,.editor-preview{margin-top:16px}
+.editor-diff>summary,.editor-preview>summary{cursor:pointer;font-weight:700;min-height:44px;display:flex;align-items:center;gap:8px}
+.chronicle-diff{max-height:420px;overflow:auto;padding:12px 16px;background:var(--paper2)}
+.cd-row{margin:0 0 12px;line-height:1.6}
+.chronicle-diff del,.insert-review del{color:var(--graphite);text-decoration:line-through 1.5px}
+.chronicle-diff ins,.insert-review ins{color:var(--pen);text-decoration:none;font-weight:600;background:rgba(43,76,140,.08)}
+#chronicle-preview .chronicle-new{background:rgba(227,198,90,.3)}
+#chronicle-preview .chronicle-ref,.chronicle-reader:not(.tome) .chronicle-ref{text-decoration:underline dotted 1px;cursor:pointer}
+.insert-review{margin:16px 0;padding:16px;background:var(--paper2)}
+.ir-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:8px 0;border-bottom:1px dashed rgba(29,35,48,.3)}
+.ir-tag{display:block;font-size:15px;color:var(--graphite)}
+.ir-head{display:grid;grid-template-columns:1fr 1fr;gap:12px;font-weight:700}
+.ir-actions{display:flex;gap:12px;margin-top:12px}
+@media (max-width:1180px){.tome-page{padding-right:56px}.tome-side{position:static;flex-direction:row;flex-wrap:wrap;width:auto;margin:6px 0 4px}}
+@media (max-width:760px){
+  #section-chronicle>.container{padding:0 10px}
+  #section-chronicle>.container>h2:first-child{margin-left:0}
+  #chronicle-content>:not(.tome){margin-left:0;padding:22px 16px 28px}
+  .chronicle-controls{margin-left:0;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-top:4px}
+  #section-chronicle .chronicle-controls button{flex:none;padding:8px 12px 6px;font-size:16px}
+  .tome{grid-template-columns:34px minmax(0,1fr)}
+  .tome-tabs{padding-top:24px}
+  .tome-tab{width:30px;margin-left:4px;font-size:16px}.tome-tab:hover{margin-left:2px;width:32px}.tome-tab.on{width:34px;margin-left:0}
+  .tome-page{padding:26px 18px 30px 22px}
+  .tome-h{font-size:28px}
+  .tome-text{font-size:18px}
+  .tome-p.first::first-letter{font-size:62px}
+  .tome-p.is-new::before{left:-18px;width:8px;height:34px}
+  .tome-stack{display:none}
+  .tome .chronicle-callout{margin-left:0}
+  .timeline-year{grid-template-columns:1fr;gap:4px}
+  .ir-row,.ir-head{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){.tome-tab,.tome-stack i,#section-chronicle .chronicle-controls button{transition:none}}

@@ -228,7 +228,7 @@ async function showTitlesManager(profile) {
       <button type="button" class="close-modal" data-modal="modal-titles-manager" aria-label="Закрыть">&times;</button>
       <div class="modal-header">
         <h2>Управление титулами</h2>
-        <p class="tm-count">Надето: <b id="titles-count">${tempActiveTitles.length}</b> из 3 · изменения сохранятся после «Подтвердить»</p>
+        <p class="tm-count">Надето: <b id="titles-count">${tempActiveTitles.length}</b> из 3. Изменения сохранятся после «Подтвердить»</p>
       </div>
       ${titlesHTML}
       <div class="form-actions">
@@ -819,9 +819,11 @@ export function formatChronicleHtml(text) {
   }).join('');
 }
 
-export function renderChronicle(chronicle, onEventClick, canonTheories = []) {
+export function renderChronicle(chronicle, onEventClick, theories = [], opts = {}) {
   const content = document.getElementById('chronicle-content');
   if (!content) return;
+  if (window.VP_NEW && chronicle?.content) return renderTome(content, chronicle, onEventClick, theories, opts);
+  const canonTheories = theories.filter(t => t.status === 'canon');
 
   if (!chronicle || !chronicle.content) {
     content.innerHTML = '<div class="chronicle-empty"><p>Летопись ещё пуста. Здесь скоро появится история Вадимопедии.</p></div>';
@@ -847,6 +849,125 @@ export function renderChronicle(chronicle, onEventClick, canonTheories = []) {
       else onEventClick({ event_text: ref.dataset.eventText, author: ref.dataset.author, event_date: ref.dataset.date, city: ref.dataset.city });
     });
   });
+}
+
+// ============================================
+// T3.4: ЛЕТОПИСЬ В НОВОЙ ТЕМЕ — том с ушками глав
+// ============================================
+// «новое»: какие абзацы читатель уже видел (короткие отпечатки текста, на этом устройстве)
+const plainPara = t => String(t || '').replace(/\[\[\d+\|([^\]]*)\]\]/g, '$1').replace(/\s+/g, ' ').trim();
+const paraKey = t => { let x = 0; for (const c of plainPara(t)) x = (x * 31 + c.charCodeAt(0)) | 0; return (x >>> 0).toString(36); };
+const pluralRu = (n, one, few, many) => { const a = n % 10, b = n % 100; return a === 1 && b !== 11 ? one : a >= 2 && a <= 4 && (b < 12 || b > 14) ? few : many; };
+const seenKey = uid => `vpSeenChron:${uid || 'anon'}`;
+function chronicleParas(content) {
+  return String(content || '').replace(/\r/g, '').split(/\n\s*\n/).map(b => b.trim()).filter(b => b && !/^#{1,3}\s/.test(b));
+}
+// набор отпечатков новых абзацев; null — человек ещё ни разу не открывал летопись (тогда всё считаем прочитанным)
+export function chronicleNewKeys(chronicle, uid) {
+  let seen = null;
+  try { seen = JSON.parse(localStorage.getItem(seenKey(uid)) || 'null'); } catch { seen = null; }
+  if (!Array.isArray(seen)) return null;
+  const s = new Set(seen);
+  return new Set(chronicleParas(chronicle?.content).map(paraKey).filter(k => !s.has(k)));
+}
+export function markChronicleSeen(chronicle, uid) {
+  try { localStorage.setItem(seenKey(uid), JSON.stringify([...new Set(chronicleParas(chronicle?.content).map(paraKey))])); } catch { /* хранилище недоступно */ }
+}
+
+// разбор на главы: [{ title, blocks: [абзацы] }]; текст до первой главы — вступление
+function chronicleChapters(content) {
+  const blocks = String(content || '').replace(/\r/g, '').split(/\n\s*\n/).map(b => b.trim()).filter(Boolean);
+  const out = []; let pre = [];
+  for (const b of blocks) {
+    const h = b.match(/^#{1,3}\s+(.+?)(?:\n([\s\S]*))?$/);
+    if (h) { out.push({ title: h[1].trim(), blocks: h[2] ? [h[2].trim()] : [] }); continue; }
+    (out.length ? out[out.length - 1].blocks : pre).push(b);
+  }
+  if (!out.length) out.push({ title: 'Летопись', blocks: pre.splice(0) });
+  return { pre, chapters: out };
+}
+
+const tomeInline = raw => escapeHtml(raw)
+  .replace(/\[\[(\d+)\|([^\]]+)\]\]/g, (m, id, frag) => `<span class="chronicle-ref" data-event-id="${id}">${frag}</span><sup class="tome-app-w"><a href="#" role="button" class="tome-app" data-app="${id}" data-n="${id}" aria-label="Приложение ${id}: открыть событие"></a></sup>`)
+  .replace(/\n/g, '<br>');
+
+function renderTome(content, chronicle, onEventClick, theories, opts) {
+  const { pre, chapters } = chronicleChapters(chronicle.content);
+  const uid = opts.uid;
+  const fresh = chronicleNewKeys(chronicle, uid);  // null — первый визит
+  const live = (theories || []).filter(t => t.status !== 'removed');
+  const canon = live.filter(t => t.status === 'canon');
+  const hasNew = ch => !!fresh && ch.blocks.some(b => fresh.has(paraKey(b)));
+  let at = Number(localStorage.getItem('vpChap'));
+  const firstNew = chapters.findIndex(hasNew);
+  if (firstNew >= 0) at = firstNew;
+  if (!(at >= 0 && at < chapters.length)) at = 0;
+  const n = chapters.length;
+  const upd = chronicle.updated_at ? new Date(chronicle.updated_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+
+  content.innerHTML = `
+    <div class="tome chronicle-reader">
+      <nav class="tome-tabs" aria-label="Главы летописи">
+        ${chapters.map((c, i) => `<button type="button" class="tome-tab${hasNew(c) ? ' has-new' : ''}" data-ch="${i}" title="${escapeHtml(c.title)}" aria-label="Глава ${i + 1}: ${escapeHtml(c.title)}${hasNew(c) ? ', есть новое' : ''}">${i + 1}</button>`).join('')}
+      </nav>
+      <article class="tome-page" tabindex="-1" aria-live="polite"></article>
+      <div class="tome-stack" aria-hidden="true"><i></i></div>
+    </div>`;
+  const page = content.querySelector('.tome-page');
+  const stack = content.querySelector('.tome-stack i');
+
+  const theoriesOf = ids => live.filter(t => ids.includes(Number(t.event_a)) || (t.event_b && ids.includes(Number(t.event_b))));
+  const paraHtml = (b, idx) => {
+    const ids = [...b.matchAll(/\[\[(\d+)\|/g)].map(m => Number(m[1]));
+    const th = theoriesOf(ids);
+    const isNew = !!fresh && fresh.has(paraKey(b));
+    const marks = [
+      th.length ? `<button type="button" class="tome-margin" data-margin="${ids.join(',')}" aria-label="Теории к абзацу: ${th.length}">${icon('theory')}<span>${th.length} ${pluralRu(th.length, 'теория', 'теории', 'теорий')}</span></button>` : '',
+      isNew ? '<span class="tome-newtag">новое</span>' : ''
+    ].join('');
+    return `<p class="tome-p${idx === 0 ? ' first' : ''}${isNew ? ' is-new' : ''}">${tomeInline(b)}${marks ? `<span class="tome-side">${marks}</span>` : ''}</p>`;
+  };
+
+  const show = (i, focus) => {
+    at = i;
+    try { localStorage.setItem('vpChap', String(i)); } catch { /* нет хранилища */ }
+    const c = chapters[i];
+    page.innerHTML = `
+      <div class="tome-kicker"><span>Глава ${i + 1} из ${n}</span>${upd ? `<span>редакция ${chronicle.version}, ${upd}</span>` : ''}</div>
+      <h2 class="tome-h">${escapeHtml(c.title)}</h2>
+      ${i === 0 && pre.length ? `<div class="tome-epi">${pre.map(b => `<p>${tomeInline(b)}</p>`).join('')}</div>` : ''}
+      <div class="chronicle-text tome-text">${c.blocks.map(paraHtml).join('') || '<p class="empty-state">В главе пока нет текста.</p>'}</div>
+      <div class="tome-end">
+        ${i > 0 ? `<button type="button" class="btn-secondary" data-ch="${i - 1}">Предыдущая глава</button>` : '<span></span>'}
+        ${i < n - 1 ? `<button type="button" class="btn-secondary" data-ch="${i + 1}">Следующая глава</button>` : '<span></span>'}
+        <span class="stamp tome-stamp${focus ? ' drop' : ''}">Глава закрыта</span>
+      </div>`;
+    insertCanonCallouts(page.querySelector('.chronicle-text'), canon, onEventClick);
+    content.querySelectorAll('.tome-tab').forEach((t, k) => { t.classList.toggle('on', k === i); t.setAttribute('aria-current', k === i ? 'page' : 'false'); });
+    // стопка справа: чем больше глав впереди, тем толще
+    stack.style.setProperty('--left', String(n - 1 - i));
+    stack.parentElement.title = `Прочитано глав: ${i} из ${n}`;
+    if (focus) { page.focus({ preventScroll: true }); content.querySelector('.tome').scrollIntoView({ block: 'start', behavior: 'smooth' }); }
+  };
+
+  // слушатели на самом томе: #chronicle-content остаётся, том перерисовывается
+  const tome = content.querySelector('.tome');
+  tome.addEventListener('click', e => {
+    const ch = e.target.closest('[data-ch]');
+    if (ch) { show(Number(ch.dataset.ch), true); return; }
+    const app = e.target.closest('[data-app]');
+    if (app) { e.preventDefault(); onEventClick?.({ id: Number(app.dataset.app) }); return; }
+    const m = e.target.closest('[data-margin]');
+    if (m) { opts.onTheories?.(m.dataset.margin.split(',').map(Number)); }
+  });
+  content.querySelector('.tome-tabs').addEventListener('keydown', e => {
+    if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+    e.preventDefault();
+    const k = (at + (e.key === 'ArrowUp' || e.key === 'ArrowLeft' ? -1 : 1) + n) % n;
+    show(k, false); content.querySelectorAll('.tome-tab')[k].focus();
+  });
+  show(at, false);
+  markChronicleSeen(chronicle, uid);
 }
 
 export function renderChronicleEditor(editor, pendingEvents, handlers) {
@@ -895,6 +1016,11 @@ export function renderChronicleEditor(editor, pendingEvents, handlers) {
       <p class="editor-hint">Главы начинаются с «## ». Абзацы разделяются пустой строкой. Событие отмечается так: [[номер|фраза]] — каждое ровно один раз.</p>
       <textarea id="chronicle-textarea" rows="20" placeholder="Текст летописи...">${escapeHtml(draft?.content ?? published?.content ?? '')}</textarea>
 
+      <details class="editor-diff" id="chronicle-diff-box">
+        <summary>${icon('pencil')} Правки по сравнению с опубликованной <small id="chronicle-diff-count"></small></summary>
+        <div id="chronicle-diff" class="chronicle-diff"></div>
+      </details>
+
       <details class="editor-preview" open>
         <summary>${icon('eye')} Предпросмотр <small>(новые абзацы подсвечены)</small></summary>
         <div id="chronicle-preview" class="chronicle-text"></div>
@@ -911,8 +1037,16 @@ export function renderChronicleEditor(editor, pendingEvents, handlers) {
     const freshPlain = new Set(fresh.map(t => t.replace(/\[\[\d+\|([^\]]*)\]\]/g, '$1').slice(0, 80)));
     preview.querySelectorAll('p').forEach(p => { if (freshPlain.has(p.textContent.trim().slice(0, 80))) p.classList.add('chronicle-new'); });
   };
+  const diffBox = document.getElementById('chronicle-diff');
+  const updateDiff = () => {
+    const { html, changed } = chronicleDiffHtml(published?.content || '', textarea.value);
+    diffBox.innerHTML = html || '<p class="empty-state">Текст совпадает с опубликованным.</p>';
+    document.getElementById('chronicle-diff-count').textContent = changed ? `(изменено абзацев: ${changed})` : '(без правок)';
+  };
+  let diffT = null;
   textarea.addEventListener('input', updatePreview);
-  updatePreview();
+  textarea.addEventListener('input', () => { clearTimeout(diffT); diffT = setTimeout(updateDiff, 400); });
+  updatePreview(); updateDiff();
 
   document.getElementById('btn-save-chronicle').addEventListener('click', () => handlers.onSaveDraft(textarea.value));
   document.getElementById('btn-publish-chronicle').addEventListener('click', () => {
@@ -941,6 +1075,51 @@ export function diffWordsHtml(before, after) {
   return [l, r];
 }
 
+// T3.4: правки редактора одним текстом: удалённое — графитом перечёркнуто, добавленное — синей ручкой
+function diffWordsMerged(before, after) {
+  const a = String(before || '').split(/(\s+)/).filter(Boolean), b = String(after || '').split(/(\s+)/).filter(Boolean);
+  if (a.length * b.length > 400000) return `<del>${escapeHtml(before)}</del> <ins>${escapeHtml(after)}</ins>`;
+  const dp = Array.from({ length: a.length + 1 }, () => new Uint16Array(b.length + 1));
+  for (let i = a.length - 1; i >= 0; i--) for (let j = b.length - 1; j >= 0; j--)
+    dp[i][j] = a[i] === b[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+  // почти всё переписано — показываем абзац целиком: было, потом стало
+  const words = x => x.filter(t => !/^\s+$/.test(t)).length;
+  if (dp[0][0] - Math.min(a.length, b.length) / 2 < 0.4 * Math.min(words(a), words(b))) return `<del>${escapeHtml(before)}</del> <ins>${escapeHtml(after)}</ins>`;
+  let i = 0, j = 0, out = '';
+  while (i < a.length || j < b.length) {
+    if (i < a.length && j < b.length && a[i] === b[j]) { out += escapeHtml(a[i]); i++; j++; }
+    else if (j < b.length && (i >= a.length || dp[i][j + 1] >= dp[i + 1][j])) { out += /^\s+$/.test(b[j]) ? b[j] : `<ins>${escapeHtml(b[j])}</ins>`; j++; }
+    else { out += /^\s+$/.test(a[i]) ? a[i] : `<del>${escapeHtml(a[i])}</del>`; i++; }
+  }
+  return out;
+}
+export function chronicleDiffHtml(before, after) {
+  const split = t => String(t || '').replace(/\r/g, '').split(/\n\s*\n/).map(x => x.trim()).filter(Boolean);
+  const plain = t => t.replace(/\[\[(\d+)\|([^\]]*)\]\]/g, '$2 [№\u00a0$1]');
+  const A = split(before), B = split(after);
+  const dp = Array.from({ length: A.length + 1 }, () => new Uint16Array(B.length + 1));
+  for (let i = A.length - 1; i >= 0; i--) for (let j = B.length - 1; j >= 0; j--)
+    dp[i][j] = A[i] === B[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+  const rows = []; let i = 0, j = 0, del = [], ins = [];
+  const flush = () => {
+    const k = Math.max(del.length, ins.length);
+    for (let x = 0; x < k; x++) {
+      const d = del[x], n = ins[x];
+      if (d != null && n != null) rows.push(`<p class="cd-row">${diffWordsMerged(plain(d), plain(n))}</p>`);
+      else if (d != null) rows.push(`<p class="cd-row"><del>${escapeHtml(plain(d))}</del></p>`);
+      else rows.push(`<p class="cd-row"><ins>${escapeHtml(plain(n))}</ins></p>`);
+    }
+    del = []; ins = [];
+  };
+  while (i < A.length || j < B.length) {
+    if (i < A.length && j < B.length && A[i] === B[j]) { flush(); i++; j++; }
+    else if (j < B.length && (i >= A.length || dp[i][j + 1] >= dp[i + 1][j])) ins.push(B[j++]);
+    else del.push(A[i++]);
+  }
+  flush();
+  return { html: rows.join(''), changed: rows.length };
+}
+
 // T2.5: панель «было / стало» для вставки события в середину. Без «Принять» текст редактора не меняется
 export function renderInsertReview(result, { onAccept, onReject }) {
   const box = document.getElementById('insert-review');
@@ -952,9 +1131,9 @@ export function renderInsertReview(result, { onAccept, onReject }) {
   const edge = (t, i) => { const x = plain(t); return x.length <= 240 ? x : i < newAt ? '…' + x.slice(-220) : x.slice(0, 220) + '…'; };
   const rows = result.window.map((w, i) => {
     if (w.id === 'new') return `<div class="ir-row ir-new"><div class="ir-cell ir-empty">не было</div><div class="ir-cell"><b class="ir-tag">Новый абзац</b> <ins>${escapeHtml(plain(w.after))}</ins></div></div>`;
-    if (w.after == null) return `<div class="ir-row ir-same"><div class="ir-cell"><b class="ir-tag">${w.id} · без изменений</b> ${escapeHtml(edge(w.before, i))}</div></div>`;
+    if (w.after == null) return `<div class="ir-row ir-same"><div class="ir-cell"><b class="ir-tag">${w.id}, без изменений</b> ${escapeHtml(edge(w.before, i))}</div></div>`;
     const [l, r] = diffWordsHtml(plain(w.before), plain(w.after));
-    return `<div class="ir-row"><div class="ir-cell"><b class="ir-tag">${w.id} · было</b> ${l}</div><div class="ir-cell"><b class="ir-tag">${w.id} · стало</b> ${r}</div></div>`;
+    return `<div class="ir-row"><div class="ir-cell"><b class="ir-tag">${w.id}, было</b> ${l}</div><div class="ir-cell"><b class="ir-tag">${w.id}, стало</b> ${r}</div></div>`;
   }).join('');
   const changed = result.window.filter(w => w.id !== 'new' && w.after != null).length;
   box.innerHTML = `
@@ -1063,7 +1242,7 @@ export function theoryCardHtml(t, ctx) {
         ${ev(t.event_b, t.event_b_text, t.event_b_date)}` : ''}
       </div>
       <p class="th-note">«${escapeHtml(t.note)}»</p>
-      <div class="th-meta">${icon('user')} ${escapeHtml(t.author_name || 'Аноним')} · ${new Date(t.created_at).toLocaleDateString('ru-RU')}</div>
+      <div class="th-meta">${icon('user')} ${escapeHtml(t.author_name || 'Аноним')}, ${new Date(t.created_at).toLocaleDateString('ru-RU')}</div>
       <div class="th-actions">
         ${vote('believe', 'Верю', t.believe)}
         ${vote('doubt', 'Не верю', t.doubt)}
@@ -1167,13 +1346,13 @@ function insertCanonCallouts(root, canon, onEventClick) {
   const paraOf = id => { const r = root.querySelector(`.chronicle-ref[data-event-id="${id}"]`); return r ? r.closest('p, h3') : null; };
   const all = [...root.querySelectorAll('.chronicle-text > *')];
   for (const t of canon) {
-    const ps = [paraOf(t.event_a), paraOf(t.event_b)].filter(Boolean);
+    const ps = [paraOf(t.event_a), t.event_b && paraOf(t.event_b)].filter(Boolean);
     if (!ps.length) continue;  // ни одно событие не вошло в летопись — врезку не ставим
     const after = ps.sort((x, y) => all.indexOf(y) - all.indexOf(x))[0];
     const box = document.createElement('aside');
     box.className = 'chronicle-callout';
     box.innerHTML = `<b class="cc-title">Говорят, что…</b><p>${escapeHtml(t.note)}</p>
-      <div class="cc-links">${icon('theory')} Связывает: <button type="button" data-ev="${t.event_a}">№ ${t.event_a}</button> и <button type="button" data-ev="${t.event_b}">№ ${t.event_b}</button> </div><div class="cc-links">Автор теории: ${escapeHtml(t.author_name || 'аноним')}. Это версия, а не факт.</div>`;
+      <div class="cc-links">${icon('theory')} ${t.event_b ? `Связывает: <button type="button" data-ev="${t.event_a}">№ ${t.event_a}</button> и <button type="button" data-ev="${t.event_b}">№ ${t.event_b}</button>` : `О событии <button type="button" data-ev="${t.event_a}">№ ${t.event_a}</button>`}</div><div class="cc-links">Автор теории: ${escapeHtml(t.author_name || 'аноним')}. Это версия, а не факт.</div>`;
     let anchor = after;
     while (anchor.nextElementSibling?.classList.contains('chronicle-callout')) anchor = anchor.nextElementSibling;
     anchor.after(box);
