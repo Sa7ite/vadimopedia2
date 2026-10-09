@@ -551,3 +551,7 @@ body.guest .bell-wrap { display: none; }
 @media (max-width: 600px) {
   .bell-panel { position: fixed; left: 8px; right: 8px; top: 64px; width: auto; max-height: calc(100vh - 80px); }
 }
+
+/* Фаза 3: логотип в меню нужен только новой теме */
+.bar-logo{display:none!important}
+.nav-plates{display:contents}

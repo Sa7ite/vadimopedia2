@@ -1,0 +1,207 @@
+/* =====================================================================
+   Вадимопедия — тема «Секретное досье» (Фаза 3, docs/design.md)
+   Единственный файл стилей новой темы. Включается ?new=1 до конца Фазы 3.
+   ===================================================================== */
+
+/* ---------- 1. Токены (design.md, раздел 2) ---------- */
+:root{
+  --lino:#22302B; --steel:#55645E; --steel-d:#3f4c47; --card:#C6A663; --card-d:#8a6f37; --paper:#DADBD0; --paper2:#E6E6DC;
+  --ink:#1D2330; --seal:#5A2E8F; --thread:#B5261E; --pen:#2B4C8C; --graphite:#55575C; --cork:#8E7350; --tag:#E3C65A;
+  --brass:#A57E3C; --wax:#8F1D17; --sh:rgba(12,20,17,.45); --sh-hi:rgba(12,20,17,.6);
+  --serif:'Literata','PT Serif',Georgia,serif; --mono:'PT Mono','IBM Plex Mono','Courier New',monospace; --hand:'Caveat','Bad Script',cursive;
+  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='128' height='128' filter='url(%23n)'/%3E%3C/svg%3E");
+  --blot:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.018' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .22 -.03'/%3E%3C/filter%3E%3Crect width='256' height='256' filter='url(%23n)'/%3E%3C/svg%3E");
+  /* совместимость со старыми компонентами, которые берут переменные */
+  --text:var(--ink); --surface:var(--paper); --surface2:var(--paper2); --muted:var(--graphite); --line:#9a9e94; --accent:var(--seal);
+  --accent-soft:rgba(90,46,143,.12); --on-accent:#F1EFF6; --font:var(--serif); --head:var(--serif);
+  --bar-h:64px;
+}
+
+/* ---------- 2. Основа ---------- */
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;min-height:100vh;background:var(--blot),var(--lino);background-attachment:fixed;color:var(--paper);font:400 18px/1.65 var(--serif);text-rendering:optimizeLegibility}
+a{color:inherit}
+img,svg{max-width:100%}
+h1,h2,h3,h4{font-family:var(--serif);font-weight:700;line-height:1.2;letter-spacing:-.01em;margin:0 0 .5em}
+h2{font-size:36px}h3{font-size:24px}h4{font-size:20px}
+p{margin:0 0 .8em}
+small{font-size:14px}
+hr{border:0;border-top:1.5px solid currentColor;opacity:.4}
+code{font-family:var(--mono);font-size:.9em}
+.ic{width:24px;height:24px;flex:none;vertical-align:-6px}
+:focus{outline:none}
+:focus-visible{outline:3px solid var(--seal);outline-offset:2px}
+.on-desk :focus-visible,.navbar :focus-visible{outline-color:#B9A0DC}
+::selection{background:rgba(90,46,143,.28)}
+[hidden]{display:none!important}
+.container{width:100%;max-width:1280px;margin:0 auto;padding:0 40px}
+@media (max-width:600px){.container{padding:0 14px}body{font-size:17px}h2{font-size:28px}h3{font-size:21px}}
+
+/* ---------- 3. Планка ящика: шапка и меню (блок 1, вариант 1) ---------- */
+header{display:none}                       /* старая шапка не нужна: логотип живёт в планке */
+.navbar{position:sticky;top:0;z-index:60;background:var(--steel);border-bottom:3px solid var(--steel-d);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 3px 0 var(--sh)}
+.navbar .container{display:flex;align-items:center;gap:20px;height:var(--bar-h);max-width:none;padding:0 24px}
+.bar-logo{flex:none;display:inline-block;padding:4px;background:var(--brass);border:1px solid #6d5222;box-shadow:inset 0 1px 0 #d9b56f,1px 2px 0 var(--sh);text-decoration:none}
+.bar-logo span{display:block;background:var(--grain),var(--paper);color:var(--ink);padding:2px 14px;font:700 19px/1.5 var(--serif);letter-spacing:-.01em}
+.nav-plates{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+.nav-link.nav-home{display:none!important}
+.nav-plates .nav-link{position:relative;display:inline-flex;align-items:center;min-height:40px;padding:6px 14px;color:#E4E7E1;background:#4A5852;border-radius:2px;font:400 16px/1.2 var(--serif);text-decoration:none;white-space:nowrap;box-shadow:inset 1px 2px 2px rgba(0,0,0,.45),0 1px 0 rgba(255,255,255,.14)}
+.nav-plates .nav-link:hover{color:#fff}
+.nav-plates .nav-link.active{color:#fff;background:var(--steel-d)}
+.nav-plates .nav-link.active::after{content:'';position:absolute;right:-9px;top:-9px;width:22px;height:22px;border-radius:50%;background:var(--seal);border:2px solid #3e1e66;box-shadow:1px 1px 0 var(--sh),inset 0 0 0 3px var(--seal),inset 0 0 0 4px rgba(255,255,255,.5)}
+.nav-plates .nav-link.has-new::before{content:'';position:absolute;left:6px;top:6px;width:8px;height:8px;border-radius:50%;background:var(--tag);box-shadow:0 0 0 1.5px var(--ink)}
+#nav-admin{margin-left:auto}
+/* колокольчик и гостевые кнопки справа на планке */
+.bell-wrap{position:relative;flex:none;margin-left:auto}
+#nav-admin:not([style*="none"]) ~ .bell-wrap,.nav-plates:has(#nav-admin:not([style*="none"])) ~ .bell-wrap{margin-left:0}
+body.guest .bell-wrap{display:none}
+.bell-btn{position:relative;display:grid;place-items:center;width:44px;height:44px;padding:0;background:#4A5852;border:0;border-radius:2px;color:#2a2010;cursor:pointer;box-shadow:inset 1px 2px 2px rgba(0,0,0,.45)}
+.bell-btn .ic{width:24px;height:24px;color:#2a2010}
+.bell-btn[aria-expanded="true"]{background:var(--steel-d)}
+.bell-count{position:absolute;right:-7px;top:-7px;min-width:24px;height:22px;padding:0 5px 0 8px;background:var(--thread);color:#fff;font:700 13px/22px var(--mono);text-align:center;clip-path:polygon(22% 0,100% 0,100% 100%,22% 100%,0 50%)}
+.auth-corner-buttons{position:fixed;top:10px;right:20px;z-index:61;display:flex;gap:10px}
+.auth-corner-btn{min-height:44px;padding:8px 16px;border:0;font:600 16px var(--serif);cursor:pointer}
+.auth-corner-btn.register-btn{background:var(--seal);color:#F1EFF6;clip-path:var(--seal-edge)}
+.auth-corner-btn.login-btn{background:#4A5852;color:#E4E7E1;box-shadow:inset 1px 2px 2px rgba(0,0,0,.45)}
+body.guest .nav-plates{padding-right:270px}
+@media (max-width:1100px){.nav-plates .nav-link{padding:6px 10px;font-size:15px}.navbar .container{gap:12px}}
+/* телефон: сверху логотип и звонок, снизу таблички (design.md, раздел 11) */
+@media (max-width:760px){
+  :root{--bar-h:56px}
+  .navbar .container{padding:0 12px}
+  .bar-logo span{font-size:17px;padding:1px 10px}
+  .nav-plates{position:fixed;left:0;right:0;bottom:0;z-index:60;gap:4px;padding:6px 6px calc(6px + env(safe-area-inset-bottom));background:var(--steel);border-top:3px solid var(--steel-d);box-shadow:0 -3px 0 var(--sh);overflow-x:auto;scrollbar-width:none}
+  .nav-plates::-webkit-scrollbar{display:none}
+  .nav-plates .nav-link{flex:1 0 auto;justify-content:center;min-height:44px;padding:4px 10px;font-size:14px}
+  .nav-plates .nav-link.active::after{right:-4px;top:-6px;width:16px;height:16px}
+  #nav-admin{margin-left:0}
+  body{padding-bottom:72px}
+  body.guest .nav-plates{padding-right:6px}
+  .auth-corner-buttons{top:6px;right:10px;gap:6px}
+  .auth-corner-btn{min-height:44px;padding:6px 10px;font-size:14px}
+}
+
+/* ---------- 4. Разделы на столе ---------- */
+main,.section{display:none}
+.section.active{display:block}
+.section{padding:40px 0 64px}
+/* Пока экран не получил своё оформление, он лежит на столе одним листом дела */
+.section>.container{position:relative;max-width:1100px;background:var(--grain),var(--paper);color:var(--ink);padding:36px 44px 44px;box-shadow:3px 4px 0 var(--sh),0 0 0 1px rgba(0,0,0,.08)}
+.section>.container>h2:first-child{font-size:32px;padding-bottom:10px;margin-bottom:20px;border-bottom:1.5px solid var(--ink)}
+.section>.container>h2:first-child+p{color:var(--graphite);margin-top:-8px}
+@media (max-width:600px){.section{padding:20px 0 40px}.section>.container{padding:24px 16px 28px;box-shadow:2px 3px 0 var(--sh)}}
+
+footer{padding:24px 0 40px;color:#AEB7B1;font-size:15px;text-align:center}
+footer p{margin:4px 0}
+footer a{color:#D7DCD8}
+footer em{font-style:italic}
+
+/* ---------- 5. Кнопки (design.md 4.5) ---------- */
+:root{--seal-edge:polygon(1% 5%,24% 0,52% 4%,78% 0,99% 4%,100% 52%,98% 96%,70% 100%,40% 96%,12% 100%,0 95%,2% 50%)}
+button{font:inherit;color:inherit;cursor:pointer}
+button:disabled{cursor:not-allowed}
+.btn-primary,.cta-btn,.modal-submit-btn,.btn-approve,.btn-approve-request,.btn-seal{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:8px 22px;border:0;border-radius:0;background:var(--seal);color:#F1EFF6;font:600 17px/1.2 var(--serif);text-decoration:none;clip-path:var(--seal-edge);transition:transform .1s,filter .1s}
+.btn-primary:hover,.cta-btn:hover,.modal-submit-btn:hover,.btn-approve:hover,.btn-seal:hover{filter:brightness(1.08)}
+.btn-primary:active,.cta-btn:active,.modal-submit-btn:active,.btn-approve:active,.btn-seal:active,.btn-danger:active{transform:scale(.98);filter:brightness(.94)}
+.btn-primary:disabled,.cta-btn:disabled,.modal-submit-btn:disabled{background:#8c8796;filter:none;transform:none}
+.btn-danger,.btn-reject,.btn-reject-request{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 20px;border:0;background:var(--thread);color:#fff;font:600 17px/1.2 var(--serif);clip-path:var(--seal-edge)}
+.btn-secondary,.share-btn,.btn-report,.btn-bookmark,.btn-edit-event,.btn-evidence,.btn-request-title,.btn-link{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:4px 2px;border:0;background:none;color:var(--ink);font:400 17px/1.2 var(--serif);text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:5px}
+.btn-secondary:hover,.share-btn:hover,.btn-report:hover,.btn-bookmark:hover,.btn-edit-event:hover,.btn-evidence:hover{text-decoration-thickness:2.5px}
+.btn-delete-event,.btn-delete-comment,.btn-delete-message,.btn-delete-title,.btn-remove-evidence{display:inline-flex;align-items:center;min-height:44px;padding:4px 2px;border:0;background:none;color:var(--thread);font:400 16px var(--serif);text-decoration:underline;text-underline-offset:5px}
+.cta-btn{font-size:18px;padding:10px 26px}
+.modal-submit-btn{width:100%;margin-top:12px}
+
+/* ---------- 6. Бланки: поля ввода (design.md 4.4) ---------- */
+input,textarea,select{font:inherit;color:var(--pen)}
+input[type=text],input[type=email],input[type=password],input[type=search],input[type=number],input[type=date],input[type=url],input:not([type]),textarea,select{width:100%;min-height:44px;padding:8px 2px 6px;border:0;border-bottom:1.5px solid var(--ink);border-radius:0;background:transparent;color:var(--pen);font:400 18px/1.4 var(--serif);transition:border-color .12s,box-shadow .12s}
+textarea{min-height:96px;resize:vertical;background-image:repeating-linear-gradient(transparent 0 30px,rgba(29,35,48,.22) 30px 31px);line-height:31px;padding-top:2px}
+input:focus,textarea:focus,select:focus{border-bottom-color:var(--seal);box-shadow:0 1.5px 0 var(--seal);outline:none}
+input::placeholder,textarea::placeholder{color:#7d8079;font-style:italic;opacity:1}
+select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ink) 50%),linear-gradient(135deg,var(--ink) 50%,transparent 50%);background-position:calc(100% - 14px) 55%,calc(100% - 8px) 55%;background-size:6px 6px;background-repeat:no-repeat;padding-right:28px;cursor:pointer}
+input[type=checkbox],input[type=radio]{appearance:none;flex:none;width:22px;height:22px;margin:0 8px 0 0;border:2px solid var(--ink);background:transparent;vertical-align:-5px;cursor:pointer;display:inline-grid;place-items:center}
+input[type=radio]{border-radius:50%}
+input[type=checkbox]:checked{background:var(--grain)}
+input[type=checkbox]:checked::after{content:'';width:15px;height:15px;background:var(--seal);clip-path:polygon(8% 18%,18% 8%,50% 40%,82% 8%,92% 18%,60% 50%,92% 82%,82% 92%,50% 60%,18% 92%,8% 82%,40% 50%)}
+input[type=radio]:checked::after{content:'';width:10px;height:10px;border-radius:50%;background:var(--seal)}
+label{cursor:pointer}
+.form-input-group,.input-group{display:flex;flex-direction:column;gap:2px;margin:0 0 18px}
+.form-input-group>label{font:400 15px var(--serif);color:var(--graphite);order:0}
+.input-group{flex-direction:column-reverse}
+.input-group>label{font:400 15px var(--serif);color:var(--graphite)}
+.rules-check{display:flex;align-items:center;gap:4px;margin:10px 0;font-size:16px;color:var(--ink)}
+.rules-check a{color:var(--seal)}
+.field-error,.form-error{color:var(--thread);font:500 20px/1.2 var(--hand)}
+
+/* ---------- 7. Окно — лист поверх стола (design.md 4.6) ---------- */
+.modal{display:none;position:fixed;inset:0;z-index:800;align-items:flex-start;justify-content:center;padding:6vh 16px 24px;background:rgba(12,20,17,.55);overflow-y:auto}
+.modal-content{position:relative;width:100%;max-width:640px;background:var(--grain),var(--paper);color:var(--ink);padding:40px 44px 36px;box-shadow:4px 8px 0 var(--sh-hi),0 0 0 1px rgba(0,0,0,.1);clip-path:polygon(0 .3%,30% 0,64% .4%,100% 0,99.8% 40%,100% 100%,62% 99.7%,24% 100%,0 99.6%,.2% 60%)}
+.modal-content.wide{max-width:900px}.modal-content.narrow{max-width:480px}.modal-content.extra-narrow{max-width:400px}
+.modal-header{margin-bottom:18px;padding-bottom:10px;border-bottom:1.5px solid var(--ink)}
+.modal-header h2{font-size:28px;margin:0}
+.modal-header p{margin:6px 0 0;color:var(--graphite)}
+.close-modal{position:absolute;right:10px;top:8px;display:grid;place-items:center;width:44px;height:44px;font:400 30px/1 var(--serif);color:var(--ink);cursor:pointer;background:none;border:0}
+.close-modal:hover{color:var(--thread)}
+@media (max-width:600px){.modal{padding:0;align-items:flex-end}.modal-content{max-width:none;padding:34px 18px 28px;clip-path:none;max-height:92vh;overflow-y:auto}}
+
+/* ---------- 8. Уведомление — жёлтая бирка на нитке (design.md 4.6) ---------- */
+#notification-container{position:fixed;top:calc(var(--bar-h) + 14px);right:22px;z-index:900;display:flex;flex-direction:column;align-items:flex-end;gap:14px;pointer-events:none;max-width:min(380px,calc(100vw - 32px))}
+.notification{position:relative;pointer-events:auto;background:var(--tag);color:var(--ink);padding:12px 18px 12px 30px;font:400 16px/1.4 var(--serif);box-shadow:2px 3px 0 var(--sh);transform:rotate(-1.2deg);clip-path:polygon(14px 0,100% 0,100% 100%,14px 100%,0 50%);animation:tagIn .2s ease-out both;transition:opacity .3s}
+.notification p{margin:0}
+.notification::before{content:'';position:absolute;left:8px;top:50%;width:8px;height:8px;margin-top:-4px;border-radius:50%;background:var(--paper);box-shadow:inset 0 0 0 1.5px var(--ink)}
+.notification::after{content:'';position:absolute;left:-40px;top:50%;width:40px;height:1.5px;background:var(--ink)}
+.notification-error{background:#E8B9A8;color:#5c120d}
+.notification-success{background:var(--tag)}
+@keyframes tagIn{from{transform:translateY(-10px) rotate(-6deg);opacity:0}to{transform:rotate(-1.2deg);opacity:1}}
+
+/* ---------- 9. Штампы и метки (design.md 4.1) ---------- */
+.stamp,.badge-lore,.case-stamp,.th-stamp,.sub-stamp,.cred-stamp{display:inline-block;font:700 15px/1.1 var(--mono);text-transform:uppercase;letter-spacing:.08em;padding:5px 12px;border:3px solid currentColor;outline:1.5px solid currentColor;outline-offset:2px;color:var(--seal);background:transparent;transform:rotate(var(--r,-4deg));filter:url(#vp-rough);opacity:.92;white-space:nowrap}
+.stamp.red,.st-red{color:var(--thread)}.stamp.blue,.st-blue{color:var(--pen)}.stamp.gray,.st-gray{color:var(--graphite)}
+.stamp.drop{animation:stampDrop .22s cubic-bezier(.3,1.6,.6,1) both}
+@keyframes stampDrop{from{transform:rotate(var(--r,-4deg)) scale(1.8);opacity:0}to{transform:rotate(var(--r,-4deg)) scale(1);opacity:.92}}
+.badge-lore{color:var(--thread)}
+.badge,.badge-year,.badge-campaign,.badge-chronicle,.badge-warn{display:inline-flex;align-items:center;gap:4px;padding:1px 8px;font:400 14px/1.5 var(--serif);border:1.5px solid currentColor;color:var(--ink);background:transparent;border-radius:0}
+.badge-year{color:var(--seal)}.badge-warn{color:var(--thread)}.badge-chronicle{color:var(--pen)}
+
+/* ---------- 10. Общие мелочи ---------- */
+.empty-state,.chat-empty,.chronicle-empty,.q-empty,.bell-empty{color:var(--graphite);font-style:italic;padding:16px 0}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:400 14px var(--mono);color:var(--graphite)}
+details>summary{cursor:pointer}
+ul,ol{padding-left:1.4em}
+blockquote{margin:0 0 1em;padding:0 0 0 18px;font-style:italic;border:0}
+.admin-only{display:none}
+
+/* колокольчик: стопка повесток */
+.bell-panel{position:absolute;right:-6px;top:calc(100% + 12px);z-index:900;width:400px;max-height:min(70vh,560px);overflow-y:auto;background:var(--grain),var(--paper);color:var(--ink);box-shadow:3px 5px 0 var(--sh-hi),0 0 0 1px rgba(0,0,0,.1);text-align:left}
+.bell-head{position:sticky;top:0;z-index:1;display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--grain),var(--paper);border-bottom:1.5px solid var(--ink)}
+.bell-head b{margin-right:auto;font-size:18px}
+.bell-link{min-height:40px;padding:2px 4px;border:0;background:none;color:var(--ink);font:400 15px var(--serif);text-decoration:underline;text-underline-offset:4px}
+.bell-list{list-style:none;margin:0;padding:0}
+.bell-item{display:flex;gap:12px;width:100%;padding:12px 16px;border:0;border-bottom:1px solid var(--line);background:none;color:var(--ink);text-align:left;font:400 16px/1.4 var(--serif)}
+.bell-item:hover,.bell-item:focus-visible{background:rgba(29,35,48,.05)}
+.bell-item.unread{background:linear-gradient(90deg,rgba(227,198,90,.38),transparent 70%)}
+.bell-item.unread b{font-weight:700}.bell-item:not(.unread) b{font-weight:400}
+.bell-ico .ic{width:22px;height:22px;color:var(--graphite)}
+.bell-txt{display:flex;flex-direction:column;gap:2px;min-width:0;overflow-wrap:anywhere}
+.bell-txt small,.bell-txt time{color:var(--graphite);font-size:14px}
+.bell-empty{padding:18px 16px}
+.bell-prefs{display:grid;gap:10px;padding:14px 16px}
+.bell-prefs label{display:flex;align-items:center;gap:4px;font-size:16px}
+.bell-quiet{padding-top:10px;border-top:1.5px dashed var(--line)}
+@media (max-width:760px){.bell-panel{position:fixed;left:8px;right:8px;top:calc(var(--bar-h) + 8px);width:auto;max-height:calc(100vh - var(--bar-h) - 96px)}}
+
+/* ---------- 11. Доступность ---------- */
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
+
+/* ---------- 12. Поправки после первого прогона ---------- */
+.nav-plates .nav-link[style*="block"]{display:inline-flex!important}
+.bell-btn .ic,.bell-btn svg{color:#E0BE62}
+button{background:transparent;border:1.5px solid var(--ink);border-radius:0;min-height:36px;padding:4px 12px;font:400 16px/1.2 var(--serif);color:var(--ink)}
+button:hover{background:rgba(29,35,48,.06)}
+.navbar button{color:inherit}
+/* главная до своего оформления (T3.2): читаемый текст на столе */
+.hero{max-width:1100px;margin:0 auto;padding:0 40px;color:var(--paper)}
+.theme-picker{display:none}
+@media (max-width:600px){.hero{padding:0 14px}}
