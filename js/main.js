@@ -23,6 +23,7 @@ import { setupAdminPanel } from './admin.js';
 import { renderCases, openCaseAgainst, checkDoorKnock } from './cases.js';
 import { renderQueue, renderMySubmissions, reportFlow } from './moderation.js';
 import { setupBell, teardownBell } from './bell.js';
+import { renderDesk } from './desk.js';
 import { getArrest, getMessageReactions, getMessageById, muteUser, getMyMute, getEventOfDay, getMentionables, getUserFaction, getFactions } from './api.js';
 import { registerUser, loginUser, logoutUser, onAuthStateChange } from './auth.js';
 import { validateDate, geocodePlace } from './validation.js';
@@ -350,6 +351,7 @@ async function loadEvents() {
     if (list) list.innerHTML = '<li class="empty-state">Картотека доступна участникам. Войдите или станьте Вадимом, чтобы читать события.</li>';
     const st = document.getElementById('stat-events');
     if (st) st.textContent = '—';
+    renderDesk(null);
     return;
   }
   const [allEvents, counts, polls] = await Promise.all([getApprovedEvents(), getReactionCounts(), getYearPolls()]);
@@ -364,6 +366,7 @@ async function loadEvents() {
   const onAuthorClick = currentProfile ? handleAuthorClick : null;
   const onEditEvent = currentProfile ? handleEditEvent : null;
   renderEvents(events, currentProfile?.role, currentProfile?.id, handleDeleteEvent, onAuthorClick, onEditEvent);
+  renderDesk(events, handleShowEventModal);
   const statEvents = document.getElementById('stat-events');
   if (statEvents) statEvents.textContent = events.length;
   await loadYearPolls(polls, events);

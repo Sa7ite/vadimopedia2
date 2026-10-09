@@ -3,14 +3,14 @@
 const $=s=>document.querySelector(s);
 // поиск по ленте
 document.addEventListener('input',e=>{if(e.target.id!=='events-search')return;const q=e.target.value.trim().toLowerCase();
-  document.querySelectorAll('#events-list>li').forEach(li=>{li.style.display=!q||li.textContent.toLowerCase().includes(q)?'':'none';});});
+  document.querySelectorAll('#events-list>li').forEach(li=>{li.style.display=!q||(!li.classList.contains('ev-group')&&li.textContent.toLowerCase().includes(q))?'':'none';});});
 // поделиться
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-share]');if(!b)return;
   const text=decodeURIComponent(b.dataset.share)+'\n— Вадимопедия, '+location.origin;
   try{if(navigator.share)await navigator.share({title:'Вадимопедия',text});else{await navigator.clipboard.writeText(text);b.textContent='Скопировано!';}}catch(_){}});
 // новые главы летописи
 const navChron=()=>document.querySelector('.nav-link[data-section="chronicle"]');
-window.vpChronicleCheck=c=>{if(!c||!c.content)return;const seen=+localStorage.getItem('chronicleSeen')||0;
+window.vpChronicleCheck=c=>{if(!c||!c.content)return;const seen=+localStorage.getItem('chronicleSeen')||0;window.vpDeskTome?.(c,c.version>seen);
   if(c.version>seen){navChron()?.classList.add('has-new');if(seen)setTimeout(()=>window.vpToast?.('Вышла новая глава летописи!'),1500);}};
 window.vpChronicleSeen=c=>{if(!c)return;const prev=localStorage.getItem('chronicleText')||'';localStorage.setItem('chronicleSeen',c.version);navChron()?.classList.remove('has-new');
   // подсветка нового текста: абзацы, которых не было в прошлый раз
@@ -29,11 +29,13 @@ window.vpVadimOfDay=(ev,open)=>{const box=$('#vadim-of-day');if(!box||!ev||!ev.l
   box.innerHTML=`<div class="vod-label">Событие дня</div><div class="vod-text"></div><div class="vod-meta"></div>`;
   box.querySelector('.vod-meta').textContent=[e.event_date,e.city].filter(Boolean).join(' · ');
   box.querySelector('.vod-text').textContent=e.event_text.length>220?e.event_text.slice(0,220)+'…':e.event_text;
-  box.style.display='block';box.style.cursor='pointer';box.onclick=()=>open&&open(e);};
+  box.style.display='block';box.style.cursor='pointer';box.onclick=()=>open&&open(e);window.vpDeskDay?.(e,open);};
 // D8: переключатель темы в профиле
 window.vpMarkTheme=()=>document.querySelectorAll('.theme-picker button').forEach(b=>b.classList.toggle('on',document.body.classList.contains('theme-'+b.dataset.t)));
 document.addEventListener('click',e=>{const b=e.target.closest('.theme-picker button');if(!b)return;
   localStorage.setItem('theme',b.dataset.t);document.body.classList.remove('theme-agit','theme-dossier');document.body.classList.add('theme-'+b.dataset.t);window.vpMarkTheme();});
+// Esc закрывает верхнее открытое окно (T3.2)
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;const m=[...document.querySelectorAll('.modal')].filter(x=>x.style.display==='flex'||getComputedStyle(x).display!=='none').pop();m?.querySelector('.close-modal')?.click();});
 // PWA
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 })();

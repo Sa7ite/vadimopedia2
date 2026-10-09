@@ -578,8 +578,21 @@ export function renderEvents(events, currentUserRole, currentUserId, onDeleteEve
   const isAdmin = currentUserRole === 'admin' || currentUserRole === 'moderator';
   if (events.length === 0) { eventsList.innerHTML = '<li class="empty-state">Пока нет событий. Будьте первым!</li>'; return; }
 
+  // T3.2: в порядке «по дате» ящик делится карточками-разделителями по годам
+  const byYear = document.getElementById('events-sort')?.value !== 'popular';
+  let lastYear = null;
   events.forEach(event => {
+    const y = (String(event.event_date || '').match(/\d+(?!.*\d)/) || [])[0] || 'Без года';
+    if (byYear && y !== lastYear) {
+      lastYear = y;
+      const g = document.createElement('li');
+      g.className = 'ev-group';
+      g.innerHTML = `<span>${escapeHtml(y)}</span>`;
+      eventsList.appendChild(g);
+    }
     const li = document.createElement('li');
+    li.className = 'ev-card';
+    li.style.setProperty('--tx', ['18px', '36%', 'calc(100% - 190px)'][event.id % 3]);
     // D9: в ленте показываем дату события; если её нет — дату добавления с пометкой
     const date = event.event_date
       ? escapeHtml(event.event_date)
@@ -605,6 +618,7 @@ export function renderEvents(events, currentUserRole, currentUserId, onDeleteEve
       : '';
     
     li.innerHTML = `
+      <span class="ev-no">Дело № ${String(event.id).padStart(4, '0')}</span>
       <div class="event-header">
         ${clickableAuthor}
         <span class="event-date">${date}</span>
