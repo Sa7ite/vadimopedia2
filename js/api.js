@@ -601,31 +601,18 @@ export async function checkAndAwardAchievements(userId) {
 }
 
 // ============================================
-// ГОЛОСОВАНИЕ "СОБЫТИЕ ГОДА"
+// T2.8: «СОБЫТИЕ ГОДА» — голосование по году события (правила и титул — в базе)
 // ============================================
-
-export async function voteForEventOfYear(eventId, year) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Пользователь не авторизован');
-
-  const { error } = await supabase
-    .from('event_year_votes')
-    .upsert([{ event_id: eventId, user_id: user.id, year: year }]);
-
-  if (error) throw error;
-}
-
-export async function getEventOfYearVotes(year) {
-  const { data, error } = await supabase
-    .from('event_year_votes')
-    .select('event_id, count(*)')
-    .eq('year', year)
-    .group('event_id')
-    .order('count', { ascending: false });
-
-  if (error) { console.error('Ошибка получения голосов:', error); return []; }
+export async function getYearPolls() {
+  const { data, error } = await supabase.from('year_polls').select('*').order('year', { ascending: false });
+  if (error) { console.error('Ошибка получения голосований:', error); return []; }
   return data;
 }
+export const getYearPoll = (year) => rpcOrThrow('get_year_poll', { p_year: Number(year) });
+export const voteEventOfYear = (eventId) => rpcOrThrow('vote_event_of_year', { p_event: Number(eventId) });
+export const openYearPoll = (year) => rpcOrThrow('open_year_poll', { p_year: Number(year) });
+export const closeYearPoll = (year, winner = null) => rpcOrThrow('close_year_poll', { p_year: Number(year), p_winner: winner == null ? null : Number(winner) });
+
 // ============================================
 // T1.7: настройки, справочники, журнал (пишет только админ — проверяет база)
 // ============================================
@@ -714,7 +701,7 @@ export async function getMyEvidence() {
 // ============================================
 // T2.7: ТЕОРИИ — нитка между двумя событиями, голоса «верю / не верю», канон (права и лимиты — в базе)
 // ============================================
-const rpcOrThrow = async (fn, args) => {
+async function rpcOrThrow(fn, args) {
   const { data, error } = await supabase.rpc(fn, args);
   if (error) throw new Error(error.message);
   return data;

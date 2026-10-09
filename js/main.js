@@ -15,7 +15,8 @@ import {
   toggleBookmark, getBookmarks,
   getEventsByUser, getEventById,
   getPersons, getCampaigns, setEventParticipants, getSettingValue, getReactionCounts,
-  getTheories, createTheory, voteTheory, setTheoryStatus, addEvidence, removeEvidence, getMyEvidence
+  getTheories, createTheory, voteTheory, setTheoryStatus, addEvidence, removeEvidence, getMyEvidence,
+  getYearPolls, getYearPoll, voteEventOfYear, openYearPoll, closeYearPoll
 } from './api.js';
 import { setupAdminPanel } from './admin.js';
 import { registerUser, loginUser, logoutUser, onAuthStateChange } from './auth.js';
@@ -24,7 +25,7 @@ import {
   showSection, showNotification, updateUIForUser, updateUIForGuest,
   renderEvents, renderPendingEvents, renderProfile, renderEditProfileForm,
   renderChatMessages, showDeleteReasonModal, showUserProfile,
-  renderChronicle, renderChronicleEditor, renderInsertReview, renderTimeline, renderTheories, renderBookmarks,
+  renderChronicle, renderChronicleEditor, renderInsertReview, renderTimeline, renderTheories, renderBookmarks, renderYearPolls,
   showEventModal, showEditEventModal, eventTagsPickerHtml, readEventTags,
   openModal, closeModal, setupModalCloseHandlers
 } from './ui.js';
@@ -294,8 +295,10 @@ async function loadEvents() {
     if (st) st.textContent = '—';
     return;
   }
-  const [allEvents, counts] = await Promise.all([getApprovedEvents(), getReactionCounts()]);
-  allEvents.forEach(e => { e.rc = counts[String(e.id)] || { likes: 0, dislikes: 0, witnesses: 0, score: 0 }; });
+  const [allEvents, counts, polls] = await Promise.all([getApprovedEvents(), getReactionCounts(), getYearPolls()]);
+  // T2.8: значок «Событие года» у победителей
+  const awards = Object.fromEntries(polls.filter(p => p.winner_event).map(p => [String(p.winner_event), p.year]));
+  allEvents.forEach(e => { e.rc = counts[String(e.id)] || { likes: 0, dislikes: 0, witnesses: 0, score: 0 }; e.year_award = awards[String(e.id)] || null; });
   const byDate = (a, b) => eventDateKey(b.event_date) - eventDateKey(a.event_date);
   // T2.1: «Популярное» — счёт = нравится − не нравится, при равенстве — по дате
   const sortMode = document.getElementById('events-sort')?.value || 'date';
@@ -306,6 +309,25 @@ async function loadEvents() {
   renderEvents(events, currentProfile?.role, currentProfile?.id, handleDeleteEvent, onAuthorClick, onEditEvent);
   const statEvents = document.getElementById('stat-events');
   if (statEvents) statEvents.textContent = events.length;
+  await loadYearPolls(polls, events);
+}
+
+// T2.8: блок «Событие года» над лентой
+async function loadYearPolls(polls = null, events = feedEvents) {
+  const box = document.getElementById('year-poll-box');
+  if (!box || !currentProfile) return;
+  polls = polls || await getYearPolls();
+  const active = polls.filter(p => p.status !== 'closed');
+  const states = Object.fromEntries(await Promise.all(active.map(async p => [p.year, await getYearPoll(p.year).catch(() => ({ events: [] }))])));
+  const used = new Set(polls.map(p => p.year));
+  const years = [...new Set(events.map(e => e.event_year).filter(y => y != null && !used.has(y)))].sort((a, b) => b - a);
+  renderYearPolls(box, { polls, states, years, isAdmin: currentProfile.role === 'admin' }, {
+    onVote: voteEventOfYear,
+    onOpen: openYearPoll,
+    onClose: closeYearPoll,
+    onEventClick: handleShowEventModal,
+    reload: async () => { await loadEvents(); }
+  });
 }
 
 async function loadPendingEvents() {
