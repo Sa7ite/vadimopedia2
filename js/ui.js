@@ -91,18 +91,11 @@ function getAvatarUrl(profile) {
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
-function formatTitles(userTitles) {
-  if (!userTitles || !Array.isArray(userTitles) || userTitles.length === 0) return '';
-  const activeTitles = userTitles.filter(ut => ut && ut.titles && ut.is_active !== false && !ut.revoked_at);
-  if (activeTitles.length === 0) return '';
-  return activeTitles.map(ut => escapeHtml(ut.titles.title_name)).join(', ');
-}
-
 // D6: в профиле титулы выводятся стопкой, по одному в строке
 function formatTitlesList(userTitles) {
   const active = (userTitles || []).filter(ut => ut && ut.titles && ut.is_active !== false && !ut.revoked_at);
   if (!active.length) return '';
-  return `<ul class="profile-titles">${active.map(ut => `<li>${icon('star')} ${escapeHtml(ut.titles.title_name)}</li>`).join('')}</ul>`;
+  return `<ul class="profile-titles title-chips" aria-label="Титулы">${active.map(ut => `<li class="title-chip ${ut.titles.title_type === 'special' ? 'special' : ''}">${icon('star')} ${escapeHtml(ut.titles.title_name)}</li>`).join('')}</ul>`;
 }
 
 export function renderProfile(profile, onEditClick) {
@@ -169,7 +162,7 @@ export function renderProfile(profile, onEditClick) {
 }
 
 async function showTitlesManager(profile) {
-  const { getAllTitles, getUserTitles, createTitle, deleteTitle } = await import('./api.js');
+  const { getAllTitles, getUserTitles } = await import('./api.js');
   
   const allTitles = await getAllTitles();
   const userTitles = await getUserTitles(profile.id);
@@ -189,114 +182,53 @@ async function showTitlesManager(profile) {
   modal.style.display = 'flex';
   modal.id = 'modal-titles-manager';
   
-  let titlesHTML = '';
-  
-  if (isAdmin) {
-    titlesHTML = `
+  // Одинаковый вид для всех: создание и удаление титулов — в Канцелярии (админка)
+  const myTitles = userTitles.filter(ut => ut.titles && !ut.revoked_at);
+  const availableCommon = commonTitles.filter(t => !unlockedTitleIds.includes(t.id));
+  const availableSpecial = specialTitles.filter(t => !unlockedTitleIds.includes(t.id));
+  const card = (t, { state, extra = '', attrs = '' }) => `
+    <div class="title-card tm-${state} ${t.title_type === 'special' ? 'special' : ''} ${state === 'on' ? 'selected' : ''}" ${attrs}>
+      <div class="tm-top"><span class="title-kind">${t.title_type === 'special' ? 'Особый' : 'Базовый'}</span>
+        <span class="title-status">${{ on: 'Надет', off: 'Снят', free: 'Можно взять', ask: 'По запросу' }[state]}</span></div>
+      <div class="title-name">${escapeHtml(t.title_name)}</div>
+      ${t.description ? `<div class="title-desc">${escapeHtml(t.description)}</div>` : ''}
+      <div class="tm-hint">${{ on: 'Нажмите, чтобы снять', off: 'Нажмите, чтобы надеть', free: 'Нажмите, чтобы получить и надеть', ask: '' }[state]}</div>
+      ${extra}
+    </div>`;
+  const titlesHTML = `
+    <div class="titles-section">
+      <h3>${icon('badge')} Мои титулы</h3>
+      <div class="titles-grid">
+        ${myTitles.length === 0 ? '<p class="empty-state">У вас пока нет титулов</p>' : myTitles.map(ut => card(ut.titles, {
+          state: ut.is_active !== false ? 'on' : 'off',
+          attrs: `data-title-id="${ut.title_id}" data-type="${ut.titles.title_type}" data-unlocked="true" role="button" tabindex="0"` })).join('')}
+      </div>
+    </div>
+    ${availableCommon.length || (isAdmin && availableSpecial.length) ? `
       <div class="titles-section">
-        <h3>${icon('trophy')} Базовые титулы</h3>
+        <h3>${icon('trophy')} Можно взять</h3>
         <div class="titles-grid">
-          ${commonTitles.map(title => {
-            const isActive = tempActiveTitles.includes(title.id);
-            return `
-              <div class="title-card ${isActive ? 'selected' : ''}" data-title-id="${title.id}" data-type="common">
-                <div class="title-name">${escapeHtml(title.title_name)}</div>
-                <div class="title-desc">${escapeHtml(title.description || '')}</div>
-                <button class="btn-delete-title" data-title-id="${title.id}">${icon('trash')} Удалить</button>
-              </div>
-            `;
-          }).join('')}
+          ${[...availableCommon, ...(isAdmin ? availableSpecial : [])].map(t => card(t, {
+            state: 'free', attrs: `data-title-id="${t.id}" data-type="${t.title_type}" data-unlocked="false" role="button" tabindex="0"` })).join('')}
         </div>
-      </div>
+      </div>` : ''}
+    ${!isAdmin && availableSpecial.length ? `
       <div class="titles-section">
-        <h3>${icon('star')} Особые титулы</h3>
+        <h3>${icon('star')} Особые — выдаёт админ</h3>
         <div class="titles-grid">
-          ${specialTitles.map(title => {
-            const isActive = tempActiveTitles.includes(title.id);
-            return `
-              <div class="title-card special ${isActive ? 'selected' : ''}" data-title-id="${title.id}" data-type="special">
-                <div class="title-name">${escapeHtml(title.title_name)}</div>
-                <div class="title-desc">${escapeHtml(title.description || '')}</div>
-                <button class="btn-delete-title" data-title-id="${title.id}">${icon('trash')} Удалить</button>
-              </div>
-            `;
-          }).join('')}
+          ${availableSpecial.map(t => card(t, { state: 'ask', attrs: `data-title-id="${t.id}" data-requestable="1"`,
+            extra: `<button class="btn-request-title" data-title-id="${t.id}">Запросить</button>` })).join('')}
         </div>
-      </div>
-      <div class="titles-section admin-controls">
-        <h3>Создать новый титул</h3>
-        <div class="create-title-form">
-          <input type="text" id="new-title-name" placeholder="Название титула">
-          <textarea id="new-title-desc" placeholder="Описание" rows="2"></textarea>
-          <select id="new-title-type">
-            <option value="common">Обычный</option>
-            <option value="special">Премиальный</option>
-          </select>
-          <button class="btn-primary" id="btn-create-title">Создать титул</button>
-        </div>
-      </div>
-    `;
-  } else {
-    const myTitles = userTitles;
-    const availableCommon = commonTitles.filter(t => !unlockedTitleIds.includes(t.id));
-    const availableSpecial = specialTitles.filter(t => !unlockedTitleIds.includes(t.id));
-    
-    titlesHTML = `
-      <div class="titles-section">
-        <h3>Мои титулы</h3>
-        <p class="request-hint">Нажмите на титул, чтобы надеть или снять его</p>
-        <div class="titles-grid">
-          ${myTitles.length === 0 ? '<p>У вас пока нет титулов</p>' : myTitles.map(ut => {
-            const isActive = ut.is_active !== false;
-            const isSpecial = ut.titles.title_type === 'special';
-            return `
-              <div class="title-card ${isActive ? 'selected' : ''} ${isSpecial ? 'special' : ''}" data-title-id="${ut.title_id}" data-type="${ut.titles.title_type}" data-unlocked="true">
-                <div class="title-name">${escapeHtml(ut.titles.title_name)}</div>
-                <div class="title-desc">${escapeHtml(ut.titles.description || '')}</div>
-                <div class="title-status">${isActive ? 'Надет' : 'Снят'}</div>
-              </div>
-            `;
-          }).join('')}
-        </div>
-      </div>
-      ${availableCommon.length > 0 ? `
-        <div class="titles-section">
-          <h3>${icon('trophy')} Доступные базовые титулы</h3>
-          <p class="request-hint">Нажмите, чтобы получить титул</p>
-          <div class="titles-grid">
-            ${availableCommon.map(title => `
-              <div class="title-card" data-title-id="${title.id}" data-type="common" data-unlocked="false">
-                <div class="title-name">${escapeHtml(title.title_name)}</div>
-                <div class="title-desc">${escapeHtml(title.description || '')}</div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      ` : ''}
-      ${availableSpecial.length > 0 ? `
-        <div class="titles-section">
-          <h3>${icon('star')} Особые титулы</h3>
-          <p class="request-hint">Нажмите "Запросить", чтобы отправить запрос администратору</p>
-          <div class="titles-grid">
-            ${availableSpecial.map(title => `
-              <div class="title-card requestable" data-title-id="${title.id}">
-                <div class="title-name">${escapeHtml(title.title_name)}</div>
-                <div class="title-desc">${escapeHtml(title.description || '')}</div>
-                <button class="btn-request-title" data-title-id="${title.id}">Запросить</button>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      ` : ''}
-    `;
-  }
-  
+      </div>` : ''}
+    ${isAdmin ? '<p class="admin-hint">Создавать, менять и удалять титулы — в Канцелярии, блок «Титулы».</p>' : ''}
+  `;
+
   modal.innerHTML = `
     <div class="modal-content titles-modal">
       <span class="close-modal" data-modal="modal-titles-manager">&times;</span>
       <div class="modal-header">
         <h2>Управление титулами</h2>
-        <p>Надето: <span id="titles-count">${tempActiveTitles.length}</span> / 3</p>
+        <p class="tm-count">Надето: <b id="titles-count">${tempActiveTitles.length}</b> из 3 · изменения сохранятся после «Подтвердить»</p>
       </div>
       ${titlesHTML}
       <div class="form-actions">
@@ -319,105 +251,51 @@ async function showTitlesManager(profile) {
   });
   modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
   
-  modal.querySelectorAll('.title-card:not(.requestable)').forEach(card => {
+  modal.querySelectorAll('.title-card[data-unlocked]').forEach(card => {
+    card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); } });
     card.addEventListener('click', (e) => {
-      if (e.target.classList.contains('btn-delete-title') || e.target.classList.contains('btn-request-title')) return;
+      if (e.target.classList.contains('btn-request-title')) return;
       
       const titleId = parseInt(card.dataset.titleId);
       const titleType = card.dataset.type;
       const isUnlocked = card.dataset.unlocked === 'true';
       const isActive = card.classList.contains('selected');
-      const currentCount = tempActiveTitles.length;
-      
-      if (isUnlocked) {
-        if (isActive) {
-          tempActiveTitles = tempActiveTitles.filter(id => id !== titleId);
-          card.classList.remove('selected');
-          const statusEl = card.querySelector('.title-status');
-          if (statusEl) statusEl.textContent = ' Снят';
-        } else {
-          if (titleType === 'common' && currentCount >= 3) {
-            showNotification('Максимум 3 титула', 'error');
-            return;
-          }
-          tempActiveTitles.push(titleId);
-          card.classList.add('selected');
-          const statusEl = card.querySelector('.title-status');
-          if (statusEl) statusEl.textContent = 'Надет';
-        }
+      const setState = (st) => {
+        card.classList.remove('tm-on', 'tm-off', 'tm-free'); card.classList.add('tm-' + st);
+        card.classList.toggle('selected', st === 'on');
+        card.querySelector('.title-status').textContent = st === 'on' ? 'Надет' : 'Снят';
+        card.querySelector('.tm-hint').textContent = st === 'on' ? 'Нажмите, чтобы снять' : 'Нажмите, чтобы надеть';
+      };
+      if (isActive) {
+        tempActiveTitles = tempActiveTitles.filter(id => id !== titleId);
+        setState('off');
       } else {
-        if (titleType === 'common' && currentCount >= 3) {
-          showNotification('Максимум 3 титула', 'error');
-          return;
-        }
-        tempUnlockedTitles.push(titleId);
+        if (titleType === 'common' && tempActiveTitles.length >= 3) { showNotification('Надеть можно не больше 3 титулов — сначала снимите один', 'error'); return; }
+        if (!isUnlocked) { tempUnlockedTitles.push(titleId); card.dataset.unlocked = 'true'; }
         tempActiveTitles.push(titleId);
-        card.classList.add('selected');
-        card.dataset.unlocked = 'true';
-        const statusDiv = document.createElement('div');
-        statusDiv.className = 'title-status';
-        statusDiv.textContent = 'Надет';
-        card.appendChild(statusDiv);
+        setState('on');
       }
-      
       modal.querySelector('#titles-count').textContent = tempActiveTitles.length;
     });
   });
-  
-  if (isAdmin) {
-    modal.querySelectorAll('.btn-delete-title').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        const titleId = parseInt(btn.dataset.titleId);
-        if (!confirm('Удалить этот титул из системы?')) return;
-        try {
-          await deleteTitle(titleId);
-          showNotification('Титул удалён из системы', 'success');
-          modal.remove();
-          showTitlesManager(profile);
-        } catch (error) {
-          showNotification(`Ошибка: ${error.message}`, 'error');
-        }
-      });
-    });
-  }
-  
-  if (!isAdmin) {
-    modal.querySelectorAll('.btn-request-title').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        const titleId = parseInt(btn.dataset.titleId);
-        const reason = prompt('Укажите причину запроса титула:');
-        if (!reason || !reason.trim()) return;
-        try {
-          const { requestTitle } = await import('./api.js');
-          await requestTitle(titleId, reason.trim());
-          showNotification('Запрос отправлен администратору', 'success');
-          btn.disabled = true;
-          btn.textContent = 'Запрос отправлен';
-        } catch (error) {
-          showNotification(`Ошибка: ${error.message}`, 'error');
-        }
-      });
-    });
-  }
-  
-  if (isAdmin) {
-    modal.querySelector('#btn-create-title').addEventListener('click', async () => {
-      const name = modal.querySelector('#new-title-name').value.trim();
-      const desc = modal.querySelector('#new-title-desc').value.trim();
-      const type = modal.querySelector('#new-title-type').value;
-      if (!name) { showNotification('Введите название титула', 'error'); return; }
+
+  modal.querySelectorAll('.btn-request-title').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const titleId = parseInt(btn.dataset.titleId);
+      const reason = prompt('Укажите причину запроса титула:');
+      if (!reason || !reason.trim()) return;
       try {
-        await createTitle(name, type, desc, '');
-        showNotification('Титул создан', 'success');
-        modal.remove();
-        showTitlesManager(profile);
+        const { requestTitle } = await import('./api.js');
+        await requestTitle(titleId, reason.trim());
+        showNotification('Запрос отправлен администратору', 'success');
+        btn.disabled = true;
+        btn.textContent = 'Запрос отправлен';
       } catch (error) {
         showNotification(`Ошибка: ${error.message}`, 'error');
       }
     });
-  }
+  });
 }
 
 async function confirmTitleChanges(userId, oldActiveIds, newActiveIds, oldUnlockedIds, newUnlockedIds) {
@@ -461,7 +339,7 @@ export async function showUserProfile(userId, currentUserId) {
   
   const userEvents = await getEventsByUser(userId);
   const avatarUrl = getAvatarUrl(profile);
-  const titlesText = formatTitles(profile.user_titles);
+  const titlesText = formatTitlesList(profile.user_titles);
   
   const modal = document.createElement('div');
   modal.className = 'modal';
@@ -476,7 +354,7 @@ export async function showUserProfile(userId, currentUserId) {
           <div class="avatar-wrap"><img src="${avatarUrl}" alt="Аватар" class="profile-avatar">${credBadgeHtml(profile)}</div>
           <div class="profile-info">
             <h3>${escapeHtml(profile.full_name || 'Без имени')}</h3>
-            ${titlesText ? `<div class="profile-titles">${titlesText}</div>` : ''}
+            ${titlesText}
             <p class="profile-location">${icon('pin')} ${escapeHtml(profile.city || 'Локация не указана')}</p>
             <p class="profile-role">${icon('badge')} Роль: ${profile.role}</p>
           </div>
@@ -672,7 +550,7 @@ function isDeletedMessageExpired(message) {
 // T2.13: ссылки кликабельны (после экранирования), @Имя подсвечено
 function chatTextHtml(text, names) {
   let h = escapeHtml(text).replace(/https?:\/\/[^\s<]+[^\s<.,;:!?)»"']/g, u => `<a href="${u}" target="_blank" rel="noopener nofollow ugc">${u}</a>`);
-  for (const n of names || []) { const e = escapeHtml('@' + n); if (n && h.includes(e)) h = h.split(e).join(`<b class="chat-mention">${e}</b>`); }
+  for (const n of names || []) { const e = escapeHtml('@' + n); if (n && h.includes(e)) h = h.split(e).join(`<span class="chat-mention">${e}</span>`); }
   return h;
 }
 
@@ -718,15 +596,16 @@ export function renderChatMessages(messages, currentUserId, currentUserRole, onD
       ? `<button class="btn-delete-message" data-id="${msg.id}" data-own="${isOwnMessage}">Удалить</button>`
       : '';
 
-    const titlesText = msg.user_titles && msg.user_titles.length > 0
-      ? msg.user_titles.map(ut => ut.titles?.title_name || '').filter(s => s.trim()).join(', ')
-      : '';
+    const titleNames = (msg.user_titles || []).map(ut => ut.titles?.title_name || '').filter(s => s.trim());
+    const titlesHtml = titleNames.length ? `<span class="chat-titles" aria-label="Титулы">${titleNames.map(n => `<span class="chat-title-chip">${escapeHtml(n)}</span>`).join('')}</span>` : '';
+    if (isOwnMessage) div.classList.add('own');
 
     const authorName = msg.profiles?.full_name || 'Аноним';
     const authorId = msg.user_id;
+    const youMark = isOwnMessage ? ' <span class="chat-you">(вы)</span>' : '';
     const clickableAuthor = onAuthorClick && authorId
-      ? `<span class="clickable-author" data-user-id="${authorId}">${escapeHtml(authorName)}</span>`
-      : `<strong class="chat-author ${isOwnMessage ? 'own' : ''}">${escapeHtml(authorName)}</strong>`;
+      ? `<button type="button" class="chat-author clickable-author ${isOwnMessage ? 'own' : ''}" data-user-id="${authorId}">${escapeHtml(authorName)}</button>${youMark}`
+      : `<strong class="chat-author ${isOwnMessage ? 'own' : ''}">${escapeHtml(authorName)}</strong>${youMark}`;
 
     if (msg.is_deleted) {
       div.innerHTML = `
@@ -742,7 +621,7 @@ export function renderChatMessages(messages, currentUserId, currentUserRole, onD
     } else {
       const parent = msg.reply_to ? byId.get(String(msg.reply_to)) : null;
       const replyHtml = msg.reply_to ? `<div class="chat-reply-ref">${parent && !parent.is_deleted
-        ? `<b>${escapeHtml(parent.profiles?.full_name || 'Летопись')}:</b> ${escapeHtml((parent.message_text || '').slice(0, 90))}${(parent.message_text || '').length > 90 ? '…' : ''}`
+        ? `<span class="chat-reply-who">Ответ на сообщение ${escapeHtml(parent.profiles?.full_name || 'Летопись')}:</span> ${escapeHtml((parent.message_text || '').slice(0, 90))}${(parent.message_text || '').length > 90 ? '…' : ''}`
         : 'ответ на сообщение, которого уже нет на экране'}</div>` : '';
       const r = reacts[String(msg.id)] || { like: 0, dislike: 0, mine: {} };
       const reactBtns = ['like', 'dislike'].map(t => {
@@ -755,7 +634,7 @@ export function renderChatMessages(messages, currentUserId, currentUserRole, onD
       div.innerHTML = `
         <div class="chat-message-header">
           ${clickableAuthor}
-          ${titlesText ? `<span class="chat-titles">[${escapeHtml(titlesText)}]</span>` : ''}
+          ${titlesHtml}
           <span class="chat-time">${time}</span>
           <button class="btn-evidence-message" data-id="${msg.id}" title="Сохранить в улики (видите только вы)" aria-label="В улики">${icon('evidence')}</button>
           ${deleteBtn}
@@ -1123,10 +1002,10 @@ export function theoryCardHtml(t, ctx) {
   return `
     <article class="theory-card ${canon ? 'is-canon' : ''}" data-theory-id="${t.id}">
       ${canon ? '<span class="th-stamp">Канон</span>' : ''}
-      <div class="th-pair">
+      <div class="th-pair ${t.event_b ? '' : 'th-single'}">
         ${ev(t.event_a, t.event_a_text, t.event_a_date)}
-        <span class="th-thread" style="--th:${thick}px" title="Толщина нитки — по числу «верю»" aria-hidden="true"></span>
-        ${ev(t.event_b, t.event_b_text, t.event_b_date)}
+        ${t.event_b ? `<span class="th-thread" style="--th:${thick}px" title="Толщина нитки — по числу «верю»" aria-hidden="true"></span>
+        ${ev(t.event_b, t.event_b_text, t.event_b_date)}` : ''}
       </div>
       <p class="th-note">«${escapeHtml(t.note)}»</p>
       <div class="th-meta">${icon('user')} ${escapeHtml(t.author_name || 'Аноним')} · ${new Date(t.created_at).toLocaleDateString('ru-RU')}</div>
@@ -1147,11 +1026,11 @@ export function theoryFormHtml(events, fixedId = null) {
     <form class="theory-form" novalidate>
       <label>Первое событие
         <select name="a" ${fixedId ? 'disabled' : ''} required><option value="">— выберите —</option>${opts(fixedId)}</select></label>
-      <label>Второе событие
-        <select name="b" required><option value="">— выберите —</option>${opts(null)}</select></label>
-      <label>Почему они связаны
+      <label>Второе событие <span class="th-optional">(необязательно)</span>
+        <select name="b"><option value="">— без второго: теория об одном событии —</option>${opts(null)}</select></label>
+      <label>В чём теория (если два события — почему они связаны)
         <textarea name="note" rows="3" maxlength="280" placeholder="Например: после этого Вадимы и начали…" required></textarea></label>
-      <div class="th-form-foot"><span class="th-count">0 / 280</span><button type="submit" class="btn-primary">Протянуть нитку</button></div>
+      <div class="th-form-foot"><span class="th-count">0 / 280</span><button type="submit" class="btn-primary">Выдвинуть теорию</button></div>
     </form>`;
 }
 
@@ -1167,11 +1046,11 @@ export function bindTheories(root, ctx) {
     if (!form) return;
     e.preventDefault();
     const a = form.querySelector('[name=a]').value, b = form.querySelector('[name=b]').value, text = form.querySelector('[name=note]').value.trim();
-    if (!a || !b) return showNotification('Выберите два события', 'error');
-    if (a === b) return showNotification('Нужны два разных события', 'error');
-    if (text.length < 3) return showNotification('Напишите, почему события связаны', 'error');
+    if (!a) return showNotification('Выберите событие', 'error');
+    if (b && a === b) return showNotification('Второе событие должно отличаться от первого', 'error');
+    if (text.length < 3) return showNotification('Напишите, в чём теория', 'error');
     const btn = form.querySelector('[type=submit]'); btn.disabled = true;
-    try { await ctx.onCreate(a, b, text); showNotification('Нитка протянута', 'success'); await ctx.reload(); }
+    try { await ctx.onCreate(a, b, text); showNotification('Теория добавлена', 'success'); await ctx.reload(); }
     catch (err) { showNotification(err.message, 'error'); btn.disabled = false; }
   });
   root.addEventListener('click', async (e) => {
@@ -1214,7 +1093,7 @@ export function renderTheories(theories, events, ctx) {
     <div class="theories">
       <div class="theories-head">
         <h2>${icon('theory')} Теории</h2>
-        <p class="th-lead">Нитка между двумя событиями и записка, почему они связаны. Чем больше «верю», тем толще нитка. Каноническую теорию админ выносит в летопись врезкой «Говорят, что…». Не больше ${ctx.maxPerDay} теорий в день.</p>
+        <p class="th-lead">Догадка об одном событии или нитка между двумя — с запиской, в чём дело. Чем больше «верю», тем толще нитка. Каноническую теорию админ выносит в летопись врезкой «Говорят, что…». Не больше ${ctx.maxPerDay} теорий в день.</p>
       </div>
       <details class="theory-new" ${theories.length ? '' : 'open'}>
         <summary class="btn-primary">Новая теория</summary>
@@ -1671,8 +1550,8 @@ export async function showEventModal(event, currentUserId, onReaction, onComment
       const others = (theoryCtx.events || []).filter(e => e.id !== event.id);
       thBox.innerHTML = `
         <h4>${icon('theory')} Теории (${list.length})</h4>
-        ${list.length ? `<div class="theory-list">${list.map(t => theoryCardHtml(t, ctx)).join('')}</div>` : '<p class="empty-state">Это событие ещё ни с чем не связано</p>'}
-        ${event.is_approved === false ? '' : `<details class="theory-new"><summary class="btn-secondary">Связать с другим событием</summary>${theoryFormHtml([event, ...others], event.id)}</details>`}`;
+        ${list.length ? `<div class="theory-list">${list.map(t => theoryCardHtml(t, ctx)).join('')}</div>` : '<p class="empty-state">Теорий об этом событии пока нет</p>'}
+        ${event.is_approved === false ? '' : `<details class="theory-new"><summary class="btn-secondary">Теория об этом событии</summary>${theoryFormHtml([event, ...others], event.id)}</details>`}`;
     };
     ctx.reload = drawTheories;
     await drawTheories();

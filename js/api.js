@@ -202,7 +202,7 @@ export async function getAllTitles() {
 }
 
 export async function getUserTitles(userId) {
-  const { data, error } = await supabase.from('user_titles').select('title_id, is_active, titles (id, title_name, title_type, description, icon)').eq('user_id', userId);
+  const { data, error } = await supabase.from('user_titles').select('title_id, is_active, revoked_at, titles (id, title_name, title_type, description, icon)').eq('user_id', userId);
   if (error) { console.error('Ошибка получения титулов пользователя:', error); return []; }
   return data;
 }
@@ -226,6 +226,11 @@ export async function createTitle(titleName, titleType, description, icon) {
   const { data, error } = await supabase.from('titles').insert([{ title_name: titleName, title_type: titleType, description: description, icon: icon }]).select();
   if (error) throw error;
   return data[0];
+}
+
+export async function updateTitle(titleId, fields) {
+  const { error } = await supabase.from('titles').update(fields).eq('id', titleId);
+  if (error) throw error;
 }
 
 export async function deleteTitle(titleId) {
@@ -710,7 +715,7 @@ export async function getTheories({ eventId = null, status = null } = {}) {
   if (error) { console.error('Ошибка получения теорий:', error); return []; }
   return data.sort((a, b) => (b.status === 'canon') - (a.status === 'canon') || (b.believe - b.doubt) - (a.believe - a.doubt));
 }
-export const createTheory = (a, b, note) => rpcOrThrow('create_theory', { p_event_a: Number(a), p_event_b: Number(b), p_note: note });
+export const createTheory = (a, b, note) => rpcOrThrow('create_theory', { p_event_a: Number(a), p_event_b: b ? Number(b) : null, p_note: note });
 export const voteTheory = (id, vote) => rpcOrThrow('vote_theory', { p_theory: id, p_vote: vote });
 export const setTheoryStatus = (id, status) => rpcOrThrow('set_theory_status', { p_theory: id, p_status: status });
 
