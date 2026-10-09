@@ -129,6 +129,7 @@ export function renderProfile(profile, onEditClick) {
         <button class="btn-secondary" id="btn-manage-titles">Управление титулами</button>
         <button class="btn-danger" id="btn-logout">Выйти</button>
       </div>
+      <section class="sub-box" id="profile-submissions" hidden></section>
       <section class="faction-box" id="profile-faction"></section>
       <section class="ach-showcase" id="profile-achievements"></section>
       <div id="profile-quotes">${quoteShelfHtml('Мои цитаты')}</div>
@@ -154,6 +155,7 @@ export function renderProfile(profile, onEditClick) {
   renderAchievements(document.getElementById('profile-achievements'), profile.id);
   renderJailChip(profileContent.querySelector('.profile-info'), profile.id);
   renderFactionBox(document.getElementById('profile-faction'), profile.id, true);
+  window.vpSubmissions?.(document.getElementById('profile-submissions'));
   profileContent.querySelector('[data-wallet]')?.addEventListener('click', () => showWallet(profile, window.vpWalletHandlers?.(profile) || {}));
 
   const btnManageTitles = document.getElementById('btn-manage-titles');
@@ -647,38 +649,6 @@ export function renderEvents(events, currentUserRole, currentUserId, onDeleteEve
   }
 }
 
-export function renderPendingEvents(events, onApprove, onReject) {
-  const pendingList = document.getElementById('admin-pending-events');
-  if (!pendingList) return;
-  pendingList.innerHTML = '';
-  if (events.length === 0) { pendingList.innerHTML = '<li class="empty-state">Нет событий на модерации</li>'; return; }
-
-  events.forEach(event => {
-    const li = document.createElement('li');
-    li.className = 'pending-event-item';
-    const date = new Date(event.created_at).toLocaleDateString('ru-RU');
-    li.innerHTML = `
-      <div class="pending-event-header">
-        <strong>${escapeHtml(event.profiles?.full_name || 'Аноним')}</strong>
-        <span class="event-date">${date}</span>
-      </div>
-      <p class="event-text">${escapeHtml(event.event_text)}</p>
-      ${event.city ? `<span class="badge">${icon('pin')} ${escapeHtml(event.city)}</span>` : ''}
-      ${event.event_date ? `<span class="badge">${icon('calendar')} ${escapeHtml(event.event_date)}</span>` : ''}
-      ${event.is_lore_significant ? `<span class="badge badge-lore">${icon('star')} Значимое для летописи</span>` : ''}
-      ${event.as_chronicler ? `<span class="badge badge-lore">${icon('scroll')} Просит опубликовать от имени Летописца</span>` : ''}
-      <div class="pending-event-actions">
-        <button class="btn-approve" data-id="${event.id}">Одобрить</button>
-        <button class="btn-reject" data-id="${event.id}">Отклонить</button>
-      </div>
-    `;
-    pendingList.appendChild(li);
-  });
-
-  document.querySelectorAll('.btn-approve').forEach(btn => { btn.addEventListener('click', async () => await onApprove(btn.dataset.id)); });
-  document.querySelectorAll('.btn-reject').forEach(btn => { btn.addEventListener('click', async () => await onReject(btn.dataset.id)); });
-}
-
 function isDeletedMessageExpired(message) {
   if (!message.is_deleted) return false;
   if (!message.deleted_at) return true;
@@ -783,6 +753,7 @@ export function renderChatMessages(messages, currentUserId, currentUserRole, onD
         <div class="chat-message-foot">
           ${reactBtns}
           ${ctx.onReply ? `<button type="button" class="chat-reply-btn" data-id="${msg.id}">Ответить</button>` : ''}
+          ${ctx.onReport && !isOwnMessage ? `<button type="button" class="chat-report-btn" data-id="${msg.id}">Пожаловаться</button>` : ''}
           ${ctx.onMute && !isOwnMessage && currentUserRole === 'admin' ? `<button type="button" class="chat-mute-btn" data-user="${authorId}" data-name="${escapeHtml(authorName)}">Мут</button>` : ''}
         </div>
       `;
@@ -810,6 +781,7 @@ export function renderChatMessages(messages, currentUserId, currentUserRole, onD
   });
   chatMessagesEl.querySelectorAll('.chat-react').forEach(b => b.addEventListener('click', () => ctx.onReact?.(b.dataset.id, b.dataset.react)));
   chatMessagesEl.querySelectorAll('.chat-reply-btn').forEach(b => b.addEventListener('click', () => ctx.onReply?.(byId.get(String(b.dataset.id)))));
+  chatMessagesEl.querySelectorAll('.chat-report-btn').forEach(b => b.addEventListener('click', () => ctx.onReport?.(b.dataset.id)));
   chatMessagesEl.querySelectorAll('.chat-mute-btn').forEach(b => b.addEventListener('click', () => ctx.onMute?.(b.dataset.user, b.dataset.name)));
   chatMessagesEl.querySelectorAll('.chat-sys-act').forEach(b => b.addEventListener('click', () => ctx.onSystem?.(b.dataset.sys, b.dataset.ref)));
 
@@ -1149,6 +1121,7 @@ export function theoryCardHtml(t, ctx) {
         ${vote('doubt', 'Не верю', t.doubt)}
         <button type="button" class="btn-bookmark btn-evidence th-small ${ctx.evidence?.has(String(t.id)) ? 'active' : ''}" data-th-act="evidence" title="Тайно сохранить снимок в свои улики">${icon('evidence')} <span>${ctx.evidence?.has(String(t.id)) ? 'В уликах' : 'Улика'}</span></button>
         ${admin}${del}
+        ${mine ? '' : '<button type="button" class="btn-report th-small" data-th-act="report">Пожаловаться</button>'}
       </div>
     </article>`;
 }
@@ -1195,6 +1168,7 @@ export function bindTheories(root, ctx) {
     const card = btn.closest('[data-theory-id]');
     const id = Number(card.dataset.theoryId);
     const t = ctx.theories.find(x => x.id === id);
+    if (btn.dataset.thAct === 'report') { window.vpReport?.('theory', id); return; }
     btn.disabled = true;
     try {
       if (btn.dataset.thAct === 'vote') {
@@ -1625,6 +1599,7 @@ export async function showEventModal(event, currentUserId, onReaction, onComment
         <button class="btn-bookmark btn-evidence ${hasEv ? 'active' : ''}" id="btn-toggle-evidence" aria-pressed="${hasEv}" title="Тайно сохранить снимок в свои улики">
           ${icon('evidence')} <span>${hasEv ? 'В уликах' : 'Улика'}</span>
         </button>
+        ${isOwnEvent ? '' : '<button type="button" class="btn-report" id="btn-report-event">Пожаловаться</button>'}
       </div>
 
       ${theoryCtx ? '<div class="theories-section" id="event-theories"></div>' : ''}
@@ -1690,6 +1665,7 @@ export async function showEventModal(event, currentUserId, onReaction, onComment
     bindTheories(thBox, ctx);
   }
 
+  modal.querySelector('#btn-report-event')?.addEventListener('click', () => window.vpReport?.('event', event.id));
   modal.querySelector('#btn-toggle-evidence').addEventListener('click', async (e) => {
     const btn = e.currentTarget;
     try {
