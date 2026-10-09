@@ -1,7 +1,7 @@
 // Серверная функция: ИИ-летописец Вадимопедии (OpenRouter).
 // Доступна только админам. Ключ берётся из секрета vadimopedia-AI-KEY.
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { dateKey, parseAnswer, checkPiece, splitBlocks, idsOf, keyOf, findInsertion, buildInsertPrompt, parseInsertAnswer, limitToJunction, checkInsert, applyInsert, deathConflict } from './logic.ts';
+import { STYLE, checkStyle, dateKey, parseAnswer, checkPiece, splitBlocks, idsOf, keyOf, findInsertion, buildInsertPrompt, parseInsertAnswer, limitToJunction, checkInsert, applyInsert, deathConflict } from './logic.ts';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -13,49 +13,25 @@ const json = (body: unknown, status = 200) =>
 
 // Порядок моделей: основная + запасные (OpenRouter сам переключится, если модель недоступна)
 // Порядок моделей (проверено 08.10.2026): nemotron стабильно ставит метки; openrouter/free и gemma — запасные
-const MODELS = ['nvidia/nemotron-3-super-120b-a12b:free', 'openrouter/free', 'google/gemma-4-31b-it:free'];
+// 09.10.2026 (T2.6): gemma-4 отвечает «Provider returned error», ultra и lightning не укладываются по времени — сравнение в quality-log
+const MODELS = ['nvidia/nemotron-3-super-120b-a12b:free', 'openrouter/free'];
 const BATCH_MAX = 5;            // потолок событий за один вызов (настройка ai.batch_size — не больше него)
 const ATTEMPT_MS = 70_000;      // время на одну попытку
 const TOTAL_MS = 135_000;       // общий запас внутри лимита Edge Function (~150 с)
 const CONTEXT_CHARS = 4000;     // сколько конца летописи отдаём для связности
 
-const SYSTEM_PROMPT = `Ты — Летописец Вадимопедии: хроники обо всех Вадимах мира. Ты пишешь единую художественную летопись — связный рассказ, который читается как книга, а не как список новостей.
-
-СТИЛЬ
-- Слог древнерусской летописи и эпического сказания, но понятный современному читателю: "В лето...", "и было так", "молва разнеслась по земле".
-- Лёгкая ирония и теплота: повседневные дела Вадимов звучат величаво, как подвиги.
-- Повествование от третьего лица, в прошедшем времени.
-- Абзацы по 3–6 предложений, между абзацами — пустая строка.
-- Новую главу начинай, когда меняется эпоха, место или тема (поле "chapter" в ответе). Не больше одной главы на 3–5 событий.
-
-КАК ВПЛЕТАТЬ СОБЫТИЯ (самое важное)
-- Никогда не перечисляй события и не пиши шаблонно "сначала случилось X, затем Y", "вчера произошло: ...", "через час: ...".
-- Никогда не копируй текст события дословно — всегда пересказывай другими словами.
-- Не повторяй одни и те же связки: "И тогда", "Так", "Спустя" — каждую не больше одного раза на весь новый текст. Начала предложений должны быть разнообразными.
-- Перескажи каждое событие своими словами, как сцену: кто, где, зачем, что почувствовали люди вокруг, к чему это привело.
-- Связывай события между собой: причина и следствие, отголоски, совпадения, общие места и герои. Переходы делай плавными и разнообразными, не начинай каждый абзац с даты.
-- Строго соблюдай хронологию: новые события уже отсортированы по дате — описывай их в этом порядке.
-- Даты и места упоминай естественно внутри фраз, переводи их в летописную форму ("в лето 2024-е, в месяц березозол" или просто "весной 2024 года").
-- Не выдумывай новых фактов, героев и последствий, которых нет в событиях. Можно добавлять атмосферу и детали обстановки, но смысл события должен остаться точным.
-- Автор события — это летописец-очевидец, который принёс весть. Упоминай его изредка и к месту ("как поведал ..."), не в каждом событии.
-
-МЕТКИ СОБЫТИЙ (обязательно)
-- Каждое новое событие отметь в тексте ровно один раз: [[ID|фрагмент]], где ID — номер события, а фрагмент — 3–10 слов из твоего пересказа (не исходный текст события и не дата).
-- Метка ЗАМЕНЯЕТ фрагмент в предложении, а не добавляется рядом. Текст внутри метки читатель видит как обычную часть предложения, поэтому не повторяй его до или после метки.
-- Правильно: "И тогда [[42|Вадим из Коломны распахнул двери своей кофейни]], и запах зёрен поплыл над рекой."
-- Неправильно: "Вадим из Коломны распахнул двери своей кофейни [[42|Вадим из Коломны распахнул двери своей кофейни]]".
-- Существующие метки [[...]] и старые вставки вида [СОБЫТИЕ: ...] в тексте сохраняй как есть.
+const SYSTEM_PROMPT = `${STYLE}
 
 ПРОДОЛЖЕНИЕ ТЕКСТА
 - Тебе дан конец уже написанной летописи — только для связности. Не повторяй и не пересказывай его.
-- Напиши ТОЛЬКО продолжение: новые абзацы с новыми событиями, плавно продолжающие последний абзац.
+- Напиши ТОЛЬКО продолжение: новые абзацы с новыми событиями, плавно продолжающие последний абзац. Один абзац — одна сцена.
+- Новую главу начинай, когда меняется эпоха, место или тема (поле "chapter"). Название главы — короткая фраза, как в книге («Курск пал на исходе зимы»), без слова «Глава» и без номера. Не больше одной новой главы на порцию.
+- Существующие метки [[...]] в тексте не трогай.
 
 ФОРМАТ ОТВЕТА — СТРОГО JSON, без пояснений и блоков кода:
 {"paragraphs":[{"chapter":null,"text":"Абзац с метками [[ID|фрагмент]]"}],"review_flags":[{"event_id":123,"note":"почему админу стоит проверить"}]}
-- "paragraphs" — новые абзацы по порядку. Если с этого абзаца начинается новая глава, укажи её название в "chapter", иначе null.
-- В "text" не пиши "## " — заголовок главы только в поле "chapter".
-- Если событие противоречит уже написанному (например, герой уже погиб), НЕ исправляй противоречие сам: опиши событие как есть и добавь запись в "review_flags". Если противоречий нет — пустой массив.
-- Пиши только на русском языке, современной орфографией (без "ъ" на конце слов и дореформенных букв). Латиницу используй только для имён и слов, которые так написаны в событиях.`;
+- "paragraphs" — новые абзацы по порядку. Если с абзаца начинается новая глава, укажи её название в "chapter", иначе null. В "text" не пиши "## ".
+- Если событие противоречит уже написанному (например, герой уже погиб), НЕ исправляй противоречие сам: опиши событие как есть и добавь запись в "review_flags". Если противоречий нет — пустой массив.`;
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
@@ -71,7 +47,9 @@ Deno.serve(async (req) => {
     const apiKey = Deno.env.get('vadimopedia-AI-KEY') ?? Deno.env.get('OPENROUTER_API_KEY');
     if (!apiKey) return json({ error: 'Ключ OpenRouter не добавлен в секреты Supabase (vadimopedia-AI-KEY)' }, 500);
 
-    const { currentContent = '', events = [] } = await req.json();
+    const { currentContent = '', events = [], model: onlyModel = null } = await req.json();
+    // для проверки моделей админом: можно указать одну бесплатную модель
+    const models = typeof onlyModel === 'string' && /^(openrouter\/free|[\w.-]+\/[\w.-]+:free)$/.test(onlyModel) ? [onlyModel] : MODELS;
     if (!Array.isArray(events) || events.length === 0) return json({ error: 'Нет событий для летописи' }, 400);
     const { data: batchRow } = await supabase.from('settings').select('value').eq('key', 'ai.batch_size').maybeSingle();
     const batchMax = Math.min(BATCH_MAX, Math.max(1, Number(batchRow?.value ?? BATCH_MAX) || BATCH_MAX));
@@ -94,7 +72,7 @@ Deno.serve(async (req) => {
       for (let attempt = 0; attempt < attempts; attempt++) {
         const left = TOTAL_MS - (Date.now() - started);
         if (left < 15_000) { problems.push('закончилось время'); break; }
-        const model = MODELS[attempt % MODELS.length];
+        const model = models[attempt % models.length];
         const ctrl = new AbortController();
         const timer = setTimeout(() => ctrl.abort(), Math.min(ATTEMPT_MS, left));
         try {
@@ -138,7 +116,7 @@ Deno.serve(async (req) => {
       const out = await run(buildInsertPrompt(ins, e), (raw, model) => {
         const ans = parseInsertAnswer(raw, context);
         const soft: string[] = [];
-        const err = limitToJunction(ans, ins, soft) ?? checkInsert(ans, newId, context, known, soft);
+        const err = limitToJunction(ans, ins, soft) ?? checkInsert(ans, newId, context, known, soft) ?? checkStyle([ans.new_paragraph], [e], soft);
         if (err) return err;
         return { ans, soft, model };
       }, 8000);
@@ -175,10 +153,10 @@ Deno.serve(async (req) => {
     const out = await run(`${SYSTEM_PROMPT}\n\n=====\n\n${userPrompt}`, (raw, model) => {
       const answer = parseAnswer(raw);
       const soft: string[] = [];
-      const err = checkPiece(answer.paragraphs, wanted, sorted, tail, soft);
+      const err = checkPiece(answer.paragraphs, wanted, sorted, tail, soft) ?? checkStyle(answer.paragraphs.map((p: any) => p.text), sorted, soft);
       if (err) return err;
       return { answer, soft, model };
-    });
+    }, 8000);
     if (out) {
       const { answer, soft, model } = out;
       const piece = answer.paragraphs.map((p: any) => (p.chapter ? `## ${p.chapter}\n\n` : '') + p.text).join('\n\n');
