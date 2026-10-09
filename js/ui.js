@@ -546,9 +546,8 @@ export function renderEvents(events, currentUserRole, currentUserId, onDeleteEve
       ? `<span class="badge badge-lore"> Значимое</span>` 
       : '';
     const yearBadge = event.year_award ? `<span class="badge badge-year">${icon('trophy')} Событие ${event.year_award} года</span>` : '';
-    const chronicleBadge = event.is_in_chronicle 
-      ? `<span class="badge badge-chronicle">${icon('check')} В летописи</span>` 
-      : '';
+    // «В летописи» не показываем: повторяет «Значимое» (правка владельца)
+    const chronicleBadge = '';
     
     li.innerHTML = `
       <span class="ev-no">Дело № ${String(event.id).padStart(4, '0')}</span>
@@ -891,6 +890,18 @@ const tomeInline = raw => escapeHtml(raw)
   .replace(/\[\[(\d+)\|([^\]]+)\]\]/g, (m, id, frag) => `<span class="chronicle-ref" data-event-id="${id}">${frag}</span><sup class="tome-app-w"><a href="#" role="button" class="tome-app" data-app="${id}" data-n="${id}" aria-label="Приложение ${id}: открыть событие"></a></sup>`)
   .replace(/\n/g, '<br>');
 
+// штамп падает, когда до него долистали (а не заранее за краем экрана)
+let dropObserver = null;
+export function dropWhenSeen(el) {
+  if (!el) return;
+  if (!('IntersectionObserver' in window)) { el.classList.remove('wait-drop'); el.classList.add('drop'); return; }
+  dropObserver ||= new IntersectionObserver((entries) => entries.forEach(en => {
+    if (!en.isIntersecting) return;
+    en.target.classList.remove('wait-drop'); en.target.classList.add('drop'); dropObserver.unobserve(en.target);
+  }), { threshold: 0.9 });
+  dropObserver.observe(el);
+}
+
 function renderTome(content, chronicle, onEventClick, theories, opts) {
   const { pre, chapters } = chronicleChapters(chronicle.content);
   const uid = opts.uid;
@@ -940,9 +951,11 @@ function renderTome(content, chronicle, onEventClick, theories, opts) {
       <div class="tome-end">
         ${i > 0 ? `<button type="button" class="btn-secondary" data-ch="${i - 1}">Предыдущая глава</button>` : '<span></span>'}
         ${i < n - 1 ? `<button type="button" class="btn-secondary" data-ch="${i + 1}">Следующая глава</button>` : '<span></span>'}
-        <span class="stamp tome-stamp${focus ? ' drop' : ''}">Глава закрыта</span>
+        <span class="stamp tome-stamp wait-drop">Глава закрыта</span>
       </div>`;
     insertCanonCallouts(page.querySelector('.chronicle-text'), canon, onEventClick);
+    dropWhenSeen(page.querySelector('.tome-stamp'));
+    if (focus) { page.classList.remove('turn'); void page.offsetWidth; page.classList.add('turn'); }
     content.querySelectorAll('.tome-tab').forEach((t, k) => { t.classList.toggle('on', k === i); t.setAttribute('aria-current', k === i ? 'page' : 'false'); });
     // стопка справа: чем больше глав впереди, тем толще
     stack.style.setProperty('--left', String(n - 1 - i));
@@ -1653,8 +1666,8 @@ function reactionsHtml(reactions, currentUserId, isOwnEvent) {
     <h4>Реакции</h4>
     <div class="reactions-list">
       ${REACTIONS.map(({ type, label }) => `
-        <button class="reaction-btn ${mine(type) ? 'active' : ''}" data-type="${type}" aria-pressed="${mine(type)}" ${isOwnEvent ? 'disabled' : ''} title="${label}">
-          ${icon(type)} <span>${label}</span> <b class="reaction-count">${count(type) || ''}</b>
+        <button class="reaction-btn rx-${type} ${mine(type) ? 'active' : ''}" data-type="${type}" aria-pressed="${mine(type)}" ${isOwnEvent ? 'disabled' : ''} title="${label}">
+          <span class="rx-seal" aria-hidden="true">${icon(type)}</span><span class="rx-label">${label}</span> <b class="reaction-count">${count(type) || ''}</b>
         </button>`).join('')}
     </div>
     ${isOwnEvent ? '<p class="reactions-hint">Это ваше событие — реакции на своё ставить нельзя.</p>' : ''}
@@ -1710,7 +1723,6 @@ export async function showEventModal(event, currentUserId, onReaction, onComment
   const stamps = [
     event.is_approved !== false ? '<span class="stamp" style="--r:-7deg">Одобрено</span>' : '<span class="stamp gray" style="--r:-5deg">На проверке</span>',
     event.is_lore_significant ? '<span class="stamp red" style="--r:6deg">Значимое</span>' : '',
-    event.is_in_chronicle ? '<span class="stamp blue" style="--r:-3deg">В летописи</span>' : '',
     event.year_award ? `<span class="stamp" style="--r:4deg">Событие ${escapeHtml(event.year_award)} года</span>` : ''
   ].join('');
   const shareText = encodeURIComponent((event.event_date ? event.event_date + ' — ' : '') + event.event_text);
@@ -1779,6 +1791,13 @@ export async function showEventModal(event, currentUserId, onReaction, onComment
     try {
       await onReaction(event.id, btn.dataset.type);
       reactBox.innerHTML = reactionsHtml(await getEventReactions(event.id), currentUserId, isOwnEvent);
+      // печать прилетает и бьёт по листу (снятие реакции — без удара)
+      const now = reactBox.querySelector(`.reaction-btn[data-type="${btn.dataset.type}"]`);
+      if (now?.classList.contains('active')) {
+        now.classList.add('slam');
+        const sheet = modal.querySelector('.ev-sheet');
+        setTimeout(() => { sheet?.classList.remove('thump'); void sheet?.offsetWidth; sheet?.classList.add('thump'); }, 230);
+      }
       window.dispatchEvent(new CustomEvent('vp:reactions-changed'));
     } catch (error) {
       showNotification(`Ошибка: ${error.message}`, 'error');

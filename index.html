@@ -76,7 +76,7 @@
         <div class="dh-drawer" id="dh-drawer">
           <div class="dh-lip"></div>
           <div class="dh-rows" id="dh-rows"></div>
-          <div class="dh-front"><span class="dh-holder">Картотека · <span id="dh-count">…</span></span>
+          <div class="dh-front"><span class="dh-holder">Картотека: <span id="dh-count">…</span></span>
             <button type="button" class="btn-primary dh-pull" id="dh-pull">Вся картотека</button></div>
         </div>
         <button type="button" class="dh-tome" id="dh-tome" hidden><b></b><span></span></button>
@@ -142,8 +142,11 @@
       
       <!-- Форма добавления события (скрыта для гостей, управляется через JS) -->
       <div id="add-event-form-container" style="display: none;">
-        <div class="add-section-inline blank-sheet">
-          <div class="bl-head"><span>Донесение</span><span>номер дела присвоят после проверки</span></div>
+        <button type="button" class="btn-primary bl-toggle" id="bl-toggle" aria-expanded="false" aria-controls="bl-sheet">
+          <span class="bl-toggle-t">Добавить событие</span><span class="bl-toggle-s">Написать донесение</span>
+        </button>
+        <div class="add-section-inline blank-sheet" id="bl-sheet" hidden>
+          <div class="bl-head"><span>Донесение</span><span>номер дела присвоят после проверки</span><button type="button" class="btn-link bl-close" id="bl-close">Свернуть бланк</button></div>
           <h3>Добавить событие</h3>
           <form id="form-add-event">
             <div class="form-input-group">
