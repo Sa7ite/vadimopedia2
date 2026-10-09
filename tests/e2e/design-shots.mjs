@@ -1,0 +1,14 @@
+import { chromium } from 'playwright-core';
+import fs from 'fs';
+const [,, sel='', w='1440'] = process.argv;
+const b = await chromium.launch({ executablePath: '/usr/local/bin/chromium', args: ['--no-sandbox'] });
+const p = await b.newPage({viewport:{width:+w,height:900}});
+const errs=[]; p.on('pageerror',e=>errs.push(e.message)); p.on('console',m=>{if(m.type()==='error')errs.push(m.text())});
+await p.goto('http://localhost:8765/design/'+(sel?'#v='+sel:''),{waitUntil:'networkidle'});
+await p.evaluate(()=>document.fonts.ready); await p.addStyleTag({content:'.ui{display:none!important}'});
+const out='/data/work/design'; fs.mkdirSync(out,{recursive:true});
+await p.waitForTimeout(300);
+const secs = await p.$$('section.blkwrap');
+for (let i=0;i<secs.length;i++) await secs[i].screenshot({path:`${out}/s${w}_b${i+1}.png`});
+console.log('scrollWidth',await p.evaluate(()=>document.documentElement.scrollWidth),'errors',errs.slice(0,5));
+await b.close();
