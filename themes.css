@@ -215,3 +215,53 @@ body.guest .hero-stats{display:none}
   .ir-row { grid-template-columns: 1fr; }
   .ir-empty { display: none; }
 }
+
+/* ---------- T2.7: ТЕОРИИ (список; доска — в Фазе 3) ---------- */
+.theories-head h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; }
+.theories-head .ic, .theories-section h4 .ic { width: 1.2em; height: 1.2em; }
+.th-lead { color: var(--muted); margin: 0 0 14px; max-width: 70ch; }
+.theory-new { margin: 0 0 18px; }
+.theory-new > summary { display: inline-block; cursor: pointer; list-style: none; }
+.theory-new > summary::-webkit-details-marker { display: none; }
+.theory-form { display: grid; gap: 10px; margin-top: 12px; padding: 12px; border: 2px dashed var(--line); background: var(--surface); }
+.theory-form label { display: grid; gap: 4px; font-weight: 700; font-size: .9rem; }
+.theory-form select, .theory-form textarea { width: 100%; max-width: 100%; font: inherit; font-weight: 400; padding: 8px; box-sizing: border-box; }
+.th-form-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.th-count { color: var(--muted); font-size: .85rem; }
+.th-group { margin: 18px 0 8px; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; }
+.theory-list { display: grid; gap: 12px; }
+.theory-card { position: relative; padding: 12px 14px; border: 2px solid var(--text); background: var(--surface); color: var(--text); }
+.theory-card.is-canon { border-color: #6b3fa0; box-shadow: 4px 4px 0 #6b3fa0; }
+.th-stamp { position: absolute; top: -12px; right: 12px; transform: rotate(6deg); padding: 1px 10px; border: 3px solid #6b3fa0; color: #6b3fa0; background: var(--surface); font: 700 .8rem var(--head); text-transform: uppercase; letter-spacing: 1px; }
+.th-pair { display: grid; grid-template-columns: 1fr 56px 1fr; align-items: center; gap: 8px; }
+.th-event { text-align: left; font: inherit; font-size: .92rem; line-height: 1.35; padding: 8px 10px; border: 1px solid var(--line); background: var(--surface2); color: var(--text); cursor: pointer; min-height: 44px; }
+.th-event:hover, .th-event:focus-visible { border-color: var(--text); }
+.th-date { display: block; font-size: .78rem; color: var(--muted); font-weight: 700; }
+.th-thread { display: block; height: var(--th, 1px); background: #b5261e; border-radius: 3px; }
+.is-canon .th-thread { background: #6b3fa0; }
+.th-note { margin: 10px 0 4px; font-style: italic; line-height: 1.5; overflow-wrap: anywhere; }
+.th-meta { font-size: .82rem; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+.th-meta .ic { width: 1em; height: 1em; }
+.th-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.th-vote { font: inherit; font-size: .9rem; padding: 6px 12px; min-height: 40px; border: 2px solid var(--text); background: transparent; color: var(--text); cursor: pointer; }
+.th-vote.active { background: var(--text); color: var(--surface); }
+.th-vote:disabled { opacity: .5; cursor: not-allowed; }
+.th-small { font-size: .85rem; padding: 6px 10px; min-height: 40px; }
+.th-small .ic { width: 1.1em; height: 1.1em; vertical-align: -2px; }
+.theories-section { margin: 16px 0; }
+.theories-section h4 { display: flex; align-items: center; gap: 6px; }
+.chronicle-callout { margin: 4px 0 18px 24px; padding: 10px 14px; border-left: 4px solid #6b3fa0; background: rgba(107, 63, 160, .08); }
+.chronicle-callout .cc-title { display: block; font-family: var(--head); color: #6b3fa0; margin-bottom: 2px; }
+.chronicle-callout p { margin: 0 0 6px; font-style: italic; }
+.cc-links { font-size: .82rem; color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.cc-links .ic { width: 1em; height: 1em; }
+.cc-links button { font: inherit; background: none; border: 0; padding: 0; color: inherit; text-decoration: underline; cursor: pointer; }
+@media (max-width: 600px) {
+  .th-pair { grid-template-columns: 1fr; gap: 0; }
+  .th-thread { width: var(--th, 1px); height: 18px; margin: 0 auto; min-width: 2px; }
+  .chronicle-callout { margin-left: 8px; }
+}
+.theories { padding: 16px; }
+.theme-agit .th-event, .theme-agit .th-vote { text-transform: none; letter-spacing: 0; }
+.theme-agit .th-event { font-family: var(--font); font-weight: 600; }
+@media (max-width: 600px) { .theories { padding: 10px; } }

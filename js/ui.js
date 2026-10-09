@@ -827,7 +827,7 @@ export function formatChronicleHtml(text) {
   }).join('');
 }
 
-export function renderChronicle(chronicle, onEventClick) {
+export function renderChronicle(chronicle, onEventClick, canonTheories = []) {
   const content = document.getElementById('chronicle-content');
   if (!content) return;
 
@@ -845,6 +845,8 @@ export function renderChronicle(chronicle, onEventClick) {
       <div class="chronicle-text">${formatChronicleHtml(chronicle.content)}</div>
     </div>
   `;
+
+  insertCanonCallouts(content.querySelector('.chronicle-text'), canonTheories, onEventClick);
 
   content.querySelectorAll('.chronicle-ref').forEach(ref => {
     ref.addEventListener('click', () => {
@@ -1046,125 +1048,143 @@ export function renderTimeline(events, onEventClick) {
 }
 
 // ============================================
-// ЛЕТОПИСЬ — КАРТА
+// T2.7: ТЕОРИИ — список ниток между событиями (доска появится в Фазе 3)
 // ============================================
+const shortText = (t, n = 90) => { const s = String(t || ''); return s.length > n ? s.slice(0, n - 1) + '…' : s; };
 
-export function renderMap(events, onEventClick) {
+// карточка теории: пара событий, записка, автор, голоса и толщина нитки (1–5 px по «верю»)
+export function theoryCardHtml(t, ctx) {
+  const mine = String(t.author_id) === String(ctx.userId);
+  const canon = t.status === 'canon';
+  const thick = 1 + Math.min(4, t.believe || 0);
+  const ev = (id, text, date) => `<button type="button" class="th-event" data-th-event="${id}">${date ? `<span class="th-date">${escapeHtml(date)}</span>` : ''}${escapeHtml(shortText(text))}</button>`;
+  const vote = (kind, label, n) => `<button type="button" class="th-vote ${t.my_vote === kind ? 'active' : ''}" data-th-act="vote" data-vote="${kind}" aria-pressed="${t.my_vote === kind}" ${mine ? 'disabled title="За свою теорию голосовать нельзя"' : ''}>${label} <b>${n}</b></button>`;
+  const admin = ctx.isAdmin
+    ? `<button type="button" class="btn-secondary th-small" data-th-act="status" data-status="${canon ? 'active' : 'canon'}">${canon ? 'Снять канон' : 'Сделать каноном'}</button>` : '';
+  const del = (ctx.isAdmin || mine) ? `<button type="button" class="btn-secondary th-small" data-th-act="status" data-status="removed">${icon('trash')} Удалить</button>` : '';
+  return `
+    <article class="theory-card ${canon ? 'is-canon' : ''}" data-theory-id="${t.id}">
+      ${canon ? '<span class="th-stamp">Канон</span>' : ''}
+      <div class="th-pair">
+        ${ev(t.event_a, t.event_a_text, t.event_a_date)}
+        <span class="th-thread" style="--th:${thick}px" title="Толщина нитки — по числу «верю»" aria-hidden="true"></span>
+        ${ev(t.event_b, t.event_b_text, t.event_b_date)}
+      </div>
+      <p class="th-note">«${escapeHtml(t.note)}»</p>
+      <div class="th-meta">${icon('user')} ${escapeHtml(t.author_name || 'Аноним')} · ${new Date(t.created_at).toLocaleDateString('ru-RU')}</div>
+      <div class="th-actions">
+        ${vote('believe', 'Верю', t.believe)}
+        ${vote('doubt', 'Не верю', t.doubt)}
+        <button type="button" class="btn-bookmark btn-evidence th-small ${ctx.evidence?.has(String(t.id)) ? 'active' : ''}" data-th-act="evidence" title="Тайно сохранить снимок в свои улики">${icon('evidence')} <span>${ctx.evidence?.has(String(t.id)) ? 'В уликах' : 'Улика'}</span></button>
+        ${admin}${del}
+      </div>
+    </article>`;
+}
+
+// форма новой теории: два события + записка до 280 знаков. fixedId — событие, из окна которого связываем
+export function theoryFormHtml(events, fixedId = null) {
+  const opts = (sel) => events.map(e => `<option value="${e.id}" ${String(e.id) === String(sel) ? 'selected' : ''}>${e.event_date ? escapeHtml(e.event_date) + ' — ' : ''}${escapeHtml(shortText(e.event_text, 70))}</option>`).join('');
+  return `
+    <form class="theory-form" novalidate>
+      <label>Первое событие
+        <select name="a" ${fixedId ? 'disabled' : ''} required><option value="">— выберите —</option>${opts(fixedId)}</select></label>
+      <label>Второе событие
+        <select name="b" required><option value="">— выберите —</option>${opts(null)}</select></label>
+      <label>Почему они связаны
+        <textarea name="note" rows="3" maxlength="280" placeholder="Например: после этого Вадимы и начали…" required></textarea></label>
+      <div class="th-form-foot"><span class="th-count">0 / 280</span><button type="submit" class="btn-primary">Протянуть нитку</button></div>
+    </form>`;
+}
+
+// общие обработчики для списка теорий (и в разделе, и в окне события)
+export function bindTheories(root, ctx) {
+  // делегирование: форма может перерисовываться после каждого действия
+  root.addEventListener('input', (e) => {
+    const f = e.target.closest('.theory-form');
+    if (f && e.target.name === 'note') f.querySelector('.th-count').textContent = `${e.target.value.length} / 280`;
+  });
+  root.addEventListener('submit', async (e) => {
+    const form = e.target.closest('.theory-form');
+    if (!form) return;
+    e.preventDefault();
+    const a = form.querySelector('[name=a]').value, b = form.querySelector('[name=b]').value, text = form.querySelector('[name=note]').value.trim();
+    if (!a || !b) return showNotification('Выберите два события', 'error');
+    if (a === b) return showNotification('Нужны два разных события', 'error');
+    if (text.length < 3) return showNotification('Напишите, почему события связаны', 'error');
+    const btn = form.querySelector('[type=submit]'); btn.disabled = true;
+    try { await ctx.onCreate(a, b, text); showNotification('Нитка протянута', 'success'); await ctx.reload(); }
+    catch (err) { showNotification(err.message, 'error'); btn.disabled = false; }
+  });
+  root.addEventListener('click', async (e) => {
+    const evBtn = e.target.closest('[data-th-event]');
+    if (evBtn) { ctx.onEventClick?.({ id: Number(evBtn.dataset.thEvent) }); return; }
+    const btn = e.target.closest('[data-th-act]');
+    if (!btn || btn.disabled) return;
+    const card = btn.closest('[data-theory-id]');
+    const id = Number(card.dataset.theoryId);
+    const t = ctx.theories.find(x => x.id === id);
+    btn.disabled = true;
+    try {
+      if (btn.dataset.thAct === 'vote') {
+        await ctx.onVote(id, t?.my_vote === btn.dataset.vote ? null : btn.dataset.vote);
+      } else if (btn.dataset.thAct === 'status') {
+        const s = btn.dataset.status;
+        if (s === 'removed' && !confirm('Удалить теорию? Голоса пропадут, у кого она в уликах — останется снимок с пометкой.')) { btn.disabled = false; return; }
+        await ctx.onStatus(id, s);
+        showNotification(s === 'canon' ? 'Теория признана каноном — она появится в летописи врезкой «Говорят, что…»' : s === 'removed' ? 'Теория удалена' : 'Канон снят', 'success');
+      } else if (btn.dataset.thAct === 'evidence') {
+        const has = ctx.evidence.has(String(id));
+        await ctx.onEvidence(id, has);
+        has ? ctx.evidence.delete(String(id)) : ctx.evidence.add(String(id));
+        showNotification(has ? 'Убрано из улик' : 'Снимок теории сохранён в ваши улики. Его видите только вы.', 'success');
+      }
+      await ctx.reload();
+    } catch (err) { showNotification(err.message, 'error'); btn.disabled = false; }
+  });
+}
+
+// раздел «Теории» в летописи
+export function renderTheories(theories, events, ctx) {
   const content = document.getElementById('chronicle-content');
   if (!content) return;
-
-  const eventsWithCity = events.filter(e => e.city);
-
-  if (eventsWithCity.length === 0) {
-    content.innerHTML = '<div class="chronicle-empty"><p>Нет событий с указанием города для отображения на карте.</p></div>';
-    return;
-  }
-
+  const full = { ...ctx, theories };
+  const canon = theories.filter(t => t.status === 'canon');
+  const rest = theories.filter(t => t.status !== 'canon');
   content.innerHTML = `
-    <div class="map-container">
-      <h2>${icon('map')} Карта событий</h2>
-      <div id="map" style="height: 500px; border-radius: 12px;"></div>
-      <div class="map-legend">
-        <h3>События по городам:</h3>
-        <ul>
-          ${eventsWithCity.map(e => `
-            <li class="map-event-item" data-id="${e.id}">
-              <strong>${escapeHtml(e.city)}</strong> — ${escapeHtml(e.event_text)}
-              <span class="event-author">(${escapeHtml(e.profiles?.full_name || 'Аноним')})</span>
-            </li>
-          `).join('')}
-        </ul>
+    <div class="theories">
+      <div class="theories-head">
+        <h2>${icon('theory')} Теории</h2>
+        <p class="th-lead">Нитка между двумя событиями и записка, почему они связаны. Чем больше «верю», тем толще нитка. Каноническую теорию админ выносит в летопись врезкой «Говорят, что…». Не больше ${ctx.maxPerDay} теорий в день.</p>
       </div>
-    </div>
-  `;
+      <details class="theory-new" ${theories.length ? '' : 'open'}>
+        <summary class="btn-primary">Новая теория</summary>
+        ${theoryFormHtml(events)}
+      </details>
+      ${theories.length === 0 ? '<p class="empty-state">Теорий пока нет. Протяните первую нитку.</p>' : ''}
+      ${canon.length ? `<h3 class="th-group">Канон (${canon.length})</h3><div class="theory-list">${canon.map(t => theoryCardHtml(t, full)).join('')}</div>` : ''}
+      ${rest.length ? `<h3 class="th-group">На проверке (${rest.length})</h3><div class="theory-list">${rest.map(t => theoryCardHtml(t, full)).join('')}</div>` : ''}
+    </div>`;
+  bindTheories(content.querySelector('.theories'), full);
+}
 
-  if (typeof L !== 'undefined') {
-    const map = L.map('map').setView([55.7558, 37.6173], 4);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap'
-    }).addTo(map);
-
-    const cityEvents = {};
-    eventsWithCity.forEach(e => {
-      const cityName = e.city.trim();
-      if (!cityEvents[cityName]) cityEvents[cityName] = [];
-      cityEvents[cityName].push(e);
-    });
-
-    const cityCoords = {
-      'москва': [55.7558, 37.6173],
-      'санкт-петербург': [59.9343, 30.3351],
-      'спб': [59.9343, 30.3351],
-      'казань': [55.7887, 49.1221],
-      'екатеринбург': [56.8389, 60.6057],
-      'новосибирск': [55.0084, 82.9357],
-      'краснодар': [45.0355, 38.9753],
-      'самара': [53.2001, 50.1500],
-      'ростов-на-дону': [47.2357, 39.7015],
-      'уфа': [54.7388, 55.9721],
-      'красноярск': [56.0184, 92.8672],
-      'коломна': [55.0794, 38.7783],
-      'киев': [50.4501, 30.5234],
-      'токио': [35.6762, 139.6503],
-      'лондон': [51.5074, -0.1278],
-      'париж': [48.8566, 2.3522],
-      'берлин': [52.5200, 13.4050],
-      'рим': [41.9028, 12.4964],
-      'мадрид': [40.4168, -3.7038],
-      'нью-йорк': [40.7128, -74.0060],
-      'минск': [53.9006, 27.5590],
-      'алматы': [43.2220, 76.8512],
-      'ташкент': [41.2995, 69.2401]
-    };
-
-    const placedMarkers = [];
-
-    Object.entries(cityEvents).forEach(([city, cityEvts]) => {
-      const cityLower = city.toLowerCase().trim();
-      const withCoords = cityEvts.find(e => e.lat != null && e.lon != null);
-      let coords = withCoords ? [withCoords.lat, withCoords.lon] : cityCoords[cityLower];
-      
-      if (!coords) {
-        for (const [key, value] of Object.entries(cityCoords)) {
-          if (cityLower.includes(key) || key.includes(cityLower)) {
-            coords = value;
-            break;
-          }
-        }
-      }
-      
-      if (!coords) {
-        console.warn(`Город "${city}" не найден в базе координат`);
-        return;
-      }
-
-      placedMarkers.push(coords);
-      const marker = L.marker(coords).addTo(map);
-      marker.bindPopup(`
-        <strong>${city}</strong><br>
-        ${cityEvts.map(e => `
-          <div style="margin: 5px 0;">
-            ${escapeHtml(e.event_text)}<br>
-            <em>— ${escapeHtml(e.profiles?.full_name || 'Аноним')}</em>
-          </div>
-        `).join('')}
-      `);
-    });
-
-    if (placedMarkers.length > 0) {
-      const group = L.featureGroup(placedMarkers.map(c => L.marker(c)));
-      map.fitBounds(group.getBounds().pad(0.1));
-    }
-  } else {
-    content.innerHTML += '<p style="color: #888;">Карта недоступна. Загрузите библиотеку Leaflet.</p>';
+// врезки «Говорят, что…» в летописи: после абзаца, где позже по тексту упомянуто одно из двух событий
+function insertCanonCallouts(root, canon, onEventClick) {
+  if (!canon?.length) return;
+  const paraOf = id => { const r = root.querySelector(`.chronicle-ref[data-event-id="${id}"]`); return r ? r.closest('p, h3') : null; };
+  const all = [...root.querySelectorAll('.chronicle-text > *')];
+  for (const t of canon) {
+    const ps = [paraOf(t.event_a), paraOf(t.event_b)].filter(Boolean);
+    if (!ps.length) continue;  // ни одно событие не вошло в летопись — врезку не ставим
+    const after = ps.sort((x, y) => all.indexOf(y) - all.indexOf(x))[0];
+    const box = document.createElement('aside');
+    box.className = 'chronicle-callout';
+    box.innerHTML = `<b class="cc-title">Говорят, что…</b><p>${escapeHtml(t.note)}</p>
+      <div class="cc-links">${icon('theory')} Связывает: <button type="button" data-ev="${t.event_a}">№ ${t.event_a}</button> и <button type="button" data-ev="${t.event_b}">№ ${t.event_b}</button> </div><div class="cc-links">Автор теории: ${escapeHtml(t.author_name || 'аноним')}. Это версия, а не факт.</div>`;
+    let anchor = after;
+    while (anchor.nextElementSibling?.classList.contains('chronicle-callout')) anchor = anchor.nextElementSibling;
+    anchor.after(box);
+    box.querySelectorAll('[data-ev]').forEach(b => b.addEventListener('click', () => onEventClick?.({ id: Number(b.dataset.ev) })));
   }
-
-  content.querySelectorAll('.map-event-item').forEach(el => {
-    el.addEventListener('click', () => {
-      const event = events.find(e => e.id === parseInt(el.dataset.id));
-      if (event && onEventClick) onEventClick(event);
-    });
-  });
 }
 
 // ============================================
@@ -1263,7 +1283,7 @@ export async function renderEvidenceList() {
   }));
 }
 
-export async function showEventModal(event, currentUserId, onReaction, onComment, onBookmark, onDeleteComment) {
+export async function showEventModal(event, currentUserId, onReaction, onComment, onBookmark, onDeleteComment, theoryCtx = null) {
   const { getEventReactions, getEventComments } = await import('./api.js');
   
   const reactions = await getEventReactions(event.id);
@@ -1301,6 +1321,8 @@ export async function showEventModal(event, currentUserId, onReaction, onComment
           ${icon('evidence')} <span>${hasEv ? 'В уликах' : 'Улика'}</span>
         </button>
       </div>
+
+      ${theoryCtx ? '<div class="theories-section" id="event-theories"></div>' : ''}
 
       <div class="comments-section">
         <h4>Комментарии (${comments.length})</h4>
@@ -1344,6 +1366,24 @@ export async function showEventModal(event, currentUserId, onReaction, onComment
       btn.disabled = false;
     }
   });
+
+  // T2.7: теории по событию + «Связать с другим событием»
+  const thBox = modal.querySelector('#event-theories');
+  if (thBox) {
+    const ctx = { ...theoryCtx, onEventClick: (ev) => { modal.remove(); theoryCtx.onEventClick?.(ev); } };
+    const drawTheories = async () => {
+      const list = (await theoryCtx.load(event.id)).filter(t => t.status !== 'removed');
+      ctx.theories = list;
+      const others = (theoryCtx.events || []).filter(e => e.id !== event.id);
+      thBox.innerHTML = `
+        <h4>${icon('theory')} Теории (${list.length})</h4>
+        ${list.length ? `<div class="theory-list">${list.map(t => theoryCardHtml(t, ctx)).join('')}</div>` : '<p class="empty-state">Это событие ещё ни с чем не связано</p>'}
+        ${event.is_approved === false ? '' : `<details class="theory-new"><summary class="btn-secondary">Связать с другим событием</summary>${theoryFormHtml([event, ...others], event.id)}</details>`}`;
+    };
+    ctx.reload = drawTheories;
+    await drawTheories();
+    bindTheories(thBox, ctx);
+  }
 
   modal.querySelector('#btn-toggle-evidence').addEventListener('click', async (e) => {
     const btn = e.currentTarget;

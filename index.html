@@ -8,8 +8,6 @@
   <!-- Шрифты -->
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=PT+Sans:wght@400;700&family=PT+Mono&display=swap" rel="stylesheet">
   
-  <!-- Leaflet CSS (для карты событий в летописи) -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   
   <!-- Основные стили -->
   <link rel="stylesheet" href="style.css" />
@@ -159,7 +157,7 @@
       <div class="chronicle-controls">
         <button class="btn-primary" id="btn-read-chronicle">Читать</button>
         <button class="btn-secondary" id="btn-timeline-chronicle">Таймлайн</button>
-        <button class="btn-secondary" id="btn-map-chronicle">Карта</button>
+        <button class="btn-secondary" id="btn-theories-chronicle">Теории</button>
         <button class="btn-secondary" id="btn-bookmarks-chronicle">Закладки</button>
         <!-- Эта кнопка видна только админу (управляется через класс .admin-only в JS) -->
         <button class="btn-secondary admin-only" id="btn-edit-chronicle" style="display: none;">Редактировать</button>
@@ -291,8 +289,6 @@
   <!-- ============================================ -->
   <!-- ПОДКЛЮЧЕНИЕ СКРИПТОВ -->
   <!-- ============================================ -->
-  <!-- Leaflet JS (для карты событий) -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   
   <!-- Основной скрипт приложения (он автоматически импортирует config.js, api.js, auth.js и ui.js) -->
   <script type="module" src="js/main.js"></script>
