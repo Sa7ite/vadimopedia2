@@ -555,3 +555,5 @@ body.guest .bell-wrap { display: none; }
 /* Фаза 3: логотип в меню нужен только новой теме */
 .bar-logo{display:none!important}
 .nav-plates{display:contents}
+/* T3.2: элементы новой темы в старом виде не показываем */
+.desk-home,.ev-group,.ev-no{display:none!important}
