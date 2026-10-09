@@ -32,7 +32,7 @@ import {
   showSection, showNotification, updateUIForUser, updateUIForGuest,
   renderEvents, renderProfile, renderEditProfileForm,
   renderChatMessages, showDeleteReasonModal, showUserProfile,
-  renderChronicle, renderChronicleEditor, renderInsertReview, renderTimeline, renderTheories, renderBookmarks, renderYearPolls, setupQuoteCapture, renderQuoteShelf, announceNewAchievements,
+  renderChronicle, chronicleNewKeys, markChronicleSeen, renderChronicleEditor, renderInsertReview, renderTimeline, renderTheories, renderBookmarks, renderYearPolls, setupQuoteCapture, renderQuoteShelf, announceNewAchievements,
   showEventModal, showEditEventModal, eventTagsPickerHtml, readEventTags,
   openModal, closeModal, setupModalCloseHandlers
 } from './ui.js';
@@ -442,10 +442,8 @@ async function setupChronicle() {
     chronicleData = await getChronicle();
   }
 
-  if (chronicleViewMode === 'read') {
-    renderChronicle(chronicleData, handleShowEventModal, await getTheories({ status: 'canon' }));
-    window.vpChronicleSeen?.(chronicleData);
-  }
+  if (chronicleViewMode === 'read') await readChronicle(false);
+  else markChronicleTab();
 
   const btnRead = document.getElementById('btn-read-chronicle');
   const btnTimeline = document.getElementById('btn-timeline-chronicle');
@@ -456,14 +454,13 @@ async function setupChronicle() {
   if (btnRead) {
     btnRead.onclick = async () => {
       chronicleViewMode = 'read';
-      chronicleData = await getChronicle();
-      renderChronicle(chronicleData, handleShowEventModal, await getTheories({ status: 'canon' }));
+      await readChronicle(true);
     };
   }
 
   if (btnTimeline) {
     btnTimeline.onclick = async () => {
-      chronicleViewMode = 'timeline';
+      chronicleViewMode = 'timeline'; markChronicleTab();
       const events = await getApprovedEvents(200);
       const eventsWithDate = events.filter(e => e.event_date || e.is_lore_significant);
       renderTimeline(eventsWithDate, handleShowEventModal);
@@ -472,14 +469,14 @@ async function setupChronicle() {
 
   if (btnTheories) {
     btnTheories.onclick = async () => {
-      chronicleViewMode = 'theories';
+      chronicleViewMode = 'theories'; markChronicleTab();
       await showTheories();
     };
   }
 
   if (btnBookmarks) {
     btnBookmarks.onclick = async () => {
-      chronicleViewMode = 'bookmarks';
+      chronicleViewMode = 'bookmarks'; markChronicleTab();
       const bookmarks = await getBookmarks();
       renderBookmarks(bookmarks, handleShowEventModal);
     };
@@ -487,11 +484,37 @@ async function setupChronicle() {
 
   if (btnEdit && currentProfile.role === 'admin') {
     btnEdit.onclick = async () => {
-      chronicleViewMode = 'edit';
+      chronicleViewMode = 'edit'; markChronicleTab();
       await loadChronicleEditor();
     };
   }
 }
+
+// T3.4: чтение тома; «новое» помнится на устройстве, ушко на главной обновляется после чтения
+async function readChronicle(reload) {
+  markChronicleTab();
+  if (reload || !chronicleData) chronicleData = await getChronicle();
+  renderChronicle(chronicleData, handleShowEventModal, await getTheories(), {
+    uid: currentProfile?.id,
+    onTheories: async (ids) => { chronicleViewMode = 'theories'; markChronicleTab(); await showTheories(ids); }
+  });
+  if (!window.VP_NEW) markChronicleSeen(chronicleData, currentProfile?.id);
+  window.vpChronicleCheck?.(chronicleData);
+}
+
+// активная вкладка над томом
+function markChronicleTab() {
+  const ids = { read: 'btn-read-chronicle', timeline: 'btn-timeline-chronicle', theories: 'btn-theories-chronicle', bookmarks: 'btn-bookmarks-chronicle', edit: 'btn-edit-chronicle' };
+  Object.entries(ids).forEach(([m, id]) => { const b = document.getElementById(id); if (b) { b.classList.toggle('on', m === chronicleViewMode); b.setAttribute('aria-pressed', String(m === chronicleViewMode)); } });
+}
+
+// книга на главной: «новая глава», если в летописи есть абзацы, которых человек не видел
+window.vpChronicleCheck = async (c) => {
+  if (!c) return;
+  const uid = currentProfile?.id || (await supabase.auth.getSession()).data.session?.user?.id;
+  const fresh = chronicleNewKeys(c, uid);
+  window.vpDeskTome?.(c, !!fresh && fresh.size > 0);
+};
 
 async function loadChronicleEditor() {
   let editor;
@@ -530,7 +553,7 @@ async function handlePublishChronicle(content) {
     generatedEventIds = []; generatedFlags = [];
     showNotification('Летопись опубликована!', 'success');
     chronicleViewMode = 'read';
-    renderChronicle(chronicleData, handleShowEventModal, await getTheories({ status: 'canon' }));
+    await readChronicle(false);
   } catch (error) {
     showNotification(`Ошибка публикации: ${error.message}`, 'error');
   }
@@ -597,7 +620,7 @@ async function handleRollbackChronicle() {
     chronicleData = await rollbackChronicle();
     showNotification('Откат выполнен!', 'success');
     chronicleViewMode = 'read';
-    renderChronicle(chronicleData, handleShowEventModal, await getTheories({ status: 'canon' }));
+    await readChronicle(false);
   } catch (error) {
     showNotification(`Ошибка отката: ${error.message}`, 'error');
   }
@@ -652,10 +675,18 @@ async function theoryContext() {
   };
 }
 
-async function showTheories() {
+async function showTheories(focusIds = null) {
   const [ctx, theories] = await Promise.all([theoryContext(), getTheories()]);
   ctx.reload = async () => { if (chronicleViewMode === 'theories') await showTheories(); };
-  renderTheories(theories.filter(t => t.status !== 'removed'), ctx.events, ctx);
+  const list = theories.filter(t => t.status !== 'removed');
+  renderTheories(list, ctx.events, ctx);
+  // пришли с полей летописи: подсветить теории этого абзаца
+  if (focusIds?.length) {
+    const hit = list.filter(t => focusIds.includes(Number(t.event_a)) || focusIds.includes(Number(t.event_b)));
+    const cards = hit.map(t => document.querySelector(`#chronicle-content [data-theory-id="${t.id}"]`)).filter(Boolean);
+    cards.forEach(c => c.classList.add('th-focus'));
+    cards[0]?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
 }
 
 async function handleToggleReaction(eventId, reactionType) {
