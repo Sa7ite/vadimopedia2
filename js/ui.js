@@ -225,7 +225,7 @@ async function showTitlesManager(profile) {
 
   modal.innerHTML = `
     <div class="modal-content titles-modal">
-      <span class="close-modal" data-modal="modal-titles-manager">&times;</span>
+      <button type="button" class="close-modal" data-modal="modal-titles-manager" aria-label="Закрыть">&times;</button>
       <div class="modal-header">
         <h2>Управление титулами</h2>
         <p class="tm-count">Надето: <b id="titles-count">${tempActiveTitles.length}</b> из 3 · изменения сохранятся после «Подтвердить»</p>
@@ -348,7 +348,7 @@ export async function showUserProfile(userId, currentUserId) {
   
   modal.innerHTML = `
     <div class="modal-content user-profile-modal">
-      <span class="close-modal" data-modal="modal-user-profile">&times;</span>
+      <button type="button" class="close-modal" data-modal="modal-user-profile" aria-label="Закрыть">&times;</button>
       <div class="profile-card">
         <div class="profile-header">
           <div class="avatar-wrap"><img src="${avatarUrl}" alt="Аватар" class="profile-avatar">${credBadgeHtml(profile)}</div>
@@ -753,7 +753,7 @@ export function showDeleteReasonModal(messageId, isOwn, isModerator, onConfirm) 
   
   modal.innerHTML = `
     <div class="modal-content">
-      <span class="close-modal" data-modal="modal-delete-reason">&times;</span>
+      <button type="button" class="close-modal" data-modal="modal-delete-reason" aria-label="Закрыть">&times;</button>
       <div class="modal-header"><h2>Удаление сообщения</h2></div>
       <div class="form-input-group">
         <label for="delete-reason-input">Причина удаления</label>
@@ -1367,7 +1367,7 @@ export function showWallet(profile, { isAdmin, onRevoke, onChanged } = {}) {
     </article>`;
   modal.innerHTML = `
     <div class="modal-content wallet-modal">
-      <span class="close-modal">&times;</span>
+      <button type="button" class="close-modal" aria-label="Закрыть">&times;</button>
       <h3>${icon('badge')} Кошелёк: ${escapeHtml(profile.full_name || '')}</h3>
       <p class="wallet-hint">Номер удостоверения — порядковый номер выдачи этого титула: чем меньше, тем раньше получен.</p>
       <div class="wallet-fan">${creds.length ? creds.map(card).join('') : '<p class="empty-state">Удостоверений пока нет</p>'}</div>
@@ -1524,51 +1524,63 @@ export async function showEventModal(event, currentUserId, onReaction, onComment
   modal.style.display = 'flex';
   modal.id = 'modal-event-detail';
 
+  // T3.3: лист-донесение в раскрытой папке (design.md 6.3, вариант 3)
+  const evNo = String(event.id).padStart(4, '0');
+  const evYear = (String(event.event_date || '').match(/\d+(?!.*\d)/) || [])[0] || '';
+  const people = (event.participants || []).map(p => p.person?.name).filter(Boolean);
+  const stamps = [
+    event.is_approved !== false ? '<span class="stamp" style="--r:-7deg">Одобрено</span>' : '<span class="stamp gray" style="--r:-5deg">На проверке</span>',
+    event.is_lore_significant ? '<span class="stamp red" style="--r:6deg">Значимое</span>' : '',
+    event.is_in_chronicle ? '<span class="stamp blue" style="--r:-3deg">В летописи</span>' : '',
+    event.year_award ? `<span class="stamp" style="--r:4deg">Событие ${escapeHtml(event.year_award)} года</span>` : ''
+  ].join('');
+  const shareText = encodeURIComponent((event.event_date ? event.event_date + ' — ' : '') + event.event_text);
+  const rot = ((event.id * 37) % 15 - 7) / 10;
   modal.innerHTML = `
-    <div class="modal-content event-modal" data-event-id="${event.id}">
-      <span class="close-modal" data-modal="modal-event-detail">&times;</span>
-      <div class="event-detail-header">
-        <h3>${escapeHtml(event.event_text)}</h3>
-        <div class="event-detail-meta">
-          <span>${icon('user')} ${escapeHtml(event.profiles?.full_name || 'Аноним')}</span>
-          ${event.event_date ? `<span>${icon('calendar')} ${escapeHtml(event.event_date)}</span>` : ''}
-          <button class="btn-secondary share-btn" data-share="${encodeURIComponent((event.event_date ? event.event_date + ' — ' : '') + event.event_text)}">Поделиться</button>
-          ${event.city ? `<span> ${escapeHtml(event.city)}</span>` : ''}
+    <div class="modal-content event-modal ev-folder" data-event-id="${event.id}">
+      <button type="button" class="close-modal" data-modal="modal-event-detail" aria-label="Закрыть">&times;</button>
+      <span class="ev-folder-tab">${escapeHtml([evYear, event.city].filter(Boolean).join(', ') || 'Дело № ' + evNo)}</span>
+      <article class="ev-sheet" style="--r:${rot}deg">
+        <div class="sh-head"><span>Дело № ${evNo}</span><span>${escapeHtml(event.event_date || 'дата не указана')}</span><span>${escapeHtml(event.city || 'место не указано')}</span></div>
+        ${people.length ? `<p class="sh-who">${people.map(escapeHtml).join(', ')}</p>` : ''}
+        <div class="event-detail-header">
+          <h3 class="sh-text">${escapeHtml(event.event_text)}</h3>
+          <div class="event-detail-meta">
+            <span>Записал: ${escapeHtml(event.profiles?.full_name || 'Аноним')}</span>
+            ${event.campaign?.name ? `<span>Кампания: ${escapeHtml(event.campaign.name)}</span>` : ''}
+          </div>
         </div>
-        ${eventTagsLine(event)}
-      </div>
-
-      <div class="reactions-section" id="reactions-section">${reactionsHtml(reactions, currentUserId, isOwnEvent)}</div>
-
-      <div class="bookmark-section">
-        <button class="btn-bookmark" id="btn-toggle-bookmark">
-          ${icon('bookmark')} Добавить в закладки
-        </button>
-        <button class="btn-bookmark btn-evidence ${hasEv ? 'active' : ''}" id="btn-toggle-evidence" aria-pressed="${hasEv}" title="Тайно сохранить снимок в свои улики">
-          ${icon('evidence')} <span>${hasEv ? 'В уликах' : 'Улика'}</span>
-        </button>
-        ${isOwnEvent ? '' : '<button type="button" class="btn-report" id="btn-report-event">Пожаловаться</button>'}
-      </div>
-
-      ${theoryCtx ? '<div class="theories-section" id="event-theories"></div>' : ''}
+        <div class="sh-stamps">${stamps}</div>
+        <div class="reactions-section" id="reactions-section">${reactionsHtml(reactions, currentUserId, isOwnEvent)}</div>
+        <div class="bookmark-section">
+          <button class="btn-bookmark" id="btn-toggle-bookmark">${icon('bookmark')} Добавить в закладки</button>
+          <button class="btn-bookmark btn-evidence ${hasEv ? 'active' : ''}" id="btn-toggle-evidence" aria-pressed="${hasEv}" title="Тайно сохранить снимок в свои улики">
+            ${icon('evidence')} <span>${hasEv ? 'В уликах' : 'Улика'}</span>
+          </button>
+          <button class="btn-secondary share-btn" data-share="${shareText}">Поделиться</button>
+          ${isOwnEvent ? '' : '<button type="button" class="btn-report" id="btn-report-event">Пожаловаться</button>'}
+        </div>
+      </article>
+      ${theoryCtx ? '<a href="#event-theories" class="ev-thread-tag" id="ev-thread-tag" hidden></a><div class="theories-section" id="event-theories"></div>' : ''}
 
       <div class="comments-section">
-        <h4>Комментарии (${comments.length})</h4>
+        <h4>Записки к делу (${comments.length})</h4>
         <div class="comments-list" id="comments-list">
-          ${comments.length === 0 ? '<p class="empty-state">Пока нет комментариев</p>' : comments.map(c => `
-            <div class="comment-item" data-id="${c.id}">
+          ${comments.length === 0 ? '<p class="empty-state">Записок пока нет</p>' : comments.map((c, i) => `
+            <div class="comment-item" data-id="${c.id}" style="--r:${i % 2 ? 1.2 : -1}deg">
               <div class="comment-header">
                 <strong>${escapeHtml(c.profiles?.full_name || 'Аноним')}</strong>
                 <span class="comment-date">${new Date(c.created_at).toLocaleDateString('ru-RU')}</span>
-                ${c.user_id === currentUserId ? `<button class="btn-delete-comment" data-id="${c.id}">${icon('trash')} </button>` : ''}
+                ${c.user_id === currentUserId ? `<button class="btn-delete-comment" data-id="${c.id}" aria-label="Удалить записку">${icon('trash')}</button>` : ''}
               </div>
               <p class="comment-text">${escapeHtml(c.comment_text)}</p>
             </div>
           `).join('')}
         </div>
         <div class="comment-form">
-          <textarea id="comment-input" rows="2" placeholder="Написать комментарий..."></textarea>
-          <button class="btn-primary" id="btn-submit-comment">Отправить</button>
+          <label for="comment-input" class="sr-only">Ваша записка</label>
+          <textarea id="comment-input" rows="2" placeholder="Подколоть записку к делу…"></textarea>
+          <button class="btn-primary" id="btn-submit-comment">Подколоть</button>
         </div>
       </div>
     </div>
@@ -1602,6 +1614,8 @@ export async function showEventModal(event, currentUserId, onReaction, onComment
     const drawTheories = async () => {
       const list = (await theoryCtx.load(event.id)).filter(t => t.status !== 'removed');
       ctx.theories = list;
+      const tag = modal.querySelector('#ev-thread-tag');
+      if (tag) { tag.hidden = !list.length; tag.textContent = `${list.length} ${list.length % 10 === 1 && list.length % 100 !== 11 ? 'теория' : [2,3,4].includes(list.length % 10) && ![12,13,14].includes(list.length % 100) ? 'теории' : 'теорий'}`; }
       const others = (theoryCtx.events || []).filter(e => e.id !== event.id);
       thBox.innerHTML = `
         <h4>${icon('theory')} Теории (${list.length})</h4>
@@ -1646,12 +1660,13 @@ export async function showEventModal(event, currentUserId, onReaction, onComment
       if (commentsList.querySelector('.empty-state')) commentsList.innerHTML = '';
       const commentEl = document.createElement('div');
       commentEl.className = 'comment-item';
+      commentEl.style.setProperty('--r', '0.8deg');
       commentEl.dataset.id = comment.id;
       commentEl.innerHTML = `
         <div class="comment-header">
           <strong>Вы</strong>
           <span class="comment-date">${new Date(comment.created_at).toLocaleDateString('ru-RU')}</span>
-          <button class="btn-delete-comment" data-id="${comment.id}">️</button>
+          <button class="btn-delete-comment" data-id="${comment.id}" aria-label="Удалить записку">${icon('trash')}</button>
         </div>
         <p class="comment-text">${escapeHtml(comment.comment_text)}</p>
       `;
@@ -1723,7 +1738,7 @@ export function showEditEventModal(event, onSave, isValidDate, isValidCity, list
   
   modal.innerHTML = `
     <div class="modal-content">
-      <span class="close-modal" data-modal="modal-edit-event">&times;</span>
+      <button type="button" class="close-modal" data-modal="modal-edit-event" aria-label="Закрыть">&times;</button>
       <div class="modal-header">
         <h2>Редактировать событие</h2>
       </div>
