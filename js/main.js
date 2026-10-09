@@ -17,7 +17,7 @@ import {
   getPersons, getCampaigns, setEventParticipants, getSettingValue, getReactionCounts,
   getTheories, createTheory, voteTheory, setTheoryStatus, addEvidence, removeEvidence, getMyEvidence,
   getYearPolls, getYearPoll, voteEventOfYear, openYearPoll, closeYearPoll,
-  addQuote, shareQuoteToChat, deleteQuote
+  addQuote, shareQuoteToChat, deleteQuote, revokeTitle
 } from './api.js';
 import { setupAdminPanel } from './admin.js';
 import { registerUser, loginUser, logoutUser, onAuthStateChange } from './auth.js';
@@ -26,7 +26,7 @@ import {
   showSection, showNotification, updateUIForUser, updateUIForGuest,
   renderEvents, renderPendingEvents, renderProfile, renderEditProfileForm,
   renderChatMessages, showDeleteReasonModal, showUserProfile,
-  renderChronicle, renderChronicleEditor, renderInsertReview, renderTimeline, renderTheories, renderBookmarks, renderYearPolls, setupQuoteCapture, renderQuoteShelf,
+  renderChronicle, renderChronicleEditor, renderInsertReview, renderTimeline, renderTheories, renderBookmarks, renderYearPolls, setupQuoteCapture, renderQuoteShelf, announceNewAchievements,
   showEventModal, showEditEventModal, eventTagsPickerHtml, readEventTags,
   openModal, closeModal, setupModalCloseHandlers
 } from './ui.js';
@@ -52,6 +52,17 @@ async function initApp() {
 
   const { data: { session } } = await supabase.auth.getSession();
   
+  // T2.10: кошелёк — админ может отозвать удостоверение; после изменения профиль перечитывается
+  window.vpWalletHandlers = (profile, closeParent) => ({
+    isAdmin: currentProfile?.role === 'admin',
+    onRevoke: revokeTitle,
+    onChanged: async () => {
+      closeParent?.();
+      if (String(profile.id) === String(currentProfile.id)) { currentProfile = await getProfileWithTitles(currentProfile.id); renderProfile(currentProfile, () => renderEditProfileForm(currentProfile, handleSaveProfile)); }
+      else showUserProfile(profile.id, currentProfile.id);
+    }
+  });
+
   // T2.9: цитаты — кнопка «В коллекцию» при выделении и действия полки
   window.vpQuoteHandlers = { onShare: shareQuoteToChat, onDelete: deleteQuote, onEventClick: (ev) => handleShowEventModal(ev) };
   setupQuoteCapture((text, eventId, source) => addQuote(text, eventId, source));
@@ -62,6 +73,7 @@ async function initApp() {
     updateUIForUser(session.user, currentProfile, () => renderEditProfileForm(currentProfile, handleSaveProfile));
     await loadEvents();
     renderAddEventTags();
+    announceNewAchievements(session.user.id);
     if (currentProfile && (currentProfile.role === 'admin' || currentProfile.role === 'moderator')) {
       await loadPendingEvents();
       setupAdminTitleRequests();
@@ -608,7 +620,7 @@ async function theoryContext() {
     maxPerDay,
     events,
     evidence: new Set(evidence.filter(e => e.target_type === 'theory').map(e => String(e.target_id))),
-    onCreate: createTheory,
+    onCreate: async (a, b, note) => { await createTheory(a, b, note); announceNewAchievements(currentProfile.id); },
     onVote: voteTheory,
     onStatus: async (id, status) => { await setTheoryStatus(id, status); chronicleData = null; },
     onEvidence: (id, has) => has ? removeEvidence('theory', id) : addEvidence('theory', id),
@@ -623,17 +635,15 @@ async function showTheories() {
 }
 
 async function handleToggleReaction(eventId, reactionType) {
-  return await toggleReaction(eventId, reactionType);
+  const r = await toggleReaction(eventId, reactionType);
+  announceNewAchievements(currentProfile.id);
+  return r;
 }
 
 async function handleAddComment(eventId, commentText) {
   const comment = await addEventComment(eventId, commentText);
   if (currentProfile) {
-    const { checkAndAwardAchievements } = await import('./api.js');
-    const newAchievements = await checkAndAwardAchievements(currentProfile.id);
-    if (newAchievements.length > 0) {
-      showNotification(`Достижение: ${newAchievements.join(', ')}`, 'success');
-    }
+    announceNewAchievements(currentProfile.id);
   }
   return comment;
 }
