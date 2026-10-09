@@ -717,3 +717,18 @@ export async function getTheories({ eventId = null, status = null } = {}) {
 export const createTheory = (a, b, note) => rpcOrThrow('create_theory', { p_event_a: Number(a), p_event_b: Number(b), p_note: note });
 export const voteTheory = (id, vote) => rpcOrThrow('vote_theory', { p_theory: id, p_vote: vote });
 export const setTheoryStatus = (id, status) => rpcOrThrow('set_theory_status', { p_theory: id, p_status: status });
+
+// ============================================
+// T2.9: КОЛЛЕКЦИЯ ЦИТАТ (дословность и лимит 300 проверяет база)
+// ============================================
+export async function getQuotes(userId) {
+  const { data, error } = await supabase.from('quotes').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(200);
+  if (error) { console.error('Ошибка получения цитат:', error); return []; }
+  return data;
+}
+export const addQuote = (text, eventId, source) => rpcOrThrow('add_quote', { p_text: text, p_event: eventId == null ? null : Number(eventId), p_source: source });
+export const shareQuoteToChat = (id) => rpcOrThrow('share_quote_to_chat', { p_quote: id });
+export async function deleteQuote(id) {
+  const { error } = await supabase.from('quotes').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+}
