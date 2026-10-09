@@ -517,3 +517,37 @@ body.guest .hero-stats{display:none}
 #admin-content { padding: 12px 16px; }
 .ask-modal .modal-content { position: relative; max-width: 520px; }
 .ask-modal .close-modal { position: absolute; right: 12px; top: 6px; font: 700 1.8rem/1 Arial, sans-serif; cursor: pointer; padding: 4px 8px; }
+
+/* ===== T2.15: колокольчик ===== */
+.bell-wrap { position: relative; margin-left: auto; align-self: center; }
+body.guest .bell-wrap { display: none; }
+.bell-btn { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 2px solid var(--text); background: var(--surface); color: var(--text); cursor: pointer; }
+.bell-btn .ic { width: 22px; height: 22px; }
+.bell-btn[aria-expanded="true"] { background: var(--text); color: var(--surface); }
+.bell-count { position: absolute; top: -8px; right: -8px; min-width: 20px; height: 20px; padding: 0 5px; box-sizing: border-box; border-radius: 10px; background: #b5261e; color: #fff; font: 700 .72rem/20px Arial, sans-serif; text-align: center; }
+.bell-count[hidden] { display: none; }
+.bell-panel { position: absolute; right: 0; top: calc(100% + 8px); z-index: 900; width: 380px; max-height: min(70vh, 560px); overflow-y: auto; background: var(--surface); color: var(--text); border: 2px solid var(--text); box-shadow: 6px 6px 0 rgba(0,0,0,.25); text-align: left; }
+.bell-panel[hidden] { display: none; }
+.bell-head { position: sticky; top: 0; display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--surface2); border-bottom: 1px solid var(--line); }
+.bell-head b { margin-right: auto; }
+#bell button { text-transform: none; letter-spacing: 0; font-family: inherit; }
+.bell-link { min-height: 32px; padding: 2px 6px; border: 0; background: transparent; color: var(--text); text-decoration: underline; cursor: pointer; font-size: .85rem; }
+.bell-list { list-style: none; margin: 0; padding: 0; }
+.bell-item { display: flex; gap: 10px; width: 100%; padding: 10px 12px; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: var(--text); text-align: left; cursor: pointer; font-size: .9rem; }
+.bell-item:hover, .bell-item:focus-visible { background: var(--surface2); }
+.bell-item.unread { box-shadow: inset 4px 0 0 #b5261e; }
+.bell-item.unread b { font-weight: 700; }
+.bell-item:not(.unread) b { font-weight: 400; }
+.bell-ico .ic { width: 20px; height: 20px; color: var(--muted); }
+.bell-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.bell-txt small { color: var(--muted); }
+.bell-txt time { font-size: .75rem; color: var(--muted); }
+.bell-empty { padding: 18px 12px; color: var(--muted); font-size: .9rem; }
+.bell-prefs { display: grid; gap: 8px; padding: 12px; }
+.bell-prefs label { display: flex; gap: 8px; align-items: flex-start; font-size: .9rem; cursor: pointer; }
+.bell-prefs input { margin-top: 3px; }
+.bell-quiet { padding-top: 8px; border-top: 1px dashed var(--line); }
+.bell-prefs button { justify-self: start; min-height: 40px; }
+@media (max-width: 600px) {
+  .bell-panel { position: fixed; left: 8px; right: 8px; top: 64px; width: auto; max-height: calc(100vh - 80px); }
+}

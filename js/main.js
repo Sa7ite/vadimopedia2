@@ -22,6 +22,7 @@ import {
 import { setupAdminPanel } from './admin.js';
 import { renderCases, openCaseAgainst, checkDoorKnock } from './cases.js';
 import { renderQueue, renderMySubmissions, reportFlow } from './moderation.js';
+import { setupBell, teardownBell } from './bell.js';
 import { getArrest, getMessageReactions, getMessageById, muteUser, getMyMute, getEventOfDay, getMentionables, getUserFaction, getFactions } from './api.js';
 import { registerUser, loginUser, logoutUser, onAuthStateChange } from './auth.js';
 import { validateDate, geocodePlace } from './validation.js';
@@ -93,6 +94,7 @@ async function initApp() {
     }
     setupAdminPanel(currentProfile?.role === 'admin', () => { loadEventLists(true).then(renderAddEventTags); });
     presenceChannel = connectToPresence(session.user.id, updateOnlineCount);
+    setupBell(currentProfile, bellHandlers());
   } else {
     updateUIForGuest();
     await loadEvents();
@@ -113,7 +115,9 @@ async function initApp() {
       }
       setupAdminPanel(currentProfile?.role === 'admin', () => { loadEventLists(true).then(renderAddEventTags); });
       if (!presenceChannel) presenceChannel = connectToPresence(session.user.id, updateOnlineCount);
+      setupBell(currentProfile, bellHandlers());
     } else {
+      teardownBell();
       currentProfile = null;
       loadUserCount(null);
       updateUIForGuest();
@@ -140,6 +144,15 @@ function openSectionFromHash() {
   // раздел недоступен (например, админка у гостя) — остаёмся на главной
   if (!link || link.style.display === 'none') return;
   if (!link.classList.contains('active')) link.click();
+}
+
+// T2.15: куда ведёт уведомление из колокольчика
+function bellHandlers() {
+  return {
+    openEvent: (id) => handleShowEventModal({ id: Number(id) }),
+    openChat: (channel) => { chatChannelName = channel; setChatReply(null); document.querySelector('.nav-link[data-section="chat"]')?.click(); },
+    openSection: (sec) => document.querySelector(`.nav-link[data-section="${sec}"]`)?.click()
+  };
 }
 
 async function loadUserCount(session) {
