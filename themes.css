@@ -591,14 +591,14 @@ body.guest .bell-wrap { display: none; }
 .titles-modal .title-card.tm-on { border: 2px solid var(--text); background: var(--surface2); opacity: 1; box-shadow: 0 0 0 2px var(--accent, var(--text)) inset; }
 .titles-modal .title-card.tm-free { border-style: dotted; }
 .titles-modal .title-card.tm-ask { cursor: default; }
-.titles-modal .tm-top { display: flex; justify-content: space-between; gap: 6px; margin-bottom: 6px; font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; }
+.titles-modal .tm-top { display: flex; justify-content: space-between; gap: 6px; margin-bottom: 6px; font-size: .8rem; }
 .titles-modal .title-kind { color: var(--muted); }
 .titles-modal .title-status { font-weight: 700; padding: 0 6px; border: 1px solid currentColor; border-radius: 3px; }
 .titles-modal .tm-on .title-status { color: var(--surface); background: var(--text); border-color: var(--text); }
 .titles-modal .tm-hint { margin-top: 6px; font-size: .78rem; color: var(--muted); }
 .titles-modal .title-card:focus-visible { outline: 3px solid var(--accent, #000); outline-offset: 2px; }
 #chat-messages .chat-reply-ref { margin: 0 0 6px; padding: 3px 8px; border-left: 3px solid var(--muted); background: rgba(0,0,0,.04); color: var(--text); opacity: .8; font-size: .85rem; overflow-wrap: anywhere; }
-#chat-messages .chat-sys-label { font: 700 .78rem/1.3 var(--mono, inherit); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+#chat-messages .chat-sys-label { font-weight: 700; font-size: .85rem; color: var(--muted); }
 #chat-messages .chat-message.system .chat-message-text { font-style: italic; }
 #chat-messages .chat-message + .chat-message { margin-top: 6px; border-top: 1px solid var(--line, #ccc); }
 .titles-modal .titles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
@@ -606,3 +606,5 @@ body.guest .bell-wrap { display: none; }
 .titles-modal .title-name { font-weight: 700; font-size: 1.05rem; margin: 0 0 2px; }
 .titles-modal .title-desc { font-size: .85rem; color: var(--muted); }
 .ev-grouper{display:none!important}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.blank-sheet .bl-head{display:none}

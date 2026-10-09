@@ -15,7 +15,7 @@ export function askText({ title, label, placeholder = '', ok = 'Отправит
     const m = document.createElement('div');
     m.className = 'modal ask-modal'; m.style.display = 'flex';
     m.innerHTML = `<div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="ask-title">
-      <span class="close-modal" aria-label="Закрыть">&times;</span>
+      <button type="button" class="close-modal" aria-label="Закрыть">&times;</button>
       <div class="modal-header"><h2 id="ask-title">${esc(title)}</h2></div>
       <label class="ask-label" for="ask-text">${esc(label)}</label>
       <textarea id="ask-text" rows="3" maxlength="${max}" placeholder="${esc(placeholder)}"></textarea>

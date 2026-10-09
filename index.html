@@ -142,13 +142,15 @@
       
       <!-- Форма добавления события (скрыта для гостей, управляется через JS) -->
       <div id="add-event-form-container" style="display: none;">
-        <div class="add-section-inline">
+        <div class="add-section-inline blank-sheet">
+          <div class="bl-head"><span>Донесение</span><span>номер дела присвоят после проверки</span></div>
           <h3>Добавить событие</h3>
           <form id="form-add-event">
             <div class="form-input-group">
               <label for="event-text">Текст события</label>
               <textarea id="event-text" rows="3" placeholder="Что произошло? (например: Открыл кофейню)" required></textarea>
             </div>
+            <div class="bl-row">
             <div class="form-input-group">
               <label for="event-city">Место (необязательно)</label>
               <input type="text" id="event-city" placeholder="Город, например: Коломна">
@@ -156,6 +158,7 @@
             <div class="form-input-group">
               <label for="event-date">Дата события (необязательно)</label>
               <input type="text" id="event-date" placeholder="Например: 15 марта 2024, 07.2049 или 2049">
+            </div>
             </div>
             <div id="event-tags-picker"></div>
             <div class="form-input-group" style="display: flex; align-items: center; gap: 10px;">
@@ -259,7 +262,7 @@
   <!-- ============================================ -->
   <div id="modal-login" class="modal">
     <div class="modal-content">
-      <span class="close-modal" data-modal="modal-login">&times;</span>
+      <button type="button" class="close-modal" data-modal="modal-login" aria-label="Закрыть">&times;</button>
       <div class="modal-header">
         <h2>Вход в Вадимопедию</h2>
       </div>
@@ -282,7 +285,7 @@
   <!-- ============================================ -->
   <div id="modal-register" class="modal">
     <div class="modal-content">
-      <span class="close-modal" data-modal="modal-register">&times;</span>
+      <button type="button" class="close-modal" data-modal="modal-register" aria-label="Закрыть">&times;</button>
       <div class="modal-header">
         <h2>Стать Вадимом</h2>
       </div>
@@ -318,7 +321,7 @@
   <!-- ============================================ -->
   <div id="modal-rules" class="modal">
     <div class="modal-content rules-content">
-      <span class="close-modal" data-modal="modal-rules">&times;</span>
+      <button type="button" class="close-modal" data-modal="modal-rules" aria-label="Закрыть">&times;</button>
       <div class="modal-header">
         <h2>Правила Вадимопедии</h2>
       </div>

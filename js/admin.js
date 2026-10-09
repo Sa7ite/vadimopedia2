@@ -262,8 +262,8 @@ async function renderTitles() {
   const row = t => `<tr data-id="${t?.id ?? ''}">
     <td><input class="t-name" value="${esc(t?.title_name)}" placeholder="${t ? '' : 'Новый титул'}" aria-label="Название титула"></td>
     <td><input class="t-desc" value="${esc(t?.description)}" placeholder="Описание" aria-label="Описание"></td>
-    <td><select class="t-type" aria-label="Вид"><option value="common" ${t?.title_type !== 'special' ? 'selected' : ''}>Базовый (берёт сам)</option><option value="special" ${t?.title_type === 'special' ? 'selected' : ''}>Особый (по запросу)</option></select></td>
-    <td><label class="admin-check"><input type="checkbox" class="t-arrest" ${(t?.grants_authority || []).includes('arrest') ? 'checked' : ''}> право ареста</label></td>
+    <td><select class="t-type" aria-label="Вид"><option value="common" ${t?.title_type !== 'special' ? 'selected' : ''}>Базовый</option><option value="special" ${t?.title_type === 'special' ? 'selected' : ''}>Особый</option></select></td>
+    <td><label class="admin-check" style="white-space:nowrap"><input type="checkbox" class="t-arrest" ${(t?.grants_authority || []).includes('arrest') ? 'checked' : ''}> арест</label></td>
     <td class="admin-actions"><button class="btn-${t ? 'secondary' : 'primary'} t-save">${t ? 'Сохранить' : 'Добавить'}</button>${t ? '<button class="btn-secondary t-del">Удалить</button>' : ''}</td></tr>`;
   el.innerHTML = `<p class="admin-hint">Базовые титулы человек надевает сам (не больше 3), особые — выдаёт админ по запросу или в блоке «Пользователи». «Право ареста» — удостоверение для дел.</p>
     <table class="admin-table"><thead><tr><th>Название</th><th>Описание</th><th>Вид</th><th>Полномочия</th><th></th></tr></thead><tbody>${list.map(row).join('')}${row(null)}</tbody></table>`;
