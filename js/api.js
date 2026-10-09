@@ -710,3 +710,23 @@ export async function getMyEvidence() {
   if (error) throw error;
   return data;
 }
+
+// ============================================
+// T2.7: ТЕОРИИ — нитка между двумя событиями, голоса «верю / не верю», канон (права и лимиты — в базе)
+// ============================================
+const rpcOrThrow = async (fn, args) => {
+  const { data, error } = await supabase.rpc(fn, args);
+  if (error) throw new Error(error.message);
+  return data;
+};
+export async function getTheories({ eventId = null, status = null } = {}) {
+  let q = supabase.from('theory_list').select('*');
+  if (eventId) q = q.or(`event_a.eq.${Number(eventId)},event_b.eq.${Number(eventId)}`);
+  if (status) q = q.eq('status', status);
+  const { data, error } = await q.order('created_at', { ascending: false }).limit(300);
+  if (error) { console.error('Ошибка получения теорий:', error); return []; }
+  return data.sort((a, b) => (b.status === 'canon') - (a.status === 'canon') || (b.believe - b.doubt) - (a.believe - a.doubt));
+}
+export const createTheory = (a, b, note) => rpcOrThrow('create_theory', { p_event_a: Number(a), p_event_b: Number(b), p_note: note });
+export const voteTheory = (id, vote) => rpcOrThrow('vote_theory', { p_theory: id, p_vote: vote });
+export const setTheoryStatus = (id, status) => rpcOrThrow('set_theory_status', { p_theory: id, p_status: status });

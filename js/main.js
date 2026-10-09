@@ -14,7 +14,8 @@ import {
   toggleReaction, addEventComment, deleteEventComment,
   toggleBookmark, getBookmarks,
   getEventsByUser, getEventById,
-  getPersons, getCampaigns, setEventParticipants, getSettingValue, getReactionCounts
+  getPersons, getCampaigns, setEventParticipants, getSettingValue, getReactionCounts,
+  getTheories, createTheory, voteTheory, setTheoryStatus, addEvidence, removeEvidence, getMyEvidence
 } from './api.js';
 import { setupAdminPanel } from './admin.js';
 import { registerUser, loginUser, logoutUser, onAuthStateChange } from './auth.js';
@@ -23,7 +24,7 @@ import {
   showSection, showNotification, updateUIForUser, updateUIForGuest,
   renderEvents, renderPendingEvents, renderProfile, renderEditProfileForm,
   renderChatMessages, showDeleteReasonModal, showUserProfile,
-  renderChronicle, renderChronicleEditor, renderInsertReview, renderTimeline, renderMap, renderBookmarks,
+  renderChronicle, renderChronicleEditor, renderInsertReview, renderTimeline, renderTheories, renderBookmarks,
   showEventModal, showEditEventModal, eventTagsPickerHtml, readEventTags,
   openModal, closeModal, setupModalCloseHandlers
 } from './ui.js';
@@ -378,13 +379,13 @@ async function setupChronicle() {
   }
 
   if (chronicleViewMode === 'read') {
-    renderChronicle(chronicleData, handleShowEventModal);
+    renderChronicle(chronicleData, handleShowEventModal, await getTheories({ status: 'canon' }));
     window.vpChronicleSeen?.(chronicleData);
   }
 
   const btnRead = document.getElementById('btn-read-chronicle');
   const btnTimeline = document.getElementById('btn-timeline-chronicle');
-  const btnMap = document.getElementById('btn-map-chronicle');
+  const btnTheories = document.getElementById('btn-theories-chronicle');
   const btnBookmarks = document.getElementById('btn-bookmarks-chronicle');
   const btnEdit = document.getElementById('btn-edit-chronicle');
 
@@ -392,7 +393,7 @@ async function setupChronicle() {
     btnRead.onclick = async () => {
       chronicleViewMode = 'read';
       chronicleData = await getChronicle();
-      renderChronicle(chronicleData, handleShowEventModal);
+      renderChronicle(chronicleData, handleShowEventModal, await getTheories({ status: 'canon' }));
     };
   }
 
@@ -405,11 +406,10 @@ async function setupChronicle() {
     };
   }
 
-  if (btnMap) {
-    btnMap.onclick = async () => {
-      chronicleViewMode = 'map';
-      const events = await getApprovedEvents(200);
-      renderMap(events, handleShowEventModal);
+  if (btnTheories) {
+    btnTheories.onclick = async () => {
+      chronicleViewMode = 'theories';
+      await showTheories();
     };
   }
 
@@ -466,7 +466,7 @@ async function handlePublishChronicle(content) {
     generatedEventIds = []; generatedFlags = [];
     showNotification('Летопись опубликована!', 'success');
     chronicleViewMode = 'read';
-    renderChronicle(chronicleData, handleShowEventModal);
+    renderChronicle(chronicleData, handleShowEventModal, await getTheories({ status: 'canon' }));
   } catch (error) {
     showNotification(`Ошибка публикации: ${error.message}`, 'error');
   }
@@ -533,7 +533,7 @@ async function handleRollbackChronicle() {
     chronicleData = await rollbackChronicle();
     showNotification('Откат выполнен!', 'success');
     chronicleViewMode = 'read';
-    renderChronicle(chronicleData, handleShowEventModal);
+    renderChronicle(chronicleData, handleShowEventModal, await getTheories({ status: 'canon' }));
   } catch (error) {
     showNotification(`Ошибка отката: ${error.message}`, 'error');
   }
@@ -547,14 +547,45 @@ async function handleShowEventModal(event) {
     fullEvent = await getEventById(event.id);
     if (!fullEvent) { showNotification('Событие не найдено (возможно, удалено)', 'error'); return; }
   }
+  const ctx = await theoryContext();
+  ctx.load = (id) => getTheories({ eventId: id });
   await showEventModal(
     fullEvent,
     currentProfile.id,
     handleToggleReaction,
     handleAddComment,
     handleToggleBookmark,
-    handleDeleteComment
+    handleDeleteComment,
+    ctx
   );
+}
+
+// T2.7: общий набор для теорий — события для выбора, мои улики, действия (права проверяет база)
+async function theoryContext() {
+  const [events, evidence, maxPerDay] = await Promise.all([
+    getApprovedEvents(),
+    getMyEvidence().catch(() => []),
+    getSettingValue('theory.max_per_day', 3)
+  ]);
+  events.sort((a, b) => eventDateKey(a.event_date) - eventDateKey(b.event_date));
+  return {
+    userId: currentProfile.id,
+    isAdmin: currentProfile.role === 'admin',
+    maxPerDay,
+    events,
+    evidence: new Set(evidence.filter(e => e.target_type === 'theory').map(e => String(e.target_id))),
+    onCreate: createTheory,
+    onVote: voteTheory,
+    onStatus: async (id, status) => { await setTheoryStatus(id, status); chronicleData = null; },
+    onEvidence: (id, has) => has ? removeEvidence('theory', id) : addEvidence('theory', id),
+    onEventClick: handleShowEventModal
+  };
+}
+
+async function showTheories() {
+  const [ctx, theories] = await Promise.all([theoryContext(), getTheories()]);
+  ctx.reload = async () => { if (chronicleViewMode === 'theories') await showTheories(); };
+  renderTheories(theories.filter(t => t.status !== 'removed'), ctx.events, ctx);
 }
 
 async function handleToggleReaction(eventId, reactionType) {
