@@ -213,19 +213,21 @@ button:hover{background:rgba(29,35,48,.06)}
 .dh-drawer{position:relative;background:linear-gradient(90deg,rgba(255,255,255,.05),transparent 8%,transparent 92%,rgba(0,0,0,.12)),#3b4844;border:3px solid #0b0f0d;padding:16px 16px 0;box-shadow:6px 8px 0 rgba(0,0,0,.5)}
 .dh-lip{height:10px;margin:-16px -16px 14px;background:linear-gradient(#7d8d86,#5f6e68);border-bottom:2px solid #0b0f0d}
 .dh-rows{display:flex;flex-direction:column;padding:22px 0 6px;background:linear-gradient(#0f1513,#1b2421 30%);min-height:300px;box-shadow:inset 0 10px 18px rgba(0,0,0,.6)}
-.dh-fold{position:relative;display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;width:auto;height:50px;min-height:0;margin:0 10px;padding:0;text-align:left;background:var(--grain),linear-gradient(#D7BC7E,var(--card) 60%,#b8964f);border:1px solid #6e5526;border-radius:0;box-shadow:0 -3px 6px rgba(0,0,0,.4);filter:brightness(calc(1.08 - var(--d)*.025));transition:transform .2s ease;cursor:pointer;color:var(--ink)}
+.dh-fold{position:relative;display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;width:auto;height:50px;min-height:0;margin:0 10px;padding:0;text-align:left;background:var(--grain),linear-gradient(#D7BC7E,var(--card) 60%,#b8964f);border:1px solid #6e5526;border-radius:0;box-shadow:0 -3px 6px rgba(0,0,0,.4);filter:brightness(calc(1.08 - var(--d)*.025));transition:height .2s ease,margin-top .2s ease;cursor:pointer;color:var(--ink)}
 .dh-fold+.dh-fold{margin-top:-4px}
-.dh-fold:hover,.dh-fold:focus-visible{transform:translateY(-8px);filter:none;z-index:2;background:var(--grain),linear-gradient(#E7CF93,#D3B675)}
-.dh-fold.up{transform:translateY(-16px) scale(1.02);z-index:3}
-.dh-tab{position:absolute;top:-17px;height:22px;max-width:46%;overflow:hidden;text-overflow:ellipsis;padding:0 10px;background:inherit;border:1px solid #6e5526;border-bottom:0;font:13px/22px var(--mono);color:#2a2312;white-space:nowrap}
+/* папка вырастает вверх, нижний край стоит на месте — под ней нет щели */
+.dh-fold:hover,.dh-fold:focus-visible{height:60px;margin-top:-10px;filter:none;z-index:2;background:var(--grain),linear-gradient(#E7CF93,#D3B675)}
+.dh-fold+.dh-fold:hover,.dh-fold+.dh-fold:focus-visible{margin-top:-14px}
+.dh-fold.up,.dh-fold+.dh-fold.up{height:70px;margin-top:-24px;z-index:3}
+.dh-tab{position:absolute;top:-17px;height:22px;max-width:46%;overflow:hidden;text-overflow:ellipsis;padding:0 10px;background:inherit;border:1px solid #6e5526;border-bottom:0;font:14px/22px var(--serif);color:#2a2312;white-space:nowrap}
 .dh-tab.p0{left:5%}.dh-tab.p1{left:36%}.dh-tab.p2{right:5%}
 .dh-fold:hover .dh-tab,.dh-fold:focus-visible .dh-tab{background:var(--seal);color:#fff;border-color:var(--seal)}
 .dh-line{display:block;padding:7px 16px 0;font:15px/20px var(--serif);color:#3a3020;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.85}
-.dh-fold.locked{cursor:default}.dh-fold.locked:hover{transform:none}
+.dh-fold.locked{cursor:default}.dh-fold.locked:hover{height:50px;margin-top:0}.dh-fold+.dh-fold.locked:hover{margin-top:-4px}
 .dh-fold.locked .dh-tab{color:var(--thread);letter-spacing:.12em;text-transform:uppercase;font-size:12px}
 .dh-empty{color:#c9cfc9;padding:20px;font-style:italic}
 .dh-front{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;min-height:76px;padding:12px;margin:14px -16px 0;background:linear-gradient(#5d6c66,#4d5b55);border-top:3px solid #0b0f0d}
-.dh-holder{background:var(--paper);color:var(--ink);padding:3px 16px;font:15px var(--mono);outline:5px solid var(--brass);box-shadow:0 0 0 6px #6b5226}
+.dh-holder{background:var(--paper);color:var(--ink);padding:3px 16px;font:16px var(--serif);outline:5px solid var(--brass);box-shadow:0 0 0 6px #6b5226}
 .dh-tome{position:relative;display:block;width:144px;height:196px;margin:44px 0 0 18px;padding:16px 12px 16px 28px;text-align:left;background:linear-gradient(90deg,rgba(0,0,0,.25),transparent 12%),#3A2B47;color:#E9E3D2;border:0;border-radius:0 3px 3px 0;box-shadow:6px 6px 0 #d9d6c8,7px 7px 0 #a9a69a,10px 10px 0 rgba(0,0,0,.5);transform:rotate(-3deg);transition:transform .2s;cursor:pointer}
 .dh-tome::before{content:'';position:absolute;left:0;top:0;bottom:0;width:18px;background:linear-gradient(90deg,#1f1528,#2a1e35 60%,#3a2b47)}
 .dh-tome::after{content:'';position:absolute;left:28px;right:12px;bottom:16px;height:1.5px;background:var(--brass);opacity:.8}
@@ -371,9 +373,22 @@ body.guest .dh-note:not(.g),body:not(.guest) .dh-note.g{display:none}
 .ev-sheet .reactions-section{border-top:1px dashed rgba(29,35,48,.35);margin-top:12px;padding-top:10px;background:none}
 .ev-sheet .reactions-section h4{font:700 16px var(--serif);margin:0 0 6px;text-transform:none;letter-spacing:0}
 .ev-sheet .reactions-list{display:flex;flex-wrap:wrap;gap:6px}
-.ev-sheet .reaction-btn{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:4px 12px;background:transparent;border:1.5px solid var(--ink);color:var(--ink);font:15px var(--serif);cursor:pointer}
-.ev-sheet .reaction-btn .reaction-count{font:700 16px var(--mono)}
-.ev-sheet .reaction-btn.active{background:rgba(90,46,143,.12);border-color:var(--seal);color:var(--seal);box-shadow:inset 0 0 0 1px var(--seal)}
+/* реакции — круглые печати: пустое место для печати, по нажатию печать прилетает и бьёт */
+.ev-sheet .reactions-list{gap:10px 22px}
+.ev-sheet .reaction-btn{position:relative;display:inline-grid;grid-template-columns:auto auto;grid-template-rows:auto auto;align-items:center;justify-items:center;gap:2px 6px;min-height:44px;padding:4px 4px;background:none;border:0;color:var(--graphite);font:15px var(--serif);cursor:pointer;--c:var(--seal);--rr:-8deg}
+.ev-sheet .rx-dislike{--c:var(--thread);--rr:7deg}.ev-sheet .rx-witness{--c:var(--pen);--rr:-4deg}
+.ev-sheet .rx-seal{grid-column:1/3;display:grid;place-items:center;width:62px;height:62px;border-radius:50%;border:2px dashed rgba(85,87,92,.55);color:rgba(85,87,92,.8);transition:border-color .12s,color .12s}
+.ev-sheet .rx-seal .ic{width:28px;height:28px}
+.ev-sheet .reaction-btn:hover .rx-seal{border-color:var(--c);color:var(--c)}
+.ev-sheet .reaction-btn .reaction-count{font:700 16px var(--mono);color:var(--ink)}
+.ev-sheet .reaction-btn.active{color:var(--c)}
+.ev-sheet .reaction-btn.active .rx-seal{border:3px solid var(--c);color:var(--c);box-shadow:inset 0 0 0 3px var(--paper),inset 0 0 0 4.5px var(--c);background:radial-gradient(circle,rgba(0,0,0,0) 55%,rgba(90,46,143,.06));transform:rotate(var(--rr));filter:url(#vp-rough);opacity:.9}
+.ev-sheet .reaction-btn.slam .rx-seal{animation:rxSlam .34s cubic-bezier(.3,1.5,.5,1) both}
+.ev-sheet .reaction-btn.slam::after{content:'';position:absolute;left:50%;top:35px;width:62px;height:62px;margin:-31px 0 0 -31px;border-radius:50%;border:2px solid var(--c);animation:rxInk .45s .2s ease-out both;pointer-events:none}
+@keyframes rxSlam{0%{transform:translateY(-46px) scale(1.7) rotate(-24deg);opacity:0}55%{transform:translateY(0) scale(.9) rotate(var(--rr));opacity:1}78%{transform:scale(1.05) rotate(var(--rr))}100%{transform:scale(1) rotate(var(--rr))}}
+@keyframes rxInk{from{transform:scale(.8);opacity:.55}to{transform:scale(1.55);opacity:0}}
+.ev-sheet.thump{animation:sheetThump .2s ease-out}
+@keyframes sheetThump{0%{transform:rotate(var(--r,.5deg)) translateY(0)}40%{transform:rotate(var(--r,.5deg)) translateY(2px) scale(.997)}100%{transform:rotate(var(--r,.5deg))}}
 .ev-sheet .reaction-btn:disabled{opacity:.6;cursor:not-allowed}
 .ev-sheet .witness-list{margin:12px 0 0;padding:6px 0 0;border-top:1px solid rgba(43,76,140,.3);font:italic 19px/1.4 var(--hand);color:var(--pen)}
 .ev-sheet .reactions-hint{font-size:14px;color:var(--graphite);margin:6px 0 0}
@@ -416,10 +431,11 @@ body.guest .dh-note:not(.g),body:not(.guest) .dh-note.g{display:none}
 /* ---------- T3.4 Летопись: том с ушками глав (design.md 6.4, вариант 1) ---------- */
 #section-chronicle>.container{background:none;box-shadow:none;padding:0 40px;color:var(--paper)}
 #section-chronicle>.container>h2:first-child{border-bottom-color:rgba(218,219,208,.35);color:var(--paper);margin-left:48px}
-.chronicle-controls{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 0 48px;position:relative;z-index:1}
-#section-chronicle .chronicle-controls button{min-height:44px;padding:8px 18px 6px;border:0;border-radius:6px 6px 0 0;background:var(--grain),var(--card);color:var(--ink);font:400 17px/1.2 var(--serif);text-decoration:none;box-shadow:0 -1px 0 rgba(0,0,0,.15) inset;filter:none;clip-path:none;transform:translateY(4px);cursor:pointer;transition:transform .1s}
-#section-chronicle .chronicle-controls button:hover{transform:translateY(1px)}
-#section-chronicle .chronicle-controls button.on{background:var(--grain),var(--paper);transform:none;font-weight:700;box-shadow:none}
+.chronicle-controls{display:flex;flex-wrap:wrap;align-items:flex-end;gap:4px;margin:0 0 0 48px;position:relative;z-index:1}
+#section-chronicle .chronicle-controls button{min-height:40px;padding:7px 18px 5px;border:0;border-radius:6px 6px 0 0;background:var(--grain),var(--card);color:var(--ink);font:400 17px/1.2 var(--serif);text-decoration:none;box-shadow:0 -1px 0 rgba(0,0,0,.15) inset;filter:none;clip-path:none;cursor:pointer;transition:min-height .12s}
+#section-chronicle .chronicle-controls button:hover{min-height:44px}
+#section-chronicle .chronicle-controls button.on{min-height:48px;background:var(--grain),var(--paper);font-weight:700;box-shadow:none}
+.tome-page:focus{outline:none}
 #chronicle-content>:not(.tome){margin-left:48px;background:var(--grain),var(--paper);color:var(--ink);padding:32px 40px 40px;box-shadow:3px 4px 0 var(--sh)}
 #chronicle-content>.chronicle-empty{font-style:italic;color:var(--graphite)}
 .tome{display:grid;grid-template-columns:48px minmax(0,1fr) 34px;align-items:stretch;scroll-margin-top:calc(var(--bar-h) + 16px)}
@@ -544,3 +560,28 @@ body.guest .dh-note:not(.g),body:not(.guest) .dh-note.g{display:none}
   .ir-row,.ir-head{grid-template-columns:1fr}
 }
 @media (prefers-reduced-motion:reduce){.tome-tab,.tome-stack i,#section-chronicle .chronicle-controls button{transition:none}}
+
+/* ---------- Правки владельца после T3.4: анимации ---------- */
+.wait-drop{opacity:0}
+/* штампы в окне события падают по очереди */
+.ev-sheet .sh-stamps .stamp{animation:stampDrop .24s cubic-bezier(.3,1.6,.6,1) both;animation-delay:calc(.25s + var(--i,0)*.16s)}
+.ev-sheet .sh-stamps .stamp:nth-child(2){--i:1}.ev-sheet .sh-stamps .stamp:nth-child(3){--i:2}
+/* бирка «N теорий» качнулась на нитке при появлении */
+.ev-thread-tag{animation:tagSway .9s .5s ease-out both;transform-origin:0 50%}
+@keyframes tagSway{0%{transform:rotate(-9deg)}35%{transform:rotate(7deg)}65%{transform:rotate(1deg)}100%{transform:rotate(3deg)}}
+/* летопись: лист переворачивается от корешка */
+.tome-page{transform-origin:0 50%}
+.tome-page.turn{animation:pageTurn .42s cubic-bezier(.2,.7,.3,1)}
+@keyframes pageTurn{0%{transform:perspective(1800px) rotateY(-16deg);filter:brightness(.9)}100%{transform:none;filter:none}}
+/* бланк «Донесение»: свёрнут в полоску, раскрывается по кнопке */
+.bl-toggle:not([hidden]){display:flex!important}
+.bl-toggle{flex-direction:column;align-items:flex-start;gap:0;width:100%;min-height:64px;margin:6px 0 18px;padding:12px 22px 12px 64px!important;position:relative;background:linear-gradient(transparent 92%,rgba(29,35,48,.25) 92%) 0 0/100% 22px,var(--grain),var(--paper2)!important;color:var(--ink)!important;clip-path:none!important;text-align:left;box-shadow:2px 3px 0 var(--sh);transform:rotate(-.4deg);transition:transform .15s}
+.bl-toggle::before{content:'';position:absolute;left:20px;top:50%;width:26px;height:26px;margin-top:-13px;background:var(--pen);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8'%3E%3Cpath d='M4 20l1-4.5L15.5 5l3.5 3.5L8.5 19z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8'%3E%3Cpath d='M4 20l1-4.5L15.5 5l3.5 3.5L8.5 19z'/%3E%3C/svg%3E") center/contain no-repeat;transition:transform .15s}
+.bl-toggle:hover{transform:rotate(0) translateX(4px);filter:none!important}
+.bl-toggle:hover::before{transform:rotate(-12deg) translate(-2px,-2px)}
+.bl-toggle-t{font:700 20px/1.2 var(--serif)}
+.bl-toggle-s{font:400 22px/1.1 var(--hand);color:var(--pen)}
+.bl-head .bl-close{margin-left:auto}
+.blank-sheet.unfold{animation:blUnfold .32s cubic-bezier(.2,.8,.3,1) both;transform-origin:50% 0}
+@keyframes blUnfold{0%{transform:perspective(1200px) rotateX(-70deg);opacity:.3}100%{transform:rotate(-.4deg);opacity:1}}
+@media (max-width:600px){.blank-sheet.unfold{animation-name:blUnfoldM}@keyframes blUnfoldM{0%{transform:perspective(1200px) rotateX(-70deg);opacity:.3}100%{transform:none;opacity:1}}}

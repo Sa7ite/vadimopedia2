@@ -248,6 +248,16 @@ function setupForms() {
   }
   
   const formAddEvent = document.getElementById('form-add-event');
+  // бланк «Донесение» свёрнут: картотека под ним видна сразу, бланк раскрывается по кнопке
+  const blToggle = document.getElementById('bl-toggle'), blSheet = document.getElementById('bl-sheet');
+  const setBlank = (open) => {
+    if (!blToggle || !blSheet) return;
+    blSheet.hidden = !open; blToggle.hidden = open; blToggle.setAttribute('aria-expanded', String(open));
+    if (open) { blSheet.classList.remove('unfold'); void blSheet.offsetWidth; blSheet.classList.add('unfold'); document.getElementById('event-text')?.focus(); }
+    else blToggle.focus();
+  };
+  blToggle?.addEventListener('click', () => setBlank(true));
+  document.getElementById('bl-close')?.addEventListener('click', () => setBlank(false));
   if (formAddEvent) {
     formAddEvent.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -289,6 +299,7 @@ function setupForms() {
           showNotification('Событие добавлено! Ожидает модерации.', 'success');
         }
         formAddEvent.reset();
+        setBlank(false);
         await loadEvents();
         if (currentProfile && (currentProfile.role === 'admin' || currentProfile.role === 'moderator')) await loadPendingEvents();
       } catch (error) { 
