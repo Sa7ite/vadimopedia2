@@ -124,6 +124,7 @@ export function renderProfile(profile, onEditClick) {
         <button class="btn-secondary" id="btn-manage-titles">Управление титулами</button>
         <button class="btn-danger" id="btn-logout">Выйти</button>
       </div>
+      <div id="profile-quotes">${quoteShelfHtml('Мои цитаты')}</div>
       <details class="profile-evidence" id="profile-evidence">
         <summary>${icon('evidence')} Улики <small>(видите только вы)</small></summary>
         <div id="evidence-list"><p>Загрузка…</p></div>
@@ -142,6 +143,7 @@ export function renderProfile(profile, onEditClick) {
   const btnEditProfile = document.getElementById('btn-edit-profile');
   if (btnEditProfile && onEditClick) btnEditProfile.addEventListener('click', () => onEditClick());
   document.getElementById('profile-evidence')?.addEventListener('toggle', e => { if (e.target.open) renderEvidenceList(); });
+  if (window.vpQuoteHandlers) renderQuoteShelf(document.getElementById('profile-quotes'), profile.id, { own: true, ...window.vpQuoteHandlers });
 
   const btnManageTitles = document.getElementById('btn-manage-titles');
   if (btnManageTitles) btnManageTitles.addEventListener('click', () => showTitlesManager(profile));
@@ -468,6 +470,7 @@ export async function showUserProfile(userId, currentUserId) {
         </div>
         ${profile.bio ? `<div class="profile-bio"><h4>О себе</h4><p>${escapeHtml(profile.bio)}</p></div>` : ''}
       </div>
+      <div id="user-quotes">${quoteShelfHtml('Цитаты')}</div>
       <div class="user-events-section">
         <h3>События пользователя (${userEvents.length})</h3>
         <div class="user-events-list">
@@ -492,6 +495,7 @@ export async function showUserProfile(userId, currentUserId) {
   `;
   
   document.body.appendChild(modal);
+  renderQuoteShelf(modal.querySelector('#user-quotes'), userId, { own: String(userId) === String(currentUserId), ...(window.vpQuoteHandlers || {}), onEventClick: (ev) => { modal.remove(); window.vpQuoteHandlers?.onEventClick(ev); } });
   modal.querySelector('.close-modal').addEventListener('click', () => modal.remove());
   modal.querySelector('#btn-close-profile').addEventListener('click', () => modal.remove());
   modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
@@ -718,7 +722,9 @@ export function renderChatMessages(messages, currentUserId, currentUserRole, onD
           <button class="btn-evidence-message" data-id="${msg.id}" title="Сохранить в улики (видите только вы)" aria-label="В улики">${icon('evidence')}</button>
           ${deleteBtn}
         </div>
-        <div class="chat-message-text">${escapeHtml(msg.message_text)}</div>
+        ${msg.card?.type === 'quote'
+          ? `<blockquote class="chat-quote">«${escapeHtml(msg.card.quote)}»<cite>${escapeHtml(msg.card.source || '')} · из коллекции ${escapeHtml(msg.card.collector || '')}</cite></blockquote>`
+          : `<div class="chat-message-text">${escapeHtml(msg.message_text)}</div>`}
       `;
     }
     
@@ -1254,6 +1260,91 @@ export function renderYearPolls(box, { polls, states, years, isAdmin }, h) {
 }
 
 // ============================================
+// T2.9: КОЛЛЕКЦИЯ ЦИТАТ — выделить фразу в событии или летописи → «В коллекцию»; полка в профиле
+// ============================================
+const QUOTE_MAX = 300;
+// где можно брать цитату: текст летописи (режим чтения) и текст события в его окне
+function quoteSourceOf(node) {
+  const el = node?.nodeType === 1 ? node : node?.parentElement;
+  const ev = el?.closest('#modal-event-detail .event-detail-header h3');
+  if (ev) { const id = Number(ev.closest('[data-event-id]')?.dataset.eventId); return id ? { source: 'event', eventId: id, root: ev } : null; }
+  const ch = el?.closest('.chronicle-reader .chronicle-text');
+  if (ch) return { source: 'chronicle', root: ch };
+  return null;
+}
+
+export function setupQuoteCapture(onSave) {
+  if (document.getElementById('quote-fab')) return;
+  const fab = document.createElement('button');
+  fab.id = 'quote-fab'; fab.type = 'button'; fab.className = 'quote-fab'; fab.hidden = true;
+  document.body.appendChild(fab);
+  let pick = null;
+  const update = () => {
+    const sel = window.getSelection();
+    const text = sel && !sel.isCollapsed ? sel.toString().replace(/\s+/g, ' ').trim() : '';
+    const a = sel?.anchorNode && quoteSourceOf(sel.anchorNode), b = sel?.focusNode && quoteSourceOf(sel.focusNode);
+    if (!text || text.length < 3 || !a || !b || a.root !== b.root) { fab.hidden = true; pick = null; return; }
+    pick = { ...a, text };
+    if (a.source === 'chronicle') {  // фраза целиком внутри метки события — запомним событие
+      const ra = (sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement).closest('.chronicle-ref');
+      const rb = (sel.focusNode.nodeType === 1 ? sel.focusNode : sel.focusNode.parentElement).closest('.chronicle-ref');
+      pick.eventId = ra && ra === rb ? ra.dataset.eventId : null;
+    }
+    const long = text.length > QUOTE_MAX;
+    fab.disabled = long;
+    fab.innerHTML = long ? `Слишком длинно: ${text.length} / ${QUOTE_MAX}` : `${icon('scroll')} В коллекцию <small>${text.length} / ${QUOTE_MAX}</small>`;
+    fab.hidden = false;
+  };
+  let t = null;
+  document.addEventListener('selectionchange', () => { clearTimeout(t); t = setTimeout(update, 150); });
+  fab.addEventListener('mousedown', e => e.preventDefault());  // не сбрасывать выделение
+  fab.addEventListener('click', async () => {
+    if (!pick || fab.disabled) return;
+    fab.disabled = true;
+    try {
+      await onSave(pick.text, pick.eventId || null, pick.source);
+      showNotification('Цитата добавлена в коллекцию — она на полке в профиле', 'success');
+      window.getSelection()?.removeAllRanges(); fab.hidden = true;
+    } catch (err) { showNotification(err.message, 'error'); }
+    fab.disabled = false;
+  });
+}
+
+// полка цитат: своя (с кнопками «В чат» и «Удалить») или чужая (только чтение)
+export async function renderQuoteShelf(box, userId, { own, onShare, onDelete, onEventClick }) {
+  if (!box) return;
+  const { getQuotes } = await import('./api.js');
+  const quotes = await getQuotes(userId);
+  const head = box.querySelector('.qs-count');
+  if (head) head.textContent = `(${quotes.length})`;
+  const list = box.querySelector('.qs-list');
+  list.innerHTML = quotes.length ? quotes.map(q => `
+    <li class="qs-item" data-id="${q.id}">
+      <blockquote>«${escapeHtml(q.quote_text)}»</blockquote>
+      <div class="qs-meta">
+        ${q.event_id ? `<button type="button" class="qs-src" data-ev="${q.event_id}">${escapeHtml(q.source || '')}</button>` : `<span>${escapeHtml(q.source || '')}</span>`}
+        · ${new Date(q.created_at).toLocaleDateString('ru-RU')}
+        ${own ? `<span class="qs-actions"><button type="button" class="btn-secondary qs-btn" data-q="share">В чат</button><button type="button" class="btn-secondary qs-btn" data-q="del" aria-label="Удалить цитату">${icon('trash')}</button></span>` : ''}
+      </div>
+    </li>`).join('') : `<li class="empty-state">${own ? 'Полка пуста. Выделите фразу в событии или в летописи и нажмите «В коллекцию».' : 'Цитат пока нет'}</li>`;
+  list.onclick = async (e) => {
+    const src = e.target.closest('[data-ev]');
+    if (src) { onEventClick?.({ id: Number(src.dataset.ev) }); return; }
+    const btn = e.target.closest('[data-q]');
+    if (!btn) return;
+    const id = Number(btn.closest('[data-id]').dataset.id);
+    btn.disabled = true;
+    try {
+      if (btn.dataset.q === 'share') { await onShare(id); showNotification('Цитата отправлена в чат карточкой', 'success'); btn.disabled = false; }
+      else if (confirm('Убрать цитату с полки? Карточки в чате останутся.')) { await onDelete(id); await renderQuoteShelf(box, userId, { own, onShare, onDelete, onEventClick }); }
+      else btn.disabled = false;
+    } catch (err) { showNotification(err.message, 'error'); btn.disabled = false; }
+  };
+}
+
+export const quoteShelfHtml = (title) => `<details class="quote-shelf" open><summary>${icon('scroll')} ${title} <span class="qs-count"></span></summary><ul class="qs-list"><li>Загрузка…</li></ul></details>`;
+
+// ============================================
 // ЛЕТОПИСЬ — ЗАКЛАДКИ
 // ============================================
 
@@ -1364,7 +1455,7 @@ export async function showEventModal(event, currentUserId, onReaction, onComment
   modal.id = 'modal-event-detail';
 
   modal.innerHTML = `
-    <div class="modal-content event-modal">
+    <div class="modal-content event-modal" data-event-id="${event.id}">
       <span class="close-modal" data-modal="modal-event-detail">&times;</span>
       <div class="event-detail-header">
         <h3>${escapeHtml(event.event_text)}</h3>

@@ -16,7 +16,8 @@ import {
   getEventsByUser, getEventById,
   getPersons, getCampaigns, setEventParticipants, getSettingValue, getReactionCounts,
   getTheories, createTheory, voteTheory, setTheoryStatus, addEvidence, removeEvidence, getMyEvidence,
-  getYearPolls, getYearPoll, voteEventOfYear, openYearPoll, closeYearPoll
+  getYearPolls, getYearPoll, voteEventOfYear, openYearPoll, closeYearPoll,
+  addQuote, shareQuoteToChat, deleteQuote
 } from './api.js';
 import { setupAdminPanel } from './admin.js';
 import { registerUser, loginUser, logoutUser, onAuthStateChange } from './auth.js';
@@ -25,7 +26,7 @@ import {
   showSection, showNotification, updateUIForUser, updateUIForGuest,
   renderEvents, renderPendingEvents, renderProfile, renderEditProfileForm,
   renderChatMessages, showDeleteReasonModal, showUserProfile,
-  renderChronicle, renderChronicleEditor, renderInsertReview, renderTimeline, renderTheories, renderBookmarks, renderYearPolls,
+  renderChronicle, renderChronicleEditor, renderInsertReview, renderTimeline, renderTheories, renderBookmarks, renderYearPolls, setupQuoteCapture, renderQuoteShelf,
   showEventModal, showEditEventModal, eventTagsPickerHtml, readEventTags,
   openModal, closeModal, setupModalCloseHandlers
 } from './ui.js';
@@ -51,6 +52,10 @@ async function initApp() {
 
   const { data: { session } } = await supabase.auth.getSession();
   
+  // T2.9: цитаты — кнопка «В коллекцию» при выделении и действия полки
+  window.vpQuoteHandlers = { onShare: shareQuoteToChat, onDelete: deleteQuote, onEventClick: (ev) => handleShowEventModal(ev) };
+  setupQuoteCapture((text, eventId, source) => addQuote(text, eventId, source));
+
   if (session) {
     currentProfile = await getProfileWithTitles(session.user.id);
     window.handleSaveProfile = handleSaveProfile;
@@ -141,6 +146,7 @@ function setupNavigation() {
       if (section) showSection(section);
       if (section === 'chat' && currentProfile) setupChat();
       if (section === 'chronicle') setupChronicle();
+      if (section === 'profile' && currentProfile) refreshProfileQuotes();
     });
   });
   const btnGoEvents = document.getElementById('btn-go-events');
@@ -580,6 +586,12 @@ async function handleShowEventModal(event) {
     handleDeleteComment,
     ctx
   );
+}
+
+// T2.9: полка цитат обновляется при каждом открытии профиля
+function refreshProfileQuotes() {
+  const box = document.getElementById('profile-quotes');
+  if (box) renderQuoteShelf(box, currentProfile.id, { own: true, ...window.vpQuoteHandlers });
 }
 
 // T2.7: общий набор для теорий — события для выбора, мои улики, действия (права проверяет база)
