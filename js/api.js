@@ -797,3 +797,33 @@ export async function grantTitle(userId, titleId) {
   const { error } = await supabase.from('user_titles').insert([{ user_id: userId, title_id: Number(titleId), is_active: true }]);
   if (error) throw error;
 }
+
+// ============================================
+// T2.15: УВЕДОМЛЕНИЯ — пишет база, здесь только чтение, «прочитано» и настройки
+// ============================================
+export async function getNotifications(limit = 30) {
+  const { data, error } = await supabase.from('notifications').select('*').order('created_at', { ascending: false }).limit(limit);
+  if (error) { console.error('Уведомления:', error); return []; }
+  return data;
+}
+export async function getUnreadCount() {
+  const { count } = await supabase.from('notifications').select('id', { count: 'exact', head: true }).is('read_at', null);
+  return count || 0;
+}
+export async function markNotificationsRead(ids = null) {
+  let q = supabase.from('notifications').update({ read_at: new Date().toISOString() }).is('read_at', null);
+  if (ids) q = q.in('id', ids);
+  const { error } = await q;
+  if (error) throw error;
+}
+export async function getNotificationPrefs() {
+  const { data } = await supabase.from('notification_prefs').select('muted_kinds, quiet').maybeSingle();
+  return data || { muted_kinds: [], quiet: false };
+}
+export const saveNotificationPrefs = (muted, quiet) => rpcOrThrow('save_notification_prefs', { p_muted: muted, p_quiet: !!quiet });
+export function subscribeNotifications(userId, onNew) {
+  return supabase.channel('notifications-' + userId)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, (p) => onNew(p.new))
+    .subscribe();
+}
+export function unsubscribeNotifications(ch) { if (ch) supabase.removeChannel(ch); }
