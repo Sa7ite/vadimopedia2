@@ -265,3 +265,34 @@ body.guest .hero-stats{display:none}
 .theme-agit .th-event, .theme-agit .th-vote { text-transform: none; letter-spacing: 0; }
 .theme-agit .th-event { font-family: var(--font); font-weight: 600; }
 @media (max-width: 600px) { .theories { padding: 10px; } }
+
+/* ---------- T2.8: СОБЫТИЕ ГОДА ---------- */
+.year-poll-box { display: grid; gap: 12px; margin: 0 0 18px; }
+.yp-poll { padding: 14px 16px; border: 3px solid var(--text); background: var(--surface); color: var(--text); }
+.yp-poll h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; }
+.yp-poll h3 .ic, .yp-past .ic { width: 1.2em; height: 1.2em; }
+.yp-sub { margin: 0 0 10px; color: var(--muted); }
+.yp-list { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 6px; }
+.yp-row { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; padding: 6px 8px; border: 1px solid var(--line); }
+.yp-row.is-leader { border: 2px solid #6b3fa0; }
+.yp-event { text-align: left; font: inherit; background: none; border: 0; padding: 4px 0; color: inherit; cursor: pointer; line-height: 1.4; min-height: 40px; }
+.yp-event:hover, .yp-event:focus-visible { text-decoration: underline; }
+.yp-votes { min-width: 2.4em; text-align: center; font: 700 1.1rem var(--head); }
+.yp-small { font-size: .85rem; padding: 6px 12px; min-height: 40px; }
+.yp-mine { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; color: #6b3fa0; white-space: nowrap; }
+.yp-mine .ic { width: 1em; height: 1em; }
+.yp-note { color: var(--muted); font-size: .85rem; white-space: nowrap; }
+.yp-past { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; }
+.yp-link { font: inherit; background: none; border: 0; padding: 0; color: inherit; text-decoration: underline; cursor: pointer; font-weight: 700; }
+.yp-admin summary { cursor: pointer; font-weight: 700; }
+.yp-open { display: flex; gap: 8px; align-items: center; margin: 8px 0 4px; }
+.yp-admin .yp-note { white-space: normal; }
+.badge-year { border: 2px solid #6b3fa0; color: #6b3fa0; font-weight: 700; }
+.badge-year .ic { width: 1em; height: 1em; vertical-align: -2px; }
+.theme-agit .yp-event, .theme-agit .yp-link { text-transform: none; letter-spacing: 0; font-family: var(--font); }
+@media (max-width: 600px) {
+  .yp-row { grid-template-columns: 1fr auto; }
+  .yp-act { grid-column: 1 / -1; }
+  .yp-act:empty { display: none; }
+}
+.yp-fold > summary { cursor: pointer; font-weight: 700; margin: 0 0 8px; }

@@ -574,6 +574,7 @@ export function renderEvents(events, currentUserRole, currentUserId, onDeleteEve
     const loreBadge = event.is_lore_significant 
       ? `<span class="badge badge-lore"> Значимое</span>` 
       : '';
+    const yearBadge = event.year_award ? `<span class="badge badge-year">${icon('trophy')} Событие ${event.year_award} года</span>` : '';
     const chronicleBadge = event.is_in_chronicle 
       ? `<span class="badge badge-chronicle">${icon('check')} В летописи</span>` 
       : '';
@@ -586,6 +587,7 @@ export function renderEvents(events, currentUserRole, currentUserId, onDeleteEve
       <p class="event-text">${escapeHtml(event.event_text)}</p>
       ${eventTagsLine(event)}
       ${event.city ? `<span class="badge">${icon('pin')} ${escapeHtml(event.city)}</span>` : ''}
+      ${yearBadge}
       ${loreBadge}
       ${chronicleBadge}
       <button class="event-open" data-id="${event.id}" title="Открыть: реакции и комментарии">
@@ -1185,6 +1187,70 @@ function insertCanonCallouts(root, canon, onEventClick) {
     anchor.after(box);
     box.querySelectorAll('[data-ev]').forEach(b => b.addEventListener('click', () => onEventClick?.({ id: Number(b.dataset.ev) })));
   }
+}
+
+// ============================================
+// T2.8: «СОБЫТИЕ ГОДА» — блок над лентой: открытые голосования, ничья, прошлые победители
+// ============================================
+export function renderYearPolls(box, { polls, states, years, isAdmin }, h) {
+  if (!box) return;
+  const fmt = d => new Date(d).toLocaleString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+  const active = polls.filter(p => p.status !== 'closed');
+  const winners = polls.filter(p => p.status === 'closed' && p.winner_event);
+  const pollHtml = (p) => {
+    const st = states[p.year] || { events: [] };
+    const tie = p.status === 'tie';
+    const expired = !tie && new Date(p.closes_at) <= new Date();
+    const top = Math.max(0, ...st.events.map(e => e.votes));
+    const rows = st.events.map(e => {
+      const mine = String(st.my_vote) === String(e.id);
+      const leader = tie && e.votes === top && top > 0;
+      let action = '';
+      if (tie) action = isAdmin && leader ? `<button class="btn-primary yp-small" data-yp="pick" data-year="${p.year}" data-event="${e.id}">Выбрать победителем</button>` : '';
+      else if (mine) action = `<span class="yp-mine">${icon('check')} Ваш голос</span>`;
+      else if (e.own) action = '<span class="yp-note">Ваше событие</span>';
+      else if (!st.my_vote && !expired) action = `<button class="btn-primary yp-small" data-yp="vote" data-event="${e.id}" data-year="${p.year}">Голосовать</button>`;
+      return `<li class="yp-row ${leader ? 'is-leader' : ''}">
+        <button type="button" class="yp-event" data-open="${e.id}">${e.event_date ? `<b>${escapeHtml(e.event_date)}</b> ` : ''}${escapeHtml(shortText(e.event_text, 160))}</button>
+        <span class="yp-votes" title="Голосов">${e.votes}</span>
+        <span class="yp-act">${action}</span></li>`;
+    }).join('');
+    return `<article class="yp-poll">
+      <h3>${icon('trophy')} Событие ${p.year} года</h3>
+      <p class="yp-sub">${tie ? `Голосование закрыто: ничья (${top} : ${top}). Победителя выбирает админ.`
+        : expired ? 'Время вышло, итог подводится.' : `Голосование до ${fmt(p.closes_at)}. Один голос на человека, за своё событие нельзя.${st.my_vote ? ' Вы уже проголосовали.' : ''}`}</p>
+      <details class="yp-fold" ${st.my_vote && !tie ? '' : 'open'}><summary>События ${p.year} года (${st.events.length})</summary>
+      <ol class="yp-list">${rows || '<li class="empty-state">Событий этого года нет</li>'}</ol></details>
+      ${isAdmin && !tie ? `<button class="btn-secondary yp-small" data-yp="close" data-year="${p.year}">Закрыть сейчас и подвести итог</button>` : ''}
+    </article>`;
+  };
+  const opener = isAdmin ? `<details class="yp-admin"><summary>Открыть голосование «Событие года»</summary>
+      ${years.length ? `<div class="yp-open"><select id="yp-year" aria-label="Год">${years.map(y => `<option value="${y}">${y}</option>`).join('')}</select>
+      <button class="btn-primary yp-small" data-yp="open">Открыть</button></div>
+      <p class="yp-note">В списке годы, где есть события и голосования ещё не было. Прошлый календарный год открывается сам.</p>` : '<p class="yp-note">Все годы с событиями уже голосовали.</p>'}</details>` : '';
+  const past = winners.length ? `<p class="yp-past">${icon('trophy')} Победители: ${winners.slice(0, 6).map(w => `<button type="button" class="yp-link" data-open="${w.winner_event}">${w.year}</button>`).join(', ')}</p>` : '';
+  if (!active.length && !past && !opener) { box.innerHTML = ''; box.hidden = true; return; }
+  box.hidden = false;
+  box.innerHTML = active.map(pollHtml).join('') + past + opener;
+  box.onclick = async (e) => {
+    const open = e.target.closest('[data-open]');
+    if (open) { h.onEventClick({ id: Number(open.dataset.open) }); return; }
+    const btn = e.target.closest('[data-yp]');
+    if (!btn || btn.disabled) return;
+    const k = btn.dataset.yp, year = btn.dataset.year;
+    if (k === 'vote' && !confirm('Отдать голос этому событию? Изменить выбор будет нельзя.')) return;
+    if (k === 'close' && !confirm(`Закрыть голосование за ${year} год сейчас?`)) return;
+    btn.disabled = true;
+    try {
+      if (k === 'vote') { await h.onVote(btn.dataset.event); showNotification('Голос учтён', 'success'); }
+      if (k === 'open') { const y = box.querySelector('#yp-year').value; await h.onOpen(y); showNotification(`Голосование за ${y} год открыто`, 'success'); }
+      if (k === 'close' || k === 'pick') {
+        const r = await h.onClose(year, k === 'pick' ? btn.dataset.event : null);
+        showNotification(r === 'tie' ? 'Ничья — выберите победителя среди лидеров' : r === 'no_votes' ? 'Голосов не было — закрыто без победителя' : r === 'winner_no_author' ? 'Итог подведён. У события нет автора-участника, титул не выдан' : 'Итог подведён, автор получил титул «Событие года»', 'success');
+      }
+      await h.reload();
+    } catch (err) { showNotification(err.message, 'error'); btn.disabled = false; }
+  };
 }
 
 // ============================================
