@@ -1,4 +1,5 @@
 import { icon } from './icons.js';
+import { getFactions, getUserFaction, getFactionMembers, joinFaction, leaveFaction } from './api.js';
 // ============================================
 // МОДУЛЬ ИНТЕРФЕЙСА
 // ============================================
@@ -124,6 +125,7 @@ export function renderProfile(profile, onEditClick) {
         <button class="btn-secondary" id="btn-manage-titles">Управление титулами</button>
         <button class="btn-danger" id="btn-logout">Выйти</button>
       </div>
+      <section class="faction-box" id="profile-faction"></section>
       <section class="ach-showcase" id="profile-achievements"></section>
       <div id="profile-quotes">${quoteShelfHtml('Мои цитаты')}</div>
       <details class="profile-evidence" id="profile-evidence">
@@ -146,6 +148,7 @@ export function renderProfile(profile, onEditClick) {
   document.getElementById('profile-evidence')?.addEventListener('toggle', e => { if (e.target.open) renderEvidenceList(); });
   if (window.vpQuoteHandlers) renderQuoteShelf(document.getElementById('profile-quotes'), profile.id, { own: true, ...window.vpQuoteHandlers });
   renderAchievements(document.getElementById('profile-achievements'), profile.id);
+  renderFactionBox(document.getElementById('profile-faction'), profile.id, true);
   profileContent.querySelector('[data-wallet]')?.addEventListener('click', () => showWallet(profile, window.vpWalletHandlers?.(profile) || {}));
 
   const btnManageTitles = document.getElementById('btn-manage-titles');
@@ -473,6 +476,7 @@ export async function showUserProfile(userId, currentUserId) {
         </div>
         ${profile.bio ? `<div class="profile-bio"><h4>О себе</h4><p>${escapeHtml(profile.bio)}</p></div>` : ''}
       </div>
+      <section class="faction-box" id="user-faction"></section>
       <section class="ach-showcase" id="user-achievements"></section>
       <div id="user-quotes">${quoteShelfHtml('Цитаты')}</div>
       <div class="user-events-section">
@@ -500,6 +504,7 @@ export async function showUserProfile(userId, currentUserId) {
   
   document.body.appendChild(modal);
   renderAchievements(modal.querySelector('#user-achievements'), userId);
+  renderFactionBox(modal.querySelector('#user-faction'), userId, false);
   modal.querySelector('[data-wallet]')?.addEventListener('click', () => showWallet(profile, window.vpWalletHandlers?.(profile, () => modal.remove()) || {}));
   renderQuoteShelf(modal.querySelector('#user-quotes'), userId, { own: String(userId) === String(currentUserId), ...(window.vpQuoteHandlers || {}), onEventClick: (ev) => { modal.remove(); window.vpQuoteHandlers?.onEventClick(ev); } });
   modal.querySelector('.close-modal').addEventListener('click', () => modal.remove());
@@ -1802,4 +1807,31 @@ export function showEditEventModal(event, onSave, isValidDate, isValidCity, list
       showNotification(`Ошибка: ${error.message}`, 'error');
     }
   });
+}
+// T2.11: фракция в профиле. Своя — можно вступить/перейти (срок проверяет база), чужая — только значок.
+const factionChip = f => `<span class="faction-chip" style="--fc:${/^#[0-9a-fA-F]{6}$/.test(f.color) ? f.color : '#6b3fa0'}">${escapeHtml(f.name)}</span>`;
+export async function renderFactionBox(box, userId, own) {
+  if (!box) return;
+  const [mine, all] = await Promise.all([getUserFaction(userId), own ? getFactions() : Promise.resolve([])]);
+  const cur = mine?.factions;
+  if (!own) { box.innerHTML = cur ? `<h4>Фракция</h4><p>${factionChip(cur)}</p>` : ''; return; }
+  if (!all.length && !cur) { box.innerHTML = ''; return; }
+  box.innerHTML = `<h4>Фракция</h4>
+    <p>${cur ? factionChip(cur) + (cur.motto ? ` <em>${escapeHtml(cur.motto)}</em>` : '') : 'Вы пока ни в какой фракции.'}</p>
+    <ul class="faction-list">${all.map(f => `<li>${factionChip(f)} <small>${f.members} уч.</small>
+      <button type="button" class="btn-secondary faction-members" data-members="${f.id}">Состав</button>
+      ${cur && cur.id === f.id ? '' : `<button type="button" class="btn-secondary" data-join="${f.id}">${cur ? 'Перейти' : 'Вступить'}</button>`}
+      <div class="faction-members-list" id="fm-${f.id}" hidden></div></li>`).join('')}</ul>
+    ${cur ? '<button type="button" class="btn-secondary" data-leave>Выйти из фракции</button>' : ''}`;
+  const reload = () => renderFactionBox(box, userId, own);
+  const act = async (fn) => { try { await fn(); await reload(); } catch (e) { showNotification(e.message, 'error'); } };
+  box.querySelectorAll('[data-join]').forEach(b => b.addEventListener('click', () => act(() => joinFaction(b.dataset.join))));
+  box.querySelector('[data-leave]')?.addEventListener('click', () => act(leaveFaction));
+  box.querySelectorAll('[data-members]').forEach(b => b.addEventListener('click', async () => {
+    const el = box.querySelector(`#fm-${b.dataset.members}`);
+    if (!el.hidden) { el.hidden = true; return; }
+    const m = await getFactionMembers(b.dataset.members);
+    el.innerHTML = m.length ? m.map(x => escapeHtml(x.profiles?.full_name || 'Без имени')).join(', ') : 'Пока никого';
+    el.hidden = false;
+  }));
 }

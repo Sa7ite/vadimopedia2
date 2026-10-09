@@ -697,3 +697,24 @@ export async function deleteQuote(id) {
   const { error } = await supabase.from('quotes').delete().eq('id', id);
   if (error) throw new Error(error.message);
 }
+
+// ============================================
+// T2.11: ФРАКЦИИ — состав и смена проверяет база (раз в faction.switch_days)
+// ============================================
+export async function getFactions() {
+  const { data, error } = await supabase.from('faction_list').select('*').order('name');
+  if (error) { console.error('Ошибка получения фракций:', error); return []; }
+  return data;
+}
+export async function getUserFaction(userId) {
+  const { data } = await supabase.from('faction_members').select('faction_id, joined_at, changed_at, factions(id, name, color, motto)').eq('user_id', userId).maybeSingle();
+  return data;
+}
+export async function getFactionMembers(factionId) {
+  const { data } = await supabase.from('faction_members').select('user_id, joined_at, profiles(full_name)').eq('faction_id', factionId).order('joined_at');
+  return data || [];
+}
+export const joinFaction = (id) => rpcOrThrow('join_faction', { p_faction: Number(id) });
+export const leaveFaction = () => rpcOrThrow('leave_faction', {});
+export const saveFaction = (f) => rpcOrThrow('save_faction', { p_id: f.id == null ? null : Number(f.id), p_name: f.name, p_motto: f.motto || null, p_color: f.color || null });
+export const deleteFaction = (id) => rpcOrThrow('delete_faction', { p_id: Number(id) });

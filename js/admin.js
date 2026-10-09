@@ -1,7 +1,7 @@
 // T1.7: панель админа — настройки, персонажи, кампании, журнал действий
 import {
   getSettings, updateSetting, getPersons, savePerson, deletePerson,
-  getCampaigns, saveCampaign, deleteCampaign, getAuditLog
+  getCampaigns, saveCampaign, getFactions, saveFaction, deleteFaction, deleteCampaign, getAuditLog
 } from './api.js';
 import { showNotification } from './ui.js';
 
@@ -9,7 +9,7 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 const splitAliases = s => s.split(',').map(a => a.trim()).filter(Boolean);
 
 const ACTIONS = { insert: 'добавил', update: 'изменил', delete: 'удалил', approve: 'одобрил' };
-const TARGETS = { settings: 'настройку', persons: 'персонажа', campaigns: 'кампанию', events: 'событие', user_titles: 'титул' };
+const TARGETS = { settings: 'настройку', persons: 'персонажа', campaigns: 'кампанию', events: 'событие', user_titles: 'титул', factions: 'фракцию' };
 
 function describe(row) {
   const d = row.details || {};
@@ -30,9 +30,10 @@ export async function setupAdminPanel(isAdmin, listsChanged) {
   box.innerHTML = `
     <details class="admin-block" open><summary>Персонажи</summary><div id="admin-persons"></div></details>
     <details class="admin-block"><summary>Кампании</summary><div id="admin-campaigns"></div></details>
+    <details class="admin-block"><summary>Фракции</summary><div id="admin-factions"></div></details>
     <details class="admin-block"><summary>Настройки игры</summary><div id="admin-settings"></div></details>
     <details class="admin-block"><summary>Журнал действий</summary><div id="admin-audit"></div></details>`;
-  await Promise.all([renderPersons(), renderCampaigns(), renderSettings()]);
+  await Promise.all([renderPersons(), renderCampaigns(), renderFactions(), renderSettings()]);
   box.querySelector('#admin-audit').closest('details').addEventListener('toggle', e => { if (e.target.open) renderAudit(); });
 }
 
@@ -142,4 +143,28 @@ async function renderAudit() {
       <li><time>${new Date(r.created_at).toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' })}</time>
       <strong>${esc(r.actor_name)}</strong> ${esc(describe(r))}</li>`).join('')}</ol>` : '<p>Пока пусто.</p>';
   } catch (err) { el.innerHTML = `<p>Не удалось загрузить: ${esc(err.message)}</p>`; }
+}
+
+// T2.11: фракции — создаёт и правит только админ (права проверяет база)
+async function renderFactions() {
+  const el = document.getElementById('admin-factions');
+  const list = await getFactions();
+  const row = f => `<tr data-id="${f?.id ?? ''}">
+    <td><input class="f-name" value="${esc(f?.name)}" placeholder="${f ? '' : 'Новая фракция'}" aria-label="Название фракции"></td>
+    <td><input class="f-motto" value="${esc(f?.motto)}" placeholder="Девиз" aria-label="Девиз"></td>
+    <td><input class="f-color" type="color" value="${esc(f?.color || '#6b3fa0')}" aria-label="Цвет"></td>
+    <td class="admin-actions"><button class="btn-secondary f-save">${f ? 'Сохранить' : 'Добавить'}</button>${f ? `<button class="btn-secondary f-del">Удалить</button><small>${f.members} уч.</small>` : ''}</td></tr>`;
+  el.innerHTML = `<p class="admin-hint">Участник состоит в одной фракции; менять её можно не чаще, чем раз в N дней (настройка «Дней между сменой фракции»).</p>
+    <table class="admin-table"><thead><tr><th>Название</th><th>Девиз</th><th>Цвет</th><th></th></tr></thead><tbody>${list.map(row).join('')}${row(null)}</tbody></table>`;
+  el.querySelectorAll('tr[data-id]').forEach(tr => {
+    const id = tr.dataset.id || null;
+    tr.querySelector('.f-save').addEventListener('click', async () => {
+      const ok = await run(() => saveFaction({ id, name: tr.querySelector('.f-name').value, motto: tr.querySelector('.f-motto').value, color: tr.querySelector('.f-color').value }), 'Сохранено');
+      if (ok) renderFactions();
+    });
+    tr.querySelector('.f-del')?.addEventListener('click', async () => {
+      if (!confirm('Удалить фракцию? Участники останутся без фракции.')) return;
+      if (await run(() => deleteFaction(id), 'Удалено')) renderFactions();
+    });
+  });
 }
