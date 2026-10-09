@@ -1,4 +1,4 @@
-import { deathConflict, limitToJunction, sentences, splitBlocks, joinBlocks, findInsertion, parseInsertAnswer, checkInsert, applyInsert, keyOf, idsOf } from '../supabase/functions/chronicle-ai/logic.ts';
+import { checkStyle, deathConflict, limitToJunction, sentences, splitBlocks, joinBlocks, findInsertion, parseInsertAnswer, checkInsert, applyInsert, keyOf, idsOf } from '../supabase/functions/chronicle-ai/logic.ts';
 let fail = 0; const ok = (c: any, m: string) => { if (!c) { fail++; console.log('FAIL', m); } else console.log('ok  ', m); };
 const ev = [
   { id: 1, event_year: 1987, event_date: '1987', event_text: 'Вадим родился в Коломне' },
@@ -78,6 +78,18 @@ ok(bad({ ...base, new_paragraph: P('В 2004 году [[9|Вадим уехал �
   ok(!!deathConflict('KENTA$$ — Артемий Савинов погиб при обороне Химок', bb, i2), 'гибель героя, который действует позже, — пометка админу');
   ok(!deathConflict('KENTA$$ открыл кофейню', bb, i2), 'не о гибели — без пометки');
   ok(!deathConflict('Вадим погиб в бою', bb, i2), 'имя «Вадим» само по себе не даёт ложной пометки');
+}
+{
+  const evq = [{ id: 7, event_text: 'Школов сказал: «Не быть рабом, блядь, быть Вадимом» и ушёл в пикаповый сад' }];
+  ok(checkStyle(['Он сказал: «Не быть рабом, блядь, быть Вадимом». Потом ушёл.'], evq, []) === null, 'цитата дословно (с матом) — проходит');
+  ok(!!checkStyle(['Он сказал: «Не быть рабом, быть Вадимом». Потом ушёл.'], evq, []), 'цитата смягчена — отклонено');
+  ok(!!checkStyle(['Он воскликнул: «Слава великому Междумосковью навеки»'], evq, []), 'выдуманная цитата — отклонено');
+  ok(!!checkStyle(['Он ушёл в пиковый сад и долго сидел там.'], evq, []), '«пиковый сад» — отклонено');
+  const fl: string[] = [];
+  checkStyle(['Он шёл ' + 'очень '.repeat(35) + 'долго.'], evq, fl);
+  ok(fl.some(f => f.includes('длинное предложение')), 'длинное предложение — мягкая пометка');
+  const f2: string[] = []; checkStyle(['Той весной он пришёл домой.', 'Той весной она ушла.'], evq, f2);
+  ok(f2.some(f => f.includes('одинаково')), 'одинаковое начало абзацев — мягкая пометка');
 }
 console.log(fail ? `ПРОВАЛЕНО: ${fail}` : 'ВСЕ ТЕСТЫ ПРОШЛИ');
 process.exit(fail ? 1 : 0);
