@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Вадимопедия — варианты дизайна</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;0,7..72,700;1,7..72,400&family=PT+Mono&family=Caveat:wght@500;700&display=swap&subset=cyrillic" rel="stylesheet">
+<link rel="stylesheet" href="mock.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <filter id="rough" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="2.2" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.35" numOctaves="1" seed="8" result="n2"/>
+      <feColorMatrix in="n2" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.3 1.45" result="m"/>
+      <feComposite in="d" in2="m" operator="in"/>
+    </filter>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M12 3.2c-3.6 0-5.6 2.7-5.6 6.2v3.7L4.6 16.4h14.8l-1.8-3.3V9.4c0-3.5-2-6.2-5.6-6.2z" fill="#C9A44C" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9.8 18.4c.4 1.3 1.2 2 2.2 2s1.8-.7 2.2-2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 1.8v1.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10" cy="10" r="5.6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M14.2 14.4l5.6 5.4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M7.6 8.6c.5-1 1.3-1.6 2.4-1.7" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/></symbol>
+    <symbol id="i-like" viewBox="0 0 24 24"><ellipse cx="12" cy="12.5" rx="6.2" ry="8" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8.6 12.4c0-2.4 1.5-4.1 3.4-4.1s3.4 1.7 3.4 4.1M10.4 13c0-1.2.7-2 1.6-2s1.6.8 1.6 2v1.6M8.8 15.8c.6 1.6 1.8 2.4 3.2 2.4" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></symbol>
+    <symbol id="i-dislike" viewBox="0 0 24 24"><path d="M4 8.5h12M4 12.5h16M4 16.5h9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M3 15.5L20.5 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+    <symbol id="i-witness" viewBox="0 0 24 24"><path d="M3 16c2-4 3.4-7.5 4.6-7.4 1.4.1-.6 7.2.8 7.2 1.2 0 2-3.6 3.2-3.5 1 .1.4 2.6 1.4 2.6.8 0 1.4-1.2 2.2-1.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 9.5l2 2.2 4-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 19.5h15" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></symbol>
+    <symbol id="i-bag" viewBox="0 0 24 24"><path d="M5 7.5h12.5v12.5H5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M5 10h12.5" stroke="currentColor" stroke-width="1.3"/><path d="M14.5 13.5l4.8-2.2 1.6 3.4-4.8 2.2z" fill="#E3C65A" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><circle cx="15.7" cy="14.4" r=".7" fill="currentColor"/></symbol>
+    <symbol id="i-clip" viewBox="0 0 24 40"><path d="M8 36V8.5a4 4 0 0 1 8 0V30a2.6 2.6 0 0 1-5.2 0V11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><path d="M6 8h10l4 4-4 4H6z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="16" cy="12" r="1" fill="currentColor"/><path d="M2.5 12h3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></symbol>
+    <symbol id="i-report" viewBox="0 0 24 24"><path d="M12.4 4.5c-.6 4-1 7.2-.8 10" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="11.7" cy="18.6" r="1.4" fill="currentColor"/></symbol>
+    <symbol id="i-cell" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8.5 4v16M12 4v16M15.5 4v16" stroke="currentColor" stroke-width="1.5"/></symbol>
+  </defs>
+</svg>
+
+<div class="ui" id="ui">
+  <div class="ui-row">
+    <b>Вадимопедия · варианты дизайна</b>
+    <span class="ui-hint">Для каждого блока выберите вариант 1, 2 или 3. Внизу появится ваш выбор — его можно скопировать и прислать.</span>
+  </div>
+  <div class="ui-row ui-all">
+    <span>Сразу всё:</span>
+    <button data-all="1">Вариант 1 «Кабинет»</button>
+    <button data-all="2">Вариант 2 «Опись»</button>
+    <button data-all="3">Вариант 3 «Под лампой»</button>
+    <label class="ui-cmp"><input type="checkbox" id="cmp"> Показать все три варианта каждого блока подряд</label>
+  </div>
+</div>
+
+<main id="mock"></main>
+
+<div class="ui ui-foot">
+  <div class="ui-row"><b>Ваш выбор:</b> <code id="choice"></code> <button id="copy">Скопировать</button></div>
+</div>
+
+<script src="data.js"></script>
+<script src="mock.js"></script>
+</body>
+</html>
