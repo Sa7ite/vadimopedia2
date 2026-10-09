@@ -274,23 +274,57 @@ export async function rejectTitleRequest(requestId, adminId) {
 export async function getChatMessages(limit = 100, channel = 'general') {
   const { data, error } = await supabase.from('chat_messages').select('*, profiles (full_name, avatar_url, role)').eq('channel', channel).order('created_at', { ascending: false }).limit(limit);
   if (error) { console.error('Ошибка получения сообщений:', error); return []; }
-
-  const messagesWithTitles = await Promise.all(
-    (data || []).map(async (msg) => {
-      const { data: titles } = await supabase.from('user_titles').select('titles (title_name, icon)').eq('user_id', msg.user_id).eq('is_active', true);
-      return { ...msg, user_titles: titles || [] };
-    })
-  );
-
-  return messagesWithTitles.reverse();
+  // титулы одним запросом на всех авторов
+  const ids = [...new Set((data || []).map(m => m.user_id).filter(Boolean))];
+  const byUser = {};
+  if (ids.length) {
+    const { data: t } = await supabase.from('user_titles').select('user_id, titles (title_name, icon)').in('user_id', ids).eq('is_active', true);
+    (t || []).forEach(r => { (byUser[r.user_id] ||= []).push({ titles: r.titles }); });
+  }
+  return (data || []).map(m => ({ ...m, user_titles: byUser[m.user_id] || [] })).reverse();
 }
 
-export async function sendChatMessage(messageText, channel = 'general') {
+// T2.13: ответ (replyTo) и упоминания (mentions — id людей) проверяет база
+export async function sendChatMessage(messageText, channel = 'general', replyTo = null, mentions = []) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Пользователь не авторизован');
-  const { error } = await supabase.from('chat_messages').insert([{ user_id: user.id, message_text: messageText, channel }]);
+  const row = { user_id: user.id, message_text: messageText, channel };
+  if (replyTo) row.reply_to = replyTo;
+  if (mentions.length) row.mentions = mentions;
+  const { error } = await supabase.from('chat_messages').insert([row]);
   if (error) throw error;
   return true;
+}
+
+// реакции на сообщения: { [id]: { like, dislike, mine: { like, dislike } } }
+export async function getMessageReactions(ids, meId) {
+  const out = {};
+  if (!ids.length) return out;
+  const { data } = await supabase.from('reactions').select('target_id, type, user_id').eq('target_type', 'message').in('target_id', ids.map(String));
+  (data || []).forEach(r => {
+    const o = (out[r.target_id] ||= { like: 0, dislike: 0, mine: {} });
+    if (r.type === 'like' || r.type === 'dislike') { o[r.type]++; if (r.user_id === meId) o.mine[r.type] = true; }
+  });
+  return out;
+}
+export async function getMessageById(id) {
+  const { data } = await supabase.from('chat_messages').select('*, profiles (full_name, avatar_url, role)').eq('id', id).maybeSingle();
+  return data;
+}
+// мут: minutes = 0 снимает
+export const muteUser = (userId, minutes, reason) => rpcOrThrow('mute_user', { p_user: userId, p_minutes: Number(minutes), p_reason: reason || null });
+export async function getMyMute(userId) {
+  const { data } = await supabase.from('chat_mutes').select('until, reason').eq('user_id', userId).gt('until', new Date().toISOString()).maybeSingle();
+  return data;
+}
+export async function getEventOfDay() {
+  const { data, error } = await supabase.rpc('event_of_day', {});
+  if (error) { console.error('Событие дня:', error); return null; }
+  return data; // id события или null
+}
+export async function getMentionables() {
+  const { data } = await supabase.from('profiles').select('id, full_name').neq('id', '0c0c0c0c-1e70-4c0c-8c0c-000000000001').order('full_name');
+  return data || [];
 }
 
 export async function softDeleteChatMessage(messageId, reason) {

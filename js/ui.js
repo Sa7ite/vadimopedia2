@@ -685,10 +685,17 @@ function isDeletedMessageExpired(message) {
   return (Date.now() - new Date(message.deleted_at).getTime()) > 5 * 60 * 1000;
 }
 
-export function renderChatMessages(messages, currentUserId, currentUserRole, onDeleteClick, onAuthorClick) {
+// T2.13: ссылки кликабельны (после экранирования), @Имя подсвечено
+function chatTextHtml(text, names) {
+  let h = escapeHtml(text).replace(/https?:\/\/[^\s<]+[^\s<.,;:!?)»"']/g, u => `<a href="${u}" target="_blank" rel="noopener nofollow ugc">${u}</a>`);
+  for (const n of names || []) { const e = escapeHtml('@' + n); if (n && h.includes(e)) h = h.split(e).join(`<b class="chat-mention">${e}</b>`); }
+  return h;
+}
+
+export function renderChatMessages(messages, currentUserId, currentUserRole, onDeleteClick, onAuthorClick, ctx = {}) {
   const chatMessagesEl = document.getElementById('chat-messages');
   if (!chatMessagesEl) return;
-
+  const stick = chatMessagesEl.scrollHeight - chatMessagesEl.scrollTop - chatMessagesEl.clientHeight < 80;
   chatMessagesEl.innerHTML = '';
   const filteredMessages = messages.filter(msg => !isDeletedMessageExpired(msg));
 
@@ -698,29 +705,45 @@ export function renderChatMessages(messages, currentUserId, currentUserRole, onD
   }
 
   const isModerator = currentUserRole === 'admin' || currentUserRole === 'moderator';
+  const byId = new Map(messages.map(m => [String(m.id), m]));
+  const reacts = ctx.reactions || {};
 
   filteredMessages.forEach(msg => {
     const div = document.createElement('div');
     div.className = 'chat-message';
-    if (msg.is_deleted) div.classList.add('deleted');
-    
-    const isOwnMessage = String(msg.user_id) === String(currentUserId);
+    div.dataset.id = msg.id;
     const time = new Date(msg.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+    if (msg.kind === 'system') {
+      div.classList.add('system');
+      const c = msg.card || {};
+      const act = c.type === 'event' ? `<button type="button" class="chat-sys-act" data-sys="event" data-ref="${c.event_id}">Открыть событие</button>`
+        : c.type === 'case' ? `<button type="button" class="chat-sys-act" data-sys="case">К делам</button>`
+        : c.type === 'chronicle' ? `<button type="button" class="chat-sys-act" data-sys="chronicle">Читать</button>` : '';
+      div.innerHTML = `<div class="chat-sys"><span class="chat-sys-label">Летопись сообщает</span> <span class="chat-time">${time}</span></div>
+        <div class="chat-message-text">${escapeHtml(msg.message_text)}</div>${act}`;
+      chatMessagesEl.appendChild(div);
+      return;
+    }
+
+    if (msg.is_deleted) div.classList.add('deleted');
+    const isOwnMessage = String(msg.user_id) === String(currentUserId);
+    if ((msg.mentions || []).includes(currentUserId)) div.classList.add('mentions-me');
     const canDelete = isOwnMessage || isModerator;
-    const deleteBtn = canDelete && !msg.is_deleted 
-      ? `<button class="btn-delete-message" data-id="${msg.id}" data-own="${isOwnMessage}">Удалить</button>` 
+    const deleteBtn = canDelete && !msg.is_deleted
+      ? `<button class="btn-delete-message" data-id="${msg.id}" data-own="${isOwnMessage}">Удалить</button>`
       : '';
-    
+
     const titlesText = msg.user_titles && msg.user_titles.length > 0
       ? msg.user_titles.map(ut => ut.titles?.title_name || '').filter(s => s.trim()).join(', ')
       : '';
-    
+
     const authorName = msg.profiles?.full_name || 'Аноним';
     const authorId = msg.user_id;
     const clickableAuthor = onAuthorClick && authorId
       ? `<span class="clickable-author" data-user-id="${authorId}">${escapeHtml(authorName)}</span>`
       : `<strong class="chat-author ${isOwnMessage ? 'own' : ''}">${escapeHtml(authorName)}</strong>`;
-    
+
     if (msg.is_deleted) {
       div.innerHTML = `
         <div class="chat-message-header">
@@ -733,6 +756,18 @@ export function renderChatMessages(messages, currentUserId, currentUserRole, onD
         </div>
       `;
     } else {
+      const parent = msg.reply_to ? byId.get(String(msg.reply_to)) : null;
+      const replyHtml = msg.reply_to ? `<div class="chat-reply-ref">${parent && !parent.is_deleted
+        ? `<b>${escapeHtml(parent.profiles?.full_name || 'Летопись')}:</b> ${escapeHtml((parent.message_text || '').slice(0, 90))}${(parent.message_text || '').length > 90 ? '…' : ''}`
+        : 'ответ на сообщение, которого уже нет на экране'}</div>` : '';
+      const r = reacts[String(msg.id)] || { like: 0, dislike: 0, mine: {} };
+      const reactBtns = ['like', 'dislike'].map(t => {
+        const n = r[t] || 0, on = !!r.mine?.[t];
+        const label = t === 'like' ? 'Нравится' : 'Не нравится';
+        return isOwnMessage
+          ? (n ? `<span class="chat-react-count" title="${label}">${icon(t)} ${n}</span>` : '')
+          : `<button type="button" class="chat-react ${on ? 'active' : ''}" data-react="${t}" data-id="${msg.id}" aria-pressed="${on}" title="${label}" aria-label="${label}: ${n}">${icon(t)} <span>${n || ''}</span></button>`;
+      }).join('');
       div.innerHTML = `
         <div class="chat-message-header">
           ${clickableAuthor}
@@ -741,12 +776,18 @@ export function renderChatMessages(messages, currentUserId, currentUserRole, onD
           <button class="btn-evidence-message" data-id="${msg.id}" title="Сохранить в улики (видите только вы)" aria-label="В улики">${icon('evidence')}</button>
           ${deleteBtn}
         </div>
+        ${replyHtml}
         ${msg.card?.type === 'quote'
           ? `<blockquote class="chat-quote">«${escapeHtml(msg.card.quote)}»<cite>${escapeHtml(msg.card.source || '')} · из коллекции ${escapeHtml(msg.card.collector || '')}</cite></blockquote>`
-          : `<div class="chat-message-text">${escapeHtml(msg.message_text)}</div>`}
+          : `<div class="chat-message-text">${chatTextHtml(msg.message_text, ctx.names)}</div>`}
+        <div class="chat-message-foot">
+          ${reactBtns}
+          ${ctx.onReply ? `<button type="button" class="chat-reply-btn" data-id="${msg.id}">Ответить</button>` : ''}
+          ${ctx.onMute && !isOwnMessage && currentUserRole === 'admin' ? `<button type="button" class="chat-mute-btn" data-user="${authorId}" data-name="${escapeHtml(authorName)}">Мут</button>` : ''}
+        </div>
       `;
     }
-    
+
     chatMessagesEl.appendChild(div);
   });
 
@@ -767,6 +808,10 @@ export function renderChatMessages(messages, currentUserId, currentUserRole, onD
       onDeleteClick(btn.dataset.id, btn.dataset.own === 'true', isModerator);
     });
   });
+  chatMessagesEl.querySelectorAll('.chat-react').forEach(b => b.addEventListener('click', () => ctx.onReact?.(b.dataset.id, b.dataset.react)));
+  chatMessagesEl.querySelectorAll('.chat-reply-btn').forEach(b => b.addEventListener('click', () => ctx.onReply?.(byId.get(String(b.dataset.id)))));
+  chatMessagesEl.querySelectorAll('.chat-mute-btn').forEach(b => b.addEventListener('click', () => ctx.onMute?.(b.dataset.user, b.dataset.name)));
+  chatMessagesEl.querySelectorAll('.chat-sys-act').forEach(b => b.addEventListener('click', () => ctx.onSystem?.(b.dataset.sys, b.dataset.ref)));
 
   if (onAuthorClick) {
     chatMessagesEl.querySelectorAll('.clickable-author').forEach(span => {
@@ -777,7 +822,7 @@ export function renderChatMessages(messages, currentUserId, currentUserRole, onD
     });
   }
 
-  chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+  if (stick || ctx.forceBottom) chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
 }
 
 export function showDeleteReasonModal(messageId, isOwn, isModerator, onConfirm) {
