@@ -15,7 +15,7 @@ export async function getProfileWithTitles(userId) {
 
   const { data: userTitles, error: titlesError } = await supabase
     .from('user_titles')
-    .select('title_id, is_active, titles (id, title_name, title_type, description, icon)')
+    .select('id, title_id, is_active, serial, revoked_at, granted_at, titles (id, title_name, title_type, description, icon, grants_authority)')
     .eq('user_id', userId);
 
   profile.user_titles = titlesError ? [] : (userTitles || []);
@@ -553,52 +553,17 @@ export async function getBookmarks() {
 }
 
 // ============================================
-// ДОСТИЖЕНИЯ
+// T2.10: ДОСТИЖЕНИЯ (выдаёт база) и УДОСТОВЕРЕНИЯ
 // ============================================
-
-export async function checkAndAwardAchievements(userId) {
-  const achievements = [];
-
-  const { count: commentCount } = await supabase
-    .from('event_comments')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', userId);
-
-  if (commentCount >= 50) {
-    const { data: existing } = await supabase
-      .from('achievements')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('achievement_type', 'comment_50')
-      .single();
-
-    if (!existing) {
-      await supabase.from('achievements').insert([{ user_id: userId, achievement_type: 'comment_50' }]);
-      achievements.push('Комментатор (50 комментариев)');
-    }
-  }
-
-  const { count: reactionCount } = await supabase
-    .from('reactions')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', userId);
-
-  if (reactionCount >= 100) {
-    const { data: existing } = await supabase
-      .from('achievements')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('achievement_type', 'reaction_100')
-      .single();
-
-    if (!existing) {
-      await supabase.from('achievements').insert([{ user_id: userId, achievement_type: 'reaction_100' }]);
-      achievements.push('Реакционер (100 реакций)');
-    }
-  }
-
-  return achievements;
+export async function getAchievements(userId) {
+  const [defs, mine] = await Promise.all([
+    supabase.from('achievement_defs').select('*').order('sort_order'),
+    supabase.from('user_achievements').select('code, granted_at').eq('user_id', userId)
+  ]);
+  return { defs: defs.data || [], mine: Object.fromEntries((mine.data || []).map(a => [a.code, a.granted_at])) };
 }
+export const refreshAchievements = () => rpcOrThrow('refresh_achievements', { p_read: false });
+export const revokeTitle = (userTitleId, revoke = true) => rpcOrThrow('revoke_title', { p_user_title: Number(userTitleId), p_revoke: revoke });
 
 // ============================================
 // T2.8: «СОБЫТИЕ ГОДА» — голосование по году события (правила и титул — в базе)

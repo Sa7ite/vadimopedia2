@@ -88,14 +88,14 @@ function getAvatarUrl(profile) {
 
 function formatTitles(userTitles) {
   if (!userTitles || !Array.isArray(userTitles) || userTitles.length === 0) return '';
-  const activeTitles = userTitles.filter(ut => ut && ut.titles && ut.is_active !== false);
+  const activeTitles = userTitles.filter(ut => ut && ut.titles && ut.is_active !== false && !ut.revoked_at);
   if (activeTitles.length === 0) return '';
   return activeTitles.map(ut => escapeHtml(ut.titles.title_name)).join(', ');
 }
 
 // D6: в профиле титулы выводятся стопкой, по одному в строке
 function formatTitlesList(userTitles) {
-  const active = (userTitles || []).filter(ut => ut && ut.titles && ut.is_active !== false);
+  const active = (userTitles || []).filter(ut => ut && ut.titles && ut.is_active !== false && !ut.revoked_at);
   if (!active.length) return '';
   return `<ul class="profile-titles">${active.map(ut => `<li>${icon('star')} ${escapeHtml(ut.titles.title_name)}</li>`).join('')}</ul>`;
 }
@@ -110,7 +110,7 @@ export function renderProfile(profile, onEditClick) {
   profileContent.innerHTML = `
     <div class="profile-card">
       <div class="profile-header">
-        <img src="${avatarUrl}" alt="Аватар" class="profile-avatar">
+        <div class="avatar-wrap"><img src="${avatarUrl}" alt="Аватар" class="profile-avatar">${credBadgeHtml(profile)}</div>
         <div class="profile-info">
           <h3>${escapeHtml(profile.full_name || 'Без имени')}</h3>
           ${titlesText}
@@ -124,6 +124,7 @@ export function renderProfile(profile, onEditClick) {
         <button class="btn-secondary" id="btn-manage-titles">Управление титулами</button>
         <button class="btn-danger" id="btn-logout">Выйти</button>
       </div>
+      <section class="ach-showcase" id="profile-achievements"></section>
       <div id="profile-quotes">${quoteShelfHtml('Мои цитаты')}</div>
       <details class="profile-evidence" id="profile-evidence">
         <summary>${icon('evidence')} Улики <small>(видите только вы)</small></summary>
@@ -144,6 +145,8 @@ export function renderProfile(profile, onEditClick) {
   if (btnEditProfile && onEditClick) btnEditProfile.addEventListener('click', () => onEditClick());
   document.getElementById('profile-evidence')?.addEventListener('toggle', e => { if (e.target.open) renderEvidenceList(); });
   if (window.vpQuoteHandlers) renderQuoteShelf(document.getElementById('profile-quotes'), profile.id, { own: true, ...window.vpQuoteHandlers });
+  renderAchievements(document.getElementById('profile-achievements'), profile.id);
+  profileContent.querySelector('[data-wallet]')?.addEventListener('click', () => showWallet(profile, window.vpWalletHandlers?.(profile) || {}));
 
   const btnManageTitles = document.getElementById('btn-manage-titles');
   if (btnManageTitles) btnManageTitles.addEventListener('click', () => showTitlesManager(profile));
@@ -460,7 +463,7 @@ export async function showUserProfile(userId, currentUserId) {
       <span class="close-modal" data-modal="modal-user-profile">&times;</span>
       <div class="profile-card">
         <div class="profile-header">
-          <img src="${avatarUrl}" alt="Аватар" class="profile-avatar">
+          <div class="avatar-wrap"><img src="${avatarUrl}" alt="Аватар" class="profile-avatar">${credBadgeHtml(profile)}</div>
           <div class="profile-info">
             <h3>${escapeHtml(profile.full_name || 'Без имени')}</h3>
             ${titlesText ? `<div class="profile-titles">${titlesText}</div>` : ''}
@@ -470,6 +473,7 @@ export async function showUserProfile(userId, currentUserId) {
         </div>
         ${profile.bio ? `<div class="profile-bio"><h4>О себе</h4><p>${escapeHtml(profile.bio)}</p></div>` : ''}
       </div>
+      <section class="ach-showcase" id="user-achievements"></section>
       <div id="user-quotes">${quoteShelfHtml('Цитаты')}</div>
       <div class="user-events-section">
         <h3>События пользователя (${userEvents.length})</h3>
@@ -495,6 +499,8 @@ export async function showUserProfile(userId, currentUserId) {
   `;
   
   document.body.appendChild(modal);
+  renderAchievements(modal.querySelector('#user-achievements'), userId);
+  modal.querySelector('[data-wallet]')?.addEventListener('click', () => showWallet(profile, window.vpWalletHandlers?.(profile, () => modal.remove()) || {}));
   renderQuoteShelf(modal.querySelector('#user-quotes'), userId, { own: String(userId) === String(currentUserId), ...(window.vpQuoteHandlers || {}), onEventClick: (ev) => { modal.remove(); window.vpQuoteHandlers?.onEventClick(ev); } });
   modal.querySelector('.close-modal').addEventListener('click', () => modal.remove());
   modal.querySelector('#btn-close-profile').addEventListener('click', () => modal.remove());
@@ -1343,6 +1349,90 @@ export async function renderQuoteShelf(box, userId, { own, onShare, onDelete, on
 }
 
 export const quoteShelfHtml = (title) => `<details class="quote-shelf" open><summary>${icon('scroll')} ${title} <span class="qs-count"></span></summary><ul class="qs-list"><li>Загрузка…</li></ul></details>`;
+
+// ============================================
+// T2.10: УДОСТОВЕРЕНИЯ (кошелёк, бейдж) и ВИТРИНА ДОСТИЖЕНИЙ
+// ============================================
+const credNo = n => '№ ' + String(n || 0).padStart(4, '0');
+const validCreds = uts => (uts || []).filter(ut => ut?.titles && !ut.revoked_at);
+// «верхний» титул: премиальный раньше обычного, затем более свежий
+function topCred(uts) {
+  return validCreds(uts).sort((a, b) => (b.titles.title_type === 'special') - (a.titles.title_type === 'special') || new Date(b.granted_at) - new Date(a.granted_at))[0];
+}
+
+// бейдж на аватаре: верхний титул и число остальных
+export function credBadgeHtml(profile) {
+  const all = (profile.user_titles || []).filter(ut => ut?.titles);
+  if (!all.length) return '';
+  const top = topCred(all) || all[0];
+  const more = validCreds(all).length - (top.revoked_at ? 0 : 1);
+  return `<button type="button" class="cred-badge" data-wallet title="Открыть кошелёк удостоверений" aria-label="Удостоверения: ${all.length}">
+    <span class="cb-name">${escapeHtml(top.titles.title_name)}</span>${more > 0 ? `<span class="cb-more">+${more}</span>` : ''}</button>`;
+}
+
+// кошелёк: веер удостоверений; админ может отозвать или вернуть
+export function showWallet(profile, { isAdmin, onRevoke, onChanged } = {}) {
+  const creds = (profile.user_titles || []).filter(ut => ut?.titles).sort((a, b) => !!a.revoked_at - !!b.revoked_at || new Date(a.granted_at) - new Date(b.granted_at));
+  const modal = document.createElement('div');
+  modal.className = 'modal'; modal.style.display = 'flex'; modal.id = 'modal-wallet';
+  const card = (ut, i) => `
+    <article class="cred-card ${ut.titles.title_type === 'special' ? 'is-special' : ''} ${ut.revoked_at ? 'is-revoked' : ''}" style="--i:${i}">
+      <div class="cred-top"><span>Удостоверение</span><b class="cred-no">${credNo(ut.serial)}</b></div>
+      <h4>${escapeHtml(ut.titles.title_name)}</h4>
+      <p class="cred-holder">${escapeHtml(profile.full_name || 'Без имени')}</p>
+      <p class="cred-meta">${ut.titles.title_type === 'special' ? 'Премиальный' : 'Обычный'} · выдано ${ut.granted_at ? new Date(ut.granted_at).toLocaleDateString('ru-RU') : '—'}</p>
+      ${ut.titles.grants_authority?.length ? `<p class="cred-meta">Полномочия: ${escapeHtml(ut.titles.grants_authority.join(', '))}</p>` : ''}
+      ${ut.revoked_at ? `<span class="cred-stamp">Отозвано ${new Date(ut.revoked_at).toLocaleDateString('ru-RU')}</span>` : ''}
+      ${isAdmin && ut.id ? `<button type="button" class="btn-secondary cred-act" data-ut="${ut.id}" data-revoke="${ut.revoked_at ? 'false' : 'true'}">${ut.revoked_at ? 'Вернуть' : 'Отозвать'}</button>` : ''}
+    </article>`;
+  modal.innerHTML = `
+    <div class="modal-content wallet-modal">
+      <span class="close-modal">&times;</span>
+      <h3>${icon('badge')} Кошелёк: ${escapeHtml(profile.full_name || '')}</h3>
+      <p class="wallet-hint">Номер удостоверения — порядковый номер выдачи этого титула: чем меньше, тем раньше получен.</p>
+      <div class="wallet-fan">${creds.length ? creds.map(card).join('') : '<p class="empty-state">Удостоверений пока нет</p>'}</div>
+    </div>`;
+  document.body.appendChild(modal);
+  const close = () => modal.remove();
+  modal.querySelector('.close-modal').addEventListener('click', close);
+  modal.addEventListener('click', e => { if (e.target === modal) close(); });
+  modal.querySelectorAll('.cred-act').forEach(btn => btn.addEventListener('click', async () => {
+    const revoke = btn.dataset.revoke === 'true';
+    if (revoke && !confirm('Отозвать удостоверение? Оно станет недействительным при проверке.')) return;
+    btn.disabled = true;
+    try { await onRevoke(btn.dataset.ut, revoke); showNotification(revoke ? 'Удостоверение отозвано' : 'Удостоверение снова действует', 'success'); close(); onChanged?.(); }
+    catch (err) { showNotification(err.message, 'error'); btn.disabled = false; }
+  }));
+}
+
+// витрина достижений: открытые цветом с датой, закрытые — серым с условием
+export async function renderAchievements(box, userId) {
+  if (!box) return;
+  const { getAchievements } = await import('./api.js');
+  const { defs, mine } = await getAchievements(userId);
+  const got = defs.filter(d => mine[d.code]).length;
+  box.innerHTML = `
+    <h4 class="ach-head">${icon('trophy')} Достижения <small>${got} из ${defs.length}</small></h4>
+    <ul class="ach-grid">${defs.map(d => {
+      const at = mine[d.code];
+      return `<li class="ach ${at ? 'is-got' : 'is-locked'}" title="${escapeHtml(d.description)}">
+        <span class="ach-ic">${icon(d.icon)}</span>
+        <span class="ach-txt"><b>${escapeHtml(d.title)}</b><small>${at ? 'получено ' + new Date(at).toLocaleDateString('ru-RU') : escapeHtml(d.description)}</small></span></li>`;
+    }).join('')}</ul>`;
+}
+
+// новые достижения с прошлого визита — короткое уведомление (первый раз молча запоминаем)
+export async function announceNewAchievements(userId) {
+  const { getAchievements } = await import('./api.js');
+  const { defs, mine } = await getAchievements(userId);
+  const key = 'vp-ach-seen-' + userId;
+  const seen = JSON.parse(localStorage.getItem(key) || 'null');
+  const codes = Object.keys(mine);
+  localStorage.setItem(key, JSON.stringify(codes));
+  if (!seen) return;
+  const fresh = defs.filter(d => mine[d.code] && !seen.includes(d.code));
+  if (fresh.length) showNotification(`Новое достижение: ${fresh.map(d => d.title).join(', ')}`, 'success');
+}
 
 // ============================================
 // ЛЕТОПИСЬ — ЗАКЛАДКИ
