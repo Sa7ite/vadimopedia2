@@ -448,6 +448,58 @@ export function renderEditProfileForm(profile, onSave) {
   if (formEditProfile && onSave) formEditProfile.addEventListener('submit', async (e) => { e.preventDefault(); await onSave(); });
 }
 
+// T3.2б: группировка картотеки
+const EV_YEAR = e => (String(e.event_date || '').match(/\d+(?!.*\d)/) || [])[0] || 'Без года';
+const EV_DIMS = {
+  person: { none: 'Без персонажа', keys: e => (e.participants || []).map(p => p.person?.name).filter(Boolean) },
+  campaign: { none: 'Без кампании', keys: e => [e.campaign?.name].filter(Boolean) },
+  city: { none: 'Место не указано', keys: e => [String(e.city || '').trim()].filter(Boolean) },
+  faction: { none: 'Без фракции', keys: e => [window.vpFactionOf?.[String(e.user_id)]].filter(Boolean) }
+};
+export function eventsGrouping() {
+  const g = window.VP_NEW ? localStorage.getItem('vpGroup') : null;  // в старом виде — только годы
+  return { dim: EV_DIMS[g] ? g : 'year', first: localStorage.getItem('vpGroupFirst') === 'years' ? 'years' : 'groups' };
+}
+function eventsPlan(events, byYear) {
+  const { dim, first } = eventsGrouping();
+  if (dim === 'year') {
+    if (!byYear) return events.map(e => ({ e }));
+    const out = []; let last = null;
+    events.forEach(e => { const y = EV_YEAR(e); if (y !== last) { last = y; out.push({ div: 'main', label: y }); } out.push({ e }); });
+    return out;
+  }
+  const D = EV_DIMS[dim];
+  const keysOf = e => { const k = D.keys(e); return k.length ? k : [D.none]; };
+  // порядок групп: кампании — как они встречаются по датам; остальное — по числу дел, «без…» в конце
+  const count = new Map(); const firstSeen = new Map();
+  events.forEach((e, i) => keysOf(e).forEach(k => { count.set(k, (count.get(k) || 0) + 1); if (!firstSeen.has(k)) firstSeen.set(k, i); }));
+  const groups = [...count.keys()].sort((a, b) => (a === D.none) - (b === D.none) ||
+    (dim === 'campaign' ? firstSeen.get(a) - firstSeen.get(b) : (count.get(b) - count.get(a)) || a.localeCompare(b, 'ru')));
+  const out = [];
+  if (first === 'groups' || !byYear) {
+    groups.forEach(g => {
+      const list = events.filter(e => keysOf(e).includes(g));
+      out.push({ div: 'main', label: g, n: list.length });
+      let last = null;
+      list.forEach(e => { if (byYear) { const y = EV_YEAR(e); if (y !== last) { last = y; out.push({ div: 'sub', label: y }); } } out.push({ e }); });
+    });
+  } else {
+    const years = []; events.forEach(e => { const y = EV_YEAR(e); if (!years.includes(y)) years.push(y); });
+    years.forEach(y => {
+      const list = events.filter(e => EV_YEAR(e) === y);
+      out.push({ div: 'main', label: y, n: list.length });
+      groups.forEach(g => { const sub = list.filter(e => keysOf(e).includes(g)); if (!sub.length) return; out.push({ div: 'sub', label: g }); sub.forEach(e => out.push({ e })); });
+    });
+  }
+  return out;
+}
+function markGrouper() {
+  const { dim, first } = eventsGrouping();
+  document.querySelectorAll('#ev-grouper [data-group]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.group === dim)));
+  const f = document.getElementById('ev-group-first');
+  if (f) { f.hidden = dim === 'year'; f.textContent = first === 'years' ? 'Сначала годы' : 'Сначала группы'; f.setAttribute('aria-label', `Порядок: ${f.textContent.toLowerCase()}. Нажмите, чтобы поменять`); }
+}
+
 // Отрисовка событий (с умной кнопкой редактирования)
 export function renderEvents(events, currentUserRole, currentUserId, onDeleteEvent, onAuthorClick, onEditEvent) {
   const eventsList = document.getElementById('events-list');
@@ -456,20 +508,23 @@ export function renderEvents(events, currentUserRole, currentUserId, onDeleteEve
   const isAdmin = currentUserRole === 'admin' || currentUserRole === 'moderator';
   if (events.length === 0) { eventsList.innerHTML = '<li class="empty-state">Пока нет событий. Будьте первым!</li>'; return; }
 
-  // T3.2: в порядке «по дате» ящик делится карточками-разделителями по годам
+  // T3.2б: группировка ящика (годы / персонаж / кампания / место / фракция автора) и порядок «сначала годы / сначала группы»
   const byYear = document.getElementById('events-sort')?.value !== 'popular';
-  let lastYear = null;
-  events.forEach(event => {
-    const y = (String(event.event_date || '').match(/\d+(?!.*\d)/) || [])[0] || 'Без года';
-    if (byYear && y !== lastYear) {
-      lastYear = y;
+  const plan = eventsPlan(events, byYear);
+  markGrouper();
+  plan.forEach(item => {
+    if (item.div) {
       const g = document.createElement('li');
-      g.className = 'ev-group';
-      g.innerHTML = `<span>${escapeHtml(y)}</span>`;
+      g.className = item.div === 'sub' ? 'ev-group ev-sub' : 'ev-group';
+      g.innerHTML = `<span>${escapeHtml(item.label)}${item.n ? ` <small>· ${item.n}</small>` : ''}</span>`;
       eventsList.appendChild(g);
+      return;
     }
+    const event = item.e;
     const li = document.createElement('li');
     li.className = 'ev-card';
+    li.tabIndex = 0;
+    li.dataset.id = event.id;
     li.style.setProperty('--tx', ['18px', '36%', 'calc(100% - 190px)'][event.id % 3]);
     // D9: в ленте показываем дату события; если её нет — дату добавления с пометкой
     const date = event.event_date

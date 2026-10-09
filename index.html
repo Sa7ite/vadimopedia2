@@ -129,6 +129,15 @@
           <option value="date">По дате события</option>
           <option value="popular">Популярное</option>
         </select>
+        <div class="ev-grouper" id="ev-grouper" role="group" aria-label="Группировка картотеки">
+          <span class="ev-grouper-l">Разложить:</span>
+          <button type="button" data-group="year" aria-pressed="true">Годы</button>
+          <button type="button" data-group="person" aria-pressed="false">Персонаж</button>
+          <button type="button" data-group="campaign" aria-pressed="false">Кампания</button>
+          <button type="button" data-group="city" aria-pressed="false">Место</button>
+          <button type="button" data-group="faction" aria-pressed="false" title="Фракция автора события">Фракция</button>
+          <button type="button" id="ev-group-first" class="ev-latch" hidden>Сначала группы</button>
+        </div>
       </div>
       
       <!-- Форма добавления события (скрыта для гостей, управляется через JS) -->
