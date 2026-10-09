@@ -2,7 +2,8 @@
 import {
   getSettings, updateSetting, getPersons, savePerson, deletePerson,
   getCampaigns, saveCampaign, getFactions, saveFaction, deleteFaction, deleteCampaign, getAuditLog,
-  getAdminUsers, setUserRole, muteUser, revokeTitle, getAllTitles, grantTitle, undoAction
+  getAdminUsers, setUserRole, muteUser, revokeTitle, getAllTitles, grantTitle, undoAction,
+  createTitle, updateTitle, deleteTitle
 } from './api.js';
 import { showNotification } from './ui.js';
 import { supabase } from './config.js';
@@ -53,10 +54,11 @@ export async function setupAdminPanel(isAdmin, listsChanged) {
     <details class="admin-block" open><summary>Персонажи</summary><div id="admin-persons"></div></details>
     <details class="admin-block"><summary>Кампании</summary><div id="admin-campaigns"></div></details>
     <details class="admin-block"><summary>Фракции</summary><div id="admin-factions"></div></details>
+    <details class="admin-block"><summary>Титулы</summary><div id="admin-titles"></div></details>
     <details class="admin-block"><summary>Пользователи</summary><div id="admin-users"></div></details>
     <details class="admin-block"><summary>Настройки игры</summary><div id="admin-settings"></div></details>
     <details class="admin-block"><summary>Журнал действий</summary><div id="admin-audit"></div></details>`;
-  await Promise.all([renderPersons(), renderCampaigns(), renderFactions(), renderSettings()]);
+  await Promise.all([renderPersons(), renderCampaigns(), renderFactions(), renderSettings(), renderTitles()]);
   box.querySelector('#admin-audit').closest('details').addEventListener('toggle', e => { if (e.target.open) renderAudit(); });
   box.querySelector('#admin-users').closest('details').addEventListener('toggle', e => { if (e.target.open) renderUsers(); });
 }
@@ -249,6 +251,38 @@ async function renderFactions() {
     tr.querySelector('.f-del')?.addEventListener('click', async () => {
       if (!confirm('Удалить фракцию? Участники останутся без фракции.')) return;
       if (await run(() => deleteFaction(id), 'Удалено')) renderFactions();
+    });
+  });
+}
+
+// Титулы: создание, правка и удаление (перенесено из профиля админа). Выдать титул человеку — в «Пользователях»
+async function renderTitles() {
+  const el = document.getElementById('admin-titles');
+  const list = await getAllTitles();
+  const row = t => `<tr data-id="${t?.id ?? ''}">
+    <td><input class="t-name" value="${esc(t?.title_name)}" placeholder="${t ? '' : 'Новый титул'}" aria-label="Название титула"></td>
+    <td><input class="t-desc" value="${esc(t?.description)}" placeholder="Описание" aria-label="Описание"></td>
+    <td><select class="t-type" aria-label="Вид"><option value="common" ${t?.title_type !== 'special' ? 'selected' : ''}>Базовый (берёт сам)</option><option value="special" ${t?.title_type === 'special' ? 'selected' : ''}>Особый (по запросу)</option></select></td>
+    <td><label class="admin-check"><input type="checkbox" class="t-arrest" ${(t?.grants_authority || []).includes('arrest') ? 'checked' : ''}> право ареста</label></td>
+    <td class="admin-actions"><button class="btn-${t ? 'secondary' : 'primary'} t-save">${t ? 'Сохранить' : 'Добавить'}</button>${t ? '<button class="btn-secondary t-del">Удалить</button>' : ''}</td></tr>`;
+  el.innerHTML = `<p class="admin-hint">Базовые титулы человек надевает сам (не больше 3), особые — выдаёт админ по запросу или в блоке «Пользователи». «Право ареста» — удостоверение для дел.</p>
+    <table class="admin-table"><thead><tr><th>Название</th><th>Описание</th><th>Вид</th><th>Полномочия</th><th></th></tr></thead><tbody>${list.map(row).join('')}${row(null)}</tbody></table>`;
+  el.querySelectorAll('tr[data-id]').forEach(tr => {
+    const id = tr.dataset.id ? Number(tr.dataset.id) : null;
+    tr.querySelector('.t-save').addEventListener('click', async () => {
+      const name = tr.querySelector('.t-name').value.trim();
+      if (!name) { showNotification('Введите название титула', 'error'); return; }
+      const fields = { title_name: name, description: tr.querySelector('.t-desc').value.trim(), title_type: tr.querySelector('.t-type').value,
+        grants_authority: tr.querySelector('.t-arrest').checked ? ['arrest'] : [] };
+      const ok = await run(async () => {
+        if (id) await updateTitle(id, fields);
+        else { const t = await createTitle(fields.title_name, fields.title_type, fields.description, ''); if (fields.grants_authority.length) await updateTitle(t.id, { grants_authority: fields.grants_authority }); }
+      }, id ? 'Сохранено' : 'Титул создан');
+      if (ok) renderTitles();
+    });
+    tr.querySelector('.t-del')?.addEventListener('click', async () => {
+      if (!confirm(`Удалить титул «${tr.querySelector('.t-name').value}» из системы? Он пропадёт у всех, кто его носит.`)) return;
+      if (await run(() => deleteTitle(id), 'Титул удалён')) renderTitles();
     });
   });
 }
