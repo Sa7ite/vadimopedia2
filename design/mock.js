@@ -83,15 +83,15 @@ const home = {
   </article>
 </div></div>`,
 3:()=>`<div class="desk d3"><div class="lamp3"></div><div class="hm3">
-  <div class="drawer3">
+  <div class="hm3-left"><div class="drawer3">
     <div class="drawer3-lip"></div>
     <div class="drawer3-rows">${folders.map((e,i)=>`<div class="fold3${i===6?' up':''}" style="--d:${i}"><span class="fold3-tab p${i%3}">${e.y}, ${esc(e.city)}</span></div>`).join('')}</div>
     <div class="drawer3-front"><span class="drawer3-holder">Первая война</span></div>
   </div>
+  <div class="tome3"><b>После войны</b><span>новая глава в летописи</span></div></div>
   <div class="hm3-side">
     <div class="photo3" style="--r:${rot(today.id,3).toFixed(2)}deg"><span class="tape3"></span><div class="photo3-img"><span>${today.y}</span><small>${esc(today.city)}</small></div><div class="photo3-cap">Событие дня</div></div>
     <div class="note3" style="--r:${(-rot(today.id,2)).toFixed(2)}deg"><div class="note3-h">Дело № ${no(today.id)}</div><p>${esc(today.t)}</p><a class="btn-seal">Открыть дело</a></div>
-    <div class="tome3"><b>После войны</b><span>новая глава в летописи</span></div>
   </div>
 </div></div>`
 };

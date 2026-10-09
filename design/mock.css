@@ -568,3 +568,16 @@ mark{background:none;color:var(--seal);font-weight:600}
 .c1-sys span,.c3-sys span{text-transform:none;letter-spacing:0;font-family:var(--serif);font-weight:600}
 .hm2-sub{font-family:var(--serif);font-size:15px}
 @media(max-width:900px){.tome1-sticker{position:static;align-self:flex-start;margin-top:6px}}
+/* книга на главной (вариант 3): шире, лежит на столе */
+.tome3{left:-6px;top:360px;width:280px;height:170px;padding:18px 18px 18px 34px;border-left:0;background:#3A2B47;box-shadow:6px 6px 0 #d9d6c8,7px 7px 0 #a9a69a,10px 10px 0 rgba(0,0,0,.5);transform:rotate(-3deg);z-index:1}
+.tome3::before{content:'';position:absolute;left:0;top:0;bottom:0;width:18px;background:#2a1e35}
+.tome3::after{content:'';position:absolute;left:34px;right:18px;bottom:16px;height:1.5px;background:#C9A44C;opacity:.7}
+.tome3 b{font-size:22px;margin-bottom:4px}
+.tome3 span{font-size:14px}
+.hm3-side{min-height:560px}
+@media(max-width:600px){.tome3{top:auto;bottom:0;left:10px;width:240px;height:130px}.hm3-side{min-height:640px}}
+.tome3{position:relative;left:auto;top:auto;bottom:auto;margin:40px 0 0 24px;width:380px;height:150px}
+.hm3-side{min-height:520px}
+@media(max-width:600px){.tome3{width:auto;height:auto;margin:36px 10px 0 10px}.hm3-side{min-height:560px}}
+@media(max-width:900px){.h1nav{overflow-x:auto;min-width:0;padding:10px 4px}.h1bar{gap:12px;padding:0 12px}.h1plate{white-space:nowrap}}
+@media(max-width:600px){.h1logo{display:none}}
