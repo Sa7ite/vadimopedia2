@@ -20,6 +20,8 @@ import {
   addQuote, shareQuoteToChat, deleteQuote, revokeTitle
 } from './api.js';
 import { setupAdminPanel } from './admin.js';
+import { renderCases, openCaseAgainst, checkDoorKnock } from './cases.js';
+import { getArrest } from './api.js';
 import { registerUser, loginUser, logoutUser, onAuthStateChange } from './auth.js';
 import { validateDate, geocodePlace } from './validation.js';
 import {
@@ -35,6 +37,7 @@ let currentProfile = null;
 let feedEvents = [];
 let chatChannel = null;
 let chatMessages = [];
+let chatChannelName = 'general'; // T2.12: общий чат или камера
 let chatRefreshInterval = null;
 let presenceChannel = null;
 let chronicleData = null;
@@ -63,6 +66,9 @@ async function initApp() {
     }
   });
 
+  // T2.12: «Открыть дело» из чужого профиля
+  window.vpOpenCase = (userId) => { openCaseAgainst(userId); showSection('cases'); renderCases(currentProfile); };
+
   // T2.9: цитаты — кнопка «В коллекцию» при выделении и действия полки
   window.vpQuoteHandlers = { onShare: shareQuoteToChat, onDelete: deleteQuote, onEventClick: (ev) => handleShowEventModal(ev) };
   setupQuoteCapture((text, eventId, source) => addQuote(text, eventId, source));
@@ -74,6 +80,7 @@ async function initApp() {
     await loadEvents();
     renderAddEventTags();
     announceNewAchievements(session.user.id);
+    checkDoorKnock(currentProfile);
     if (currentProfile && (currentProfile.role === 'admin' || currentProfile.role === 'moderator')) {
       await loadPendingEvents();
       setupAdminTitleRequests();
@@ -157,6 +164,7 @@ function setupNavigation() {
       const section = link.dataset.section;
       if (section) showSection(section);
       if (section === 'chat' && currentProfile) setupChat();
+      if (section === 'cases' && currentProfile) renderCases(currentProfile);
       if (section === 'chronicle') setupChronicle();
       if (section === 'profile' && currentProfile) refreshProfileQuotes();
     });
@@ -271,7 +279,7 @@ function setupForms() {
       const messageText = document.getElementById('chat-message-text').value.trim();
       if (!messageText) return;
       try {
-        await sendChatMessage(messageText);
+        await sendChatMessage(messageText, chatChannelName);
         document.getElementById('chat-message-text').value = '';
       } catch (error) { 
         showNotification(`Ошибка отправки: ${error.message}`, 'error'); 
@@ -722,10 +730,33 @@ async function setupAdminTitleRequests() {
 // ЧАТ
 // ============================================
 
+// T2.12: вкладки «Общий / Камера»; арестованный пишет только в камеру, админ видит обе
+async function setupChatChannel() {
+  const until = await getArrest(currentProfile.id);
+  const isAdmin = currentProfile.role === 'admin';
+  const tabs = document.getElementById('chat-tabs');
+  const jail = document.getElementById('chat-jail');
+  const input = document.getElementById('chat-message-text');
+  const send = document.querySelector('#form-chat-message button[type="submit"]');
+  if (!until && !isAdmin) chatChannelName = 'general';
+  else if (until && !tabs.dataset.bound) chatChannelName = 'cell';
+  tabs.hidden = !until && !isAdmin;
+  if (!tabs.dataset.bound) {
+    tabs.dataset.bound = '1';
+    tabs.querySelectorAll('[data-ch]').forEach(b => b.addEventListener('click', () => { chatChannelName = b.dataset.ch; setupChat(); }));
+  }
+  tabs.querySelectorAll('[data-ch]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.ch === chatChannelName)));
+  const blocked = !!until && chatChannelName === 'general';
+  jail.hidden = !until;
+  if (until) jail.textContent = `Вы под арестом до ${new Date(until).toLocaleString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}. В общий чат писать нельзя — камера открыта.`;
+  input.disabled = blocked; if (send) send.disabled = blocked;
+  input.placeholder = blocked ? 'Под арестом — пишите в камеру' : chatChannelName === 'cell' ? 'Сообщение в камеру…' : 'Напишите сообщение...';
+}
+
 async function setupChat() {
   if (!currentProfile) return;
-  
-  chatMessages = await getChatMessages();
+  await setupChatChannel();
+  chatMessages = await getChatMessages(100, chatChannelName);
   renderChatMessages(chatMessages, currentProfile.id, currentProfile.role, handleDeleteChatClick, handleAuthorClick);
   
   if (!chatRefreshInterval) {
@@ -753,7 +784,7 @@ async function loadNewMessage(messageId) {
     .eq('id', messageId)
     .single();
   
-  if (data) {
+  if (data && (data.channel || 'general') === chatChannelName) {
     const { data: titles } = await supabase
       .from('user_titles')
       .select('titles (title_name, icon)')

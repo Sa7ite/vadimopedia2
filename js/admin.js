@@ -9,12 +9,12 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 const splitAliases = s => s.split(',').map(a => a.trim()).filter(Boolean);
 
 const ACTIONS = { insert: 'добавил', update: 'изменил', delete: 'удалил', approve: 'одобрил' };
-const TARGETS = { settings: 'настройку', persons: 'персонажа', campaigns: 'кампанию', events: 'событие', user_titles: 'титул', factions: 'фракцию' };
+const TARGETS = { settings: 'настройку', persons: 'персонажа', campaigns: 'кампанию', events: 'событие', user_titles: 'титул', factions: 'фракцию', cases: 'дело' };
 
 function describe(row) {
   const d = row.details || {};
   const obj = d.new || d.old || {};
-  const name = obj.name || (obj.label ? `«${obj.label}»` : obj.key) || (obj.event_text ? `«${obj.event_text.slice(0, 60)}${obj.event_text.length > 60 ? '…' : ''}»` : `№ ${row.target_id}`);
+  const name = (row.target_type === 'cases' ? `№ ${String(row.target_id).padStart(4, '0')}` : null) || obj.name || (obj.label ? `«${obj.label}»` : obj.key) || (obj.event_text ? `«${obj.event_text.slice(0, 60)}${obj.event_text.length > 60 ? '…' : ''}»` : `№ ${row.target_id}`);
   let extra = '';
   if (row.target_type === 'settings' && d.old && d.new) extra = `: ${d.old.value} → ${d.new.value}`;
   return `${ACTIONS[row.action] || row.action} ${TARGETS[row.target_type] || row.target_type} ${name}${extra}`;

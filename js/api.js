@@ -271,8 +271,8 @@ export async function rejectTitleRequest(requestId, adminId) {
 // ЧАТ
 // ============================================
 
-export async function getChatMessages(limit = 100) {
-  const { data, error } = await supabase.from('chat_messages').select('*, profiles (full_name, avatar_url, role)').order('created_at', { ascending: false }).limit(limit);
+export async function getChatMessages(limit = 100, channel = 'general') {
+  const { data, error } = await supabase.from('chat_messages').select('*, profiles (full_name, avatar_url, role)').eq('channel', channel).order('created_at', { ascending: false }).limit(limit);
   if (error) { console.error('Ошибка получения сообщений:', error); return []; }
 
   const messagesWithTitles = await Promise.all(
@@ -285,10 +285,10 @@ export async function getChatMessages(limit = 100) {
   return messagesWithTitles.reverse();
 }
 
-export async function sendChatMessage(messageText) {
+export async function sendChatMessage(messageText, channel = 'general') {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Пользователь не авторизован');
-  const { error } = await supabase.from('chat_messages').insert([{ user_id: user.id, message_text: messageText }]);
+  const { error } = await supabase.from('chat_messages').insert([{ user_id: user.id, message_text: messageText, channel }]);
   if (error) throw error;
   return true;
 }
@@ -718,3 +718,27 @@ export const joinFaction = (id) => rpcOrThrow('join_faction', { p_faction: Numbe
 export const leaveFaction = () => rpcOrThrow('leave_faction', {});
 export const saveFaction = (f) => rpcOrThrow('save_faction', { p_id: f.id == null ? null : Number(f.id), p_name: f.name, p_motto: f.motto || null, p_color: f.color || null });
 export const deleteFaction = (id) => rpcOrThrow('delete_faction', { p_id: Number(id) });
+
+// ============================================
+// T2.12: ДЕЛА — всё проверяет база (лимиты, ордер, удостоверение, суд, арест)
+// ============================================
+export const getCases = (id = null) => rpcOrThrow('get_cases', { p_case: id == null ? null : Number(id) });
+export const openCase = (defendant, charge, evidenceIds) => rpcOrThrow('open_case', { p_defendant: defendant, p_charge: charge, p_evidence: evidenceIds.map(Number) });
+export const supportWarrant = (id) => rpcOrThrow('support_warrant', { p_case: Number(id) });
+export const adminWarrant = (id, approve) => rpcOrThrow('admin_warrant', { p_case: Number(id), p_approve: approve });
+export const answerDoor = (id, action) => rpcOrThrow('answer_door', { p_case: Number(id), p_action: action });
+export const submitDefense = (id, text) => rpcOrThrow('submit_defense', { p_case: Number(id), p_text: text });
+export const voteVerdict = (id, value) => rpcOrThrow('vote_verdict', { p_case: Number(id), p_value: value });
+export const adminVerdict = (id, verdict, hours, isFalse) => rpcOrThrow('admin_verdict', { p_case: Number(id), p_verdict: verdict, p_hours: hours, p_false: !!isFalse });
+export const appealCase = (id) => rpcOrThrow('appeal_case', { p_case: Number(id) });
+export const cancelCase = (id) => rpcOrThrow('cancel_case', { p_case: Number(id) });
+// конец текущего срока или null
+export async function getArrest(userId) {
+  const { data } = await supabase.from('sentences').select('ends_at').eq('user_id', userId).is('cancelled_at', null).gt('ends_at', new Date().toISOString()).order('ends_at', { ascending: false }).limit(1);
+  return data?.[0]?.ends_at || null;
+}
+// кого можно обвинить: не себя, не админа, не Летописца
+export async function getCaseCandidates(meId) {
+  const { data } = await supabase.from('profiles').select('id, full_name').neq('role', 'admin').neq('id', '0c0c0c0c-1e70-4c0c-8c0c-000000000001').neq('id', meId).order('full_name');
+  return data || [];
+}

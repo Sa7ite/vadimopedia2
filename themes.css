@@ -368,3 +368,71 @@ body.guest .hero-stats{display:none}
 .faction-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .faction-list button, .faction-box [data-leave] { text-transform: none; letter-spacing: 0; min-height: 36px; }
 .faction-members-list { flex-basis: 100%; font-size: .9rem; color: var(--muted); }
+
+/* T2.12: дела, камера, вкладки чата */
+.case-lead { color: var(--muted); max-width: 70ch; }
+.case-new { margin: 0 0 18px; }
+.case-new > summary { display: inline-block; cursor: pointer; list-style: none; }
+.case-new > summary::-webkit-details-marker { display: none; }
+.case-form { display: grid; gap: 10px; margin-top: 12px; padding: 12px; border: 2px dashed var(--line); background: var(--surface); }
+.case-form label { display: grid; gap: 4px; font-weight: 700; font-size: .9rem; }
+.case-form select, .case-form textarea, .case-defense textarea { width: 100%; max-width: 100%; font: inherit; font-weight: 400; padding: 8px; box-sizing: border-box; }
+.case-form fieldset { border: 1px solid var(--line); padding: 8px 10px; margin: 0; display: grid; gap: 6px; max-height: 260px; overflow-y: auto; }
+.case-form legend { font-weight: 700; font-size: .9rem; padding: 0 4px; }
+.case-form .case-ev-pick { display: flex; gap: 8px; align-items: flex-start; font-weight: 400; overflow-wrap: anywhere; }
+.case-form .case-ev-pick input { margin-top: 4px; flex: none; }
+.case-note { font-size: .88rem; color: var(--muted); margin: 0; }
+.case-group { margin: 22px 0 10px; }
+.case-list { display: grid; gap: 14px; }
+.case-card { position: relative; padding: 12px 14px; border: 2px solid var(--text); background: var(--surface); color: var(--text); overflow-wrap: anywhere; }
+.case-card.is-closed { border-style: dashed; }
+.case-card.is-arrest, .case-card.v-guilty { box-shadow: 4px 4px 0 #b5261e; }
+.case-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; border-bottom: 1px dashed var(--line); padding-bottom: 6px; }
+.case-no { font: 700 1.05rem var(--head); letter-spacing: .5px; }
+.case-stamp { display: inline-block; padding: 1px 10px; border: 3px solid #b5261e; color: #b5261e; font: 700 .8rem var(--head); text-transform: uppercase; transform: rotate(-3deg); white-space: nowrap; }
+.case-card.is-warrant .case-stamp, .case-card.is-trial .case-stamp { border-color: #6b3fa0; color: #6b3fa0; }
+.case-card.v-acquitted .case-stamp, .case-card.v-cancelled .case-stamp, .case-card.v-rejected .case-stamp, .case-card.v-expired .case-stamp { border-color: var(--muted); color: var(--muted); }
+.case-parties { margin: 8px 0 4px; }
+.case-charge { margin: 4px 0; font-size: 1.05rem; }
+.case-meta { margin: 4px 0; font-size: .88rem; color: var(--muted); }
+.case-resist { color: #b5261e; font-weight: 700; text-transform: uppercase; }
+.case-ev { margin: 6px 0; }
+.case-ev > summary { cursor: pointer; font-weight: 700; display: inline-flex; gap: 6px; align-items: center; }
+.case-ev ul { margin: 6px 0 0; padding-left: 18px; font-size: .92rem; }
+.case-defense-text { margin: 8px 0; padding: 6px 10px; border-left: 3px solid var(--line); background: var(--surface2); }
+.case-verdict { margin: 8px 0 4px; font-weight: 700; }
+.case-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
+.case-actions > p, .case-actions > form, .case-actions > div { flex-basis: 100%; }
+#cases-content button, #cases-content summary, #chat-tabs button { text-transform: none; letter-spacing: 0; }
+.case-actions button, .case-new > summary, .chat-tabs button { min-height: 40px; }
+#cases-content { padding: 16px 18px 20px; }
+.theme-dossier #cases-content { background: #f7f3e8; box-shadow: 2px 4px 8px rgba(0,0,0,.35); }
+.theme-agit .section .container > .chat-tabs { border: 0; box-shadow: none; background: transparent; }
+.case-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.case-btns .active { outline: 3px solid #6b3fa0; outline-offset: 1px; }
+.case-knock { padding: 10px 12px; border: 3px solid #b5261e; background: var(--surface2); }
+.case-knock > b { display: flex; gap: 6px; align-items: center; color: #b5261e; }
+.case-cred { display: grid; gap: 6px; margin: 8px 0; }
+.case-cred .cred-card { transform: none; max-width: 320px; box-sizing: border-box; }
+.case-ok { color: var(--text); font-weight: 700; display: flex; gap: 6px; align-items: baseline; margin: 0; }
+.case-warn { color: #b5261e; font-weight: 700; display: flex; gap: 6px; align-items: baseline; margin: 0; }
+.case-ok .ic, .case-warn .ic { flex: none; align-self: center; }
+.case-admin { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding-top: 8px; border-top: 1px dashed var(--line); }
+.case-admin input[type="number"] { width: 5em; padding: 6px; font: inherit; }
+.case-check { display: inline-flex; gap: 6px; align-items: center; }
+.case-defense { display: grid; gap: 6px; }
+.case-defense label { display: grid; gap: 4px; font-weight: 700; font-size: .9rem; }
+.case-defense button { justify-self: start; }
+.case-jail, .jail-chip { display: flex; gap: 8px; align-items: center; padding: 8px 12px; border: 2px solid #b5261e; color: #b5261e; background: var(--surface); font-weight: 700; }
+.jail-chip { display: inline-flex; padding: 2px 10px; margin: 6px 0 0; font-size: .9rem; }
+.evidence-case { color: #b5261e; font-weight: 700; }
+.chat-tabs { display: flex; gap: 0; margin: 0 0 10px; }
+.chat-tabs[hidden] { display: none; }
+.chat-tabs button { padding: 6px 16px; border: 2px solid var(--text); background: var(--surface); color: var(--text); cursor: pointer; }
+.chat-tabs button + button { border-left: 0; }
+.chat-tabs button[aria-selected="true"] { background: var(--text); color: var(--surface); }
+.nav-link.has-alert::after { content: ''; display: inline-block; width: 8px; height: 8px; margin-left: 6px; background: #b5261e; border-radius: 50%; vertical-align: middle; }
+@media (max-width: 600px) { .case-cred .cred-card { max-width: none; } .case-top { align-items: flex-start; } }
+.case-jail[hidden] { display: none; }
+.chat-input-form input { min-width: 0; } /* T2.12: на телефоне форма не вылезала за край */
+@media (max-width: 600px) { .chat-input-form { padding: 10px; } .chat-input-form button { padding: 12px 14px; } }
