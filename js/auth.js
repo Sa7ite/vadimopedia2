@@ -37,6 +37,10 @@ export async function loginUser(email, password) {
   });
 
   if (error) {
+    if (error.code === 'email_not_confirmed' || /not confirmed/i.test(error.message || '')) {
+      await resendConfirmation(email);
+      return null;
+    }
     showNotification(`Ошибка входа: ${error.message}`, 'error');
     return null;
   }
@@ -44,6 +48,38 @@ export async function loginUser(email, password) {
   showNotification('Добро пожаловать!', 'success');
   return data;
 }
+
+// Повторная отправка письма подтверждения (ссылка в письме действует 24 часа)
+export async function resendConfirmation(email) {
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email,
+    options: { emailRedirectTo: window.location.origin }
+  });
+  if (error) {
+    const wait = /security purposes|rate limit|after \d+ seconds/i.test(error.message || '');
+    showNotification(wait
+      ? 'Почта ещё не подтверждена. Новое письмо можно запросить через минуту — попробуйте войти чуть позже.'
+      : 'Почта ещё не подтверждена, а новое письмо отправить не удалось. Попробуйте позже.', 'error');
+    return false;
+  }
+  showNotification('Почта ещё не подтверждена. Мы отправили новое письмо — откройте ссылку из него в течение 24 часов.', 'info');
+  return true;
+}
+
+// Ошибка из ссылки подтверждения: Supabase возвращает её в адресе (#error=...&error_code=otp_expired)
+function checkConfirmLinkError() {
+  const raw = (location.hash || '').replace(/^#/, '') || (location.search || '').replace(/^\?/, '');
+  if (!/(^|&)error(_code)?=/.test(raw)) return;
+  const q = new URLSearchParams(raw);
+  const code = q.get('error_code') || q.get('error') || '';
+  history.replaceState(null, '', location.pathname);
+  const msg = code === 'otp_expired'
+    ? 'Ссылка из письма устарела (она действует 24 часа). Войдите с почтой и паролем — мы сразу пришлём новое письмо.'
+    : 'Не получилось подтвердить почту по ссылке. Войдите с почтой и паролем — мы пришлём новое письмо.';
+  setTimeout(() => showNotification(msg, 'error'), 300);
+}
+checkConfirmLinkError();
 
 // Выход пользователя
 export async function logoutUser() {
