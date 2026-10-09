@@ -60,7 +60,8 @@ export async function getPendingEvents() {
     .from('events')
     .select(EVENT_SELECT)
     .eq('is_approved', false)
-    .order('created_at', { ascending: false });
+    .is('review_status', null)   // T2.14: отклонённые и «на доработке» в очереди не стоят
+    .order('created_at', { ascending: true });
 
   if (error) { console.error('Ошибка получения неподтверждённых событий:', error); return []; }
   return data;
@@ -162,7 +163,7 @@ export async function updateEvent(eventId, updates) {
     if (event.user_id !== user.id) {
       throw new Error('У вас нет прав на редактирование этого события');
     }
-    if (event.is_lore_significant) {
+    if (event.is_lore_significant && event.review_status !== 'needs_work') {   // T2.14: на доработке — можно
       throw new Error('Значимые события может редактировать только администратор');
     }
   }
@@ -174,6 +175,7 @@ export async function updateEvent(eventId, updates) {
     .select();
 
   if (error) throw error;
+  if (!data?.length) throw new Error('Не удалось сохранить: нет прав на это событие');
   return data[0];
 }
 
@@ -182,11 +184,6 @@ export async function approveEvent(eventId) {
   const { error } = await supabase.rpc('approve_event', { p_event_id: Number(eventId) });
   if (error) throw error;
   return true;
-}
-
-export async function rejectEvent(eventId) {
-  const { error } = await supabase.from('events').delete().eq('id', eventId);
-  if (error) throw error;
 }
 
 export async function deleteEvent(eventId) {
@@ -775,4 +772,28 @@ export async function getArrest(userId) {
 export async function getCaseCandidates(meId) {
   const { data } = await supabase.from('profiles').select('id, full_name').neq('role', 'admin').neq('id', '0c0c0c0c-1e70-4c0c-8c0c-000000000001').neq('id', meId).order('full_name');
   return data || [];
+}
+
+// ============================================
+// T2.14: МОДЕРАЦИЯ — решения, жалобы, роли, отмена из журнала (права проверяет база)
+// ============================================
+export const reviewEvent = (id, decision, reason) => rpcOrThrow('review_event', { p_event: Number(id), p_decision: decision, p_reason: reason });
+export const reportContent = (type, id, reason) => rpcOrThrow('report_content', { p_type: type, p_id: String(id), p_reason: reason });
+export const resolveReport = (id, remove) => rpcOrThrow('resolve_report', { p_report: Number(id), p_remove: !!remove });
+export const setUserRole = (userId, role) => rpcOrThrow('set_user_role', { p_user: userId, p_role: role });
+export const getAdminUsers = () => rpcOrThrow('admin_users', {});
+export const undoAction = (id) => rpcOrThrow('undo_action', { p_id: Number(id) });
+export async function getOpenReports() {
+  const { data, error } = await supabase.from('reports').select('*, reporter:profiles!reports_reporter_id_fkey(full_name)').eq('status', 'open').order('created_at');
+  if (error) { console.error('Жалобы:', error); return []; }
+  return data;
+}
+// мои события, которые ещё не опубликованы: на проверке, на доработке, отклонены
+export async function getMySubmissions(userId) {
+  const { data } = await supabase.from('events').select(EVENT_SELECT).eq('is_approved', false).or(`user_id.eq.${userId},submitted_by.eq.${userId}`).order('created_at', { ascending: false });
+  return data || [];
+}
+export async function grantTitle(userId, titleId) {
+  const { error } = await supabase.from('user_titles').insert([{ user_id: userId, title_id: Number(titleId), is_active: true }]);
+  if (error) throw error;
 }

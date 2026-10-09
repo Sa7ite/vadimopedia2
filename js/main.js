@@ -4,7 +4,7 @@
 import { supabase } from './config.js';
 import { 
   getProfileWithTitles, getUserCount, getApprovedEvents, getPendingEvents,
-  addEvent, updateEvent, updateProfile, approveEvent, rejectEvent, deleteEvent,
+  addEvent, updateEvent, updateProfile, deleteEvent,
   getChatMessages, sendChatMessage, softDeleteChatMessage, hardDeleteChatMessage,
   subscribeToChatMessages, unsubscribeFromChatMessages,
   connectToPresence, disconnectFromPresence,
@@ -21,12 +21,13 @@ import {
 } from './api.js';
 import { setupAdminPanel } from './admin.js';
 import { renderCases, openCaseAgainst, checkDoorKnock } from './cases.js';
+import { renderQueue, renderMySubmissions, reportFlow } from './moderation.js';
 import { getArrest, getMessageReactions, getMessageById, muteUser, getMyMute, getEventOfDay, getMentionables, getUserFaction, getFactions } from './api.js';
 import { registerUser, loginUser, logoutUser, onAuthStateChange } from './auth.js';
 import { validateDate, geocodePlace } from './validation.js';
 import {
   showSection, showNotification, updateUIForUser, updateUIForGuest,
-  renderEvents, renderPendingEvents, renderProfile, renderEditProfileForm,
+  renderEvents, renderProfile, renderEditProfileForm,
   renderChatMessages, showDeleteReasonModal, showUserProfile,
   renderChronicle, renderChronicleEditor, renderInsertReview, renderTimeline, renderTheories, renderBookmarks, renderYearPolls, setupQuoteCapture, renderQuoteShelf, announceNewAchievements,
   showEventModal, showEditEventModal, eventTagsPickerHtml, readEventTags,
@@ -73,6 +74,8 @@ async function initApp() {
   window.vpOpenCase = (userId) => { openCaseAgainst(userId); showSection('cases'); renderCases(currentProfile); };
 
   // T2.9: цитаты — кнопка «В коллекцию» при выделении и действия полки
+  window.vpReport = reportFlow;   // T2.14: «Пожаловаться» из окна события, теорий и чата
+  window.vpSubmissions = (el) => currentProfile && renderMySubmissions(el, currentProfile.id, handleEditEvent);
   window.vpQuoteHandlers = { onShare: shareQuoteToChat, onDelete: deleteQuote, onEventClick: (ev) => handleShowEventModal(ev) };
   setupQuoteCapture((text, eventId, source) => addQuote(text, eventId, source));
 
@@ -171,8 +174,9 @@ function setupNavigation() {
       if (section) showSection(section);
       if (section === 'chat' && currentProfile) setupChat();
       if (section === 'cases' && currentProfile) renderCases(currentProfile);
+      if (section === 'admin' && currentProfile) loadPendingEvents();   // T2.14: очередь всегда свежая
       if (section === 'chronicle') setupChronicle();
-      if (section === 'profile' && currentProfile) refreshProfileQuotes();
+      if (section === 'profile' && currentProfile) { refreshProfileQuotes(); window.vpSubmissions(document.getElementById('profile-submissions')); }
     });
   });
   const btnGoEvents = document.getElementById('btn-go-events');
@@ -370,31 +374,10 @@ async function loadYearPolls(polls = null, events = feedEvents) {
   });
 }
 
+// T2.14: очередь модерации (события; для админа ещё ордера, новые теории, жалобы)
 async function loadPendingEvents() {
-  const pendingEvents = await getPendingEvents();
-  renderPendingEvents(pendingEvents, handleApproveEvent, handleRejectEvent);
-}
-
-async function handleApproveEvent(eventId) {
-  try { 
-    await approveEvent(eventId); 
-    showNotification('Событие одобрено!', 'success'); 
-    await loadEvents(); 
-    await loadPendingEvents(); 
-  } catch (error) { 
-    showNotification(`Ошибка: ${error.message}`, 'error'); 
-  }
-}
-
-async function handleRejectEvent(eventId) {
-  if (!confirm('Вы уверены, что хотите отклонить это событие?')) return;
-  try { 
-    await rejectEvent(eventId); 
-    showNotification('Событие отклонено', 'info'); 
-    await loadPendingEvents(); 
-  } catch (error) { 
-    showNotification(`Ошибка: ${error.message}`, 'error'); 
-  }
+  if (!currentProfile) return;
+  await renderQueue(document.getElementById('admin-queue'), currentProfile, () => loadEvents());
 }
 
 async function handleDeleteEvent(eventId) {
@@ -410,13 +393,14 @@ async function handleDeleteEvent(eventId) {
 }
 
 // ИСПРАВЛЕНИЕ 1: Новая функция редактирования
-async function handleEditEvent(event) {
+async function handleEditEvent(event, after) {
   const lists = await loadEventLists();
   showEditEventModal(event, async (eventId, updates, personIds) => {
     const coords = await resolvePlace(updates.city);
     await updateEvent(eventId, { ...updates, ...coords });
     if (personIds) await setEventParticipants(eventId, personIds);
     await loadEvents();
+    after?.();
   }, isValidDate, null, lists);
 }
 
@@ -806,6 +790,7 @@ function chatCtx(extra = {}) {
     },
     onReply: (msg) => { if (msg && !document.getElementById('chat-message-text').disabled) setChatReply(msg); },
     onMute: currentProfile?.role === 'admin' ? handleMute : null,
+    onReport: (id) => reportFlow('message', id),
     onSystem: (kind, ref) => {
       if (kind === 'event' && ref) handleShowEventModal({ id: Number(ref) });
       else if (kind === 'case') { showSection('cases'); renderCases(currentProfile); }
