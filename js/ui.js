@@ -369,7 +369,7 @@ export async function showUserProfile(userId, currentUserId) {
             <h3>${escapeHtml(profile.full_name || 'Без имени')}</h3>
             ${titlesText}
             <p class="profile-location">${icon('pin')} ${escapeHtml(profile.city || 'Локация не указана')}</p>
-            <p class="profile-role">${icon('badge')} Роль: ${profile.role}</p>
+            <p class="profile-role">${icon('badge')} Роль: ${{ admin: 'администратор', moderator: 'модератор', user: 'участник' }[profile.role] || profile.role}</p>
           </div>
         </div>
         ${profile.bio ? `<div class="profile-bio"><h4>О себе</h4><p>${escapeHtml(profile.bio)}</p></div>` : ''}
@@ -402,7 +402,7 @@ export async function showUserProfile(userId, currentUserId) {
   `;
   
   document.body.appendChild(modal);
-  renderAchievements(modal.querySelector('#user-achievements'), userId);
+  renderAchievements(modal.querySelector('#user-achievements'), userId, { fold: true });
   renderFactionBox(modal.querySelector('#user-faction'), userId, false);
   renderJailChip(modal.querySelector('.profile-info'), userId);
   modal.querySelector('#btn-open-case')?.addEventListener('click', () => { modal.remove(); window.vpOpenCase?.(userId); });
@@ -419,7 +419,7 @@ export function renderEditProfileForm(profile, onSave) {
   const avatarUrl = getAvatarUrl(profile);
 
   profileContent.innerHTML = `
-    <div class="profile-card">
+    <div class="profile-card cab-edit">
       <h3 class="edit-form-title">Редактирование профиля</h3>
       <div class="avatar-section">
         <img src="${avatarUrl}" alt="Аватар" class="profile-avatar" id="avatar-preview">
@@ -1595,19 +1595,22 @@ export function showWallet(profile, { isAdmin, onRevoke, onChanged } = {}) {
 }
 
 // витрина достижений: открытые цветом с датой, закрытые — серым с условием
-export async function renderAchievements(box, userId) {
+export async function renderAchievements(box, userId, opts = {}) {
   if (!box) return;
   const { getAchievements } = await import('./api.js');
   const { defs, mine } = await getAchievements(userId);
   const got = defs.filter(d => mine[d.code]).length;
-  box.innerHTML = `
-    <h4 class="ach-head">${icon('trophy')} Достижения <small>${got} из ${defs.length}</small></h4>
-    <ul class="ach-grid">${defs.map(d => {
+  const head = `${icon('trophy')} Достижения <small>${got} из ${defs.length}</small>`;
+  const list = `<ul class="ach-grid">${defs.map(d => {
       const at = mine[d.code];
-      return `<li class="ach ${at ? 'is-got' : 'is-locked'}" title="${escapeHtml(d.description)}">
+      // условие закрытого достижения не показываем: пусть люди не делают что-то ради награды
+      return `<li class="ach ${at ? 'is-got' : 'is-locked'}">
         <span class="ach-ic">${icon(d.icon)}</span>
-        <span class="ach-txt"><b>${escapeHtml(d.title)}</b><small>${at ? 'получено ' + new Date(at).toLocaleDateString('ru-RU') : escapeHtml(d.description)}</small></span></li>`;
+        <span class="ach-txt"><b>${escapeHtml(d.title)}</b><small>${at ? 'получено ' + new Date(at).toLocaleDateString('ru-RU') : 'не получено'}</small></span></li>`;
     }).join('')}</ul>`;
+  box.innerHTML = opts.fold
+    ? `<details class="ach-fold"><summary class="ach-head">${head}</summary>${list}</details>`
+    : `<h4 class="ach-head">${head}</h4>${list}`;
 }
 
 // новые достижения с прошлого визита — короткое уведомление (первый раз молча запоминаем)
