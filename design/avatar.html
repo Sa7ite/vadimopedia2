@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Вадимопедия — аватар и комната (проект)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;0,7..72,700;1,7..72,400&family=PT+Mono&family=Caveat:wght@500;700&display=swap&subset=cyrillic" rel="stylesheet">
+<style>
+:root{--ink:#1D2330;--paper:#DADBD0;--paper2:#E6E6DC;--graphite:#55575C;--violet:#5A2E8F;--brass:#C6A663;--desk:#1F2D27;--serif:"Literata",Georgia,serif;--mono:"PT Mono",monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--desk);color:var(--paper);font:17px/1.5 var(--serif)}
+.wrap{max-width:1240px;margin:0 auto;padding:24px 20px 60px}
+h1{font:700 34px/1.2 var(--serif);margin:0 0 6px}
+h2{font:700 22px/1.3 var(--serif);margin:0 0 10px;color:var(--ink)}
+.lead{max-width:760px;color:#C8CCC3;margin:0 0 20px}
+.grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(320px,1fr);gap:22px;align-items:start}
+.sheet{background:var(--paper);color:var(--ink);padding:18px 20px 20px;box-shadow:2px 3px 0 rgba(12,20,17,.5),10px 18px 26px -8px rgba(12,20,17,.6)}
+.bar{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;margin:0 0 12px}
+.bar .t{font:14px var(--mono);color:var(--graphite);margin-right:4px}
+button{font:inherit;color:var(--ink);background:transparent;border:1.5px solid var(--ink);min-height:44px;padding:4px 14px;cursor:pointer}
+button[aria-pressed=true]{background:var(--violet);color:#fff;border-color:var(--violet)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
+.stage{background:#14201B;border:3px solid #0b0f0d;line-height:0}
+.stage svg{width:100%;height:auto;display:block}
+.chk{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-size:16px}
+.chk input{width:22px;height:22px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.tabs button{min-height:40px;padding:2px 10px;font-size:15px}
+.parts{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px;margin:0 0 14px}
+.parts button{display:grid;gap:2px;justify-items:center;padding:4px 2px;min-height:96px;font-size:13px;line-height:1.2}
+.parts svg{width:64px;height:68px;background:#B9C4BC}
+.parts button[aria-pressed=true] svg{background:#D8C9EE}
+.sw{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.sw button{width:44px;height:44px;padding:0;border-radius:50%;border:2px solid var(--ink)}
+.sw button[aria-pressed=true]{outline:3px solid var(--violet);outline-offset:2px;background:none}
+.rg{display:grid;grid-template-columns:110px 1fr 44px;gap:4px 10px;align-items:center;font-size:15px}
+.rg input[type=range]{width:100%;min-height:44px}
+.rg output{font:14px var(--mono)}
+pre{margin:0;max-height:240px;overflow:auto;background:#E6E6DC;padding:10px;font:12px/1.4 var(--mono);white-space:pre-wrap;word-break:break-all}
+.card{display:grid;grid-template-columns:150px 1fr;gap:16px;background:var(--paper2);border:2px solid var(--ink);padding:14px;max-width:460px;position:relative}
+.card .ph{background:#B9C4BC;border:2px solid var(--ink);line-height:0;aspect-ratio:3/4}
+.card .ph svg{width:100%;height:100%}
+.card dl{margin:0;font-size:15px}.card dt{font:13px var(--mono);color:var(--graphite)}.card dd{margin:0 0 6px;font-weight:600}
+.stamp{position:absolute;right:10px;bottom:8px;border:3px solid #8F1D17;color:#8F1D17;font:700 15px var(--mono);letter-spacing:.12em;padding:2px 8px;transform:rotate(-8deg);text-transform:uppercase}
+.note{font-size:15px;color:var(--graphite);margin:10px 0 0}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px;margin-top:22px}
+/* стили отрисовки */
+.st-line .s{stroke:var(--ink);stroke-width:2;stroke-linejoin:round}
+.st-cut .s{stroke:none}
+.st-cut .av-l,.st-cut .rm-o{filter:drop-shadow(1.5px 2px 0 rgba(12,20,17,.42))}
+.st-cut .rm-wall,.st-cut .rm-floor{filter:none}
+.st-pen .s{stroke:var(--ink);stroke-width:1.8;stroke-linejoin:round}
+.st-pen .stage-in{filter:url(#wobble)}
+.ln{fill:none;stroke:var(--ink);stroke-linecap:round;stroke-linejoin:round}
+.st-pen .rm-wall rect:first-child{opacity:.8}
+.blink{transform-box:fill-box;transform-origin:center;transition:transform .08s}
+.blinking .blink{transform:scaleY(.1)}
+.breath{animation:br 4s ease-in-out infinite}
+@keyframes br{50%{transform:translateY(1.4px)}}
+@media (prefers-reduced-motion:reduce){.breath{animation:none}.blink{transition:none}}
+@media (max-width:900px){.grid{grid-template-columns:1fr}.card{grid-template-columns:110px 1fr}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="wobble" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="3.2" xChannelSelector="R" yChannelSelector="G"/></filter>
+</svg>
+<div class="wrap">
+  <h1>Аватар и комната: проект</h1>
+  <p class="lead">Это рабочий прототип, а не оформленный раздел. Аватар собирается из слоёв, у каждого слоя есть деталь, цвет и сдвиг, поворот, масштаб, отражение. Комната показывает время суток и предметы, открытые достижениями. Выберите вид оформления (1, 2 или 3) и скажите, какой больше нравится, а что не нравится совсем.</p>
+  <div class="grid">
+    <section class="sheet" aria-label="Комната">
+      <h2>Комната-кабинет</h2>
+      <div class="bar" id="bar-style"><span class="t">Оформление</span>
+        <button type="button" data-st="st-line" aria-pressed="true">1. Контур</button>
+        <button type="button" data-st="st-cut" aria-pressed="false">2. Аппликация</button>
+        <button type="button" data-st="st-pen" aria-pressed="false">3. Перо</button></div>
+      <div class="stage" id="stage"></div>
+      <div class="bar" id="bar-time" style="margin-top:12px"><span class="t">Время суток</span>
+        <button type="button" data-h="8" aria-pressed="false">Утро</button><button type="button" data-h="13" aria-pressed="false">День</button><button type="button" data-h="19" aria-pressed="false">Вечер</button><button type="button" data-h="23" aria-pressed="false">Ночь</button>
+        <span class="t" id="real"></span></div>
+      <div class="bar" id="bar-items"><span class="t">Открыто достижениями</span>
+        <label class="chk"><input type="checkbox" data-it="medal" checked> Медаль</label>
+        <label class="chk"><input type="checkbox" data-it="frame" checked> Грамота</label>
+        <label class="chk"><input type="checkbox" data-it="cup" checked> Кубок</label>
+        <label class="chk"><input type="checkbox" data-it="teapot" checked> Чайник</label>
+        <label class="chk"><input type="checkbox" data-it="cactus" checked> Кактус</label></div>
+      <p class="note">Аватар моргает раз в 3–7 секунд и дышит; при включённом в системе «уменьшении движения» оба движения выключаются.</p>
+    </section>
+    <section class="sheet" aria-label="Конструктор">
+      <h2>Конструктор</h2>
+      <div class="bar"><button type="button" id="rnd">Случайный</button><button type="button" id="rst">Сбросить всё</button></div>
+      <div class="tabs" id="tabs" role="tablist"></div>
+      <div class="parts" id="parts"></div>
+      <div class="sw" id="sw" aria-label="Цвет"></div>
+      <div class="rg" id="rg"></div>
+      <div class="bar" style="margin-top:8px"><label class="chk"><input type="checkbox" id="flip"> Отразить</label><button type="button" id="rl">Сбросить слой</button></div>
+    </section>
+  </div>
+  <div class="two">
+    <section class="sheet"><h2>Режим удостоверения</h2>
+      <div class="card" id="card"><div class="ph" id="ph"></div>
+        <dl><dt>Удостоверение</dt><dd>Агент Вадим</dd><dt>Номер</dt><dd>№ 0042</dd><dt>Титулы</dt><dd>Странник, Мыслитель</dd></dl><div class="stamp">Утверждено</div></div>
+      <p class="note">Тот же аватар в рамке 3×4; нашивка на груди переезжает на карточку.</p></section>
+    <section class="sheet"><h2>Что хранится в профиле</h2>
+      <pre id="json"></pre>
+      <p class="note">Только описание аватара (слой, деталь, цвет, сдвиги), без картинок. Рисуется в браузере.</p></section>
+  </div>
+</div>
+<script src="avatar-lib.js"></script>
+<script src="avatar-room.js"></script>
+<script>
+(function(){
+  const A=VPAvatar, R=VPRoom;
+  let cfg=A.DEFAULT(), cur='head', style='st-line', hour=new Date().getHours();
+  const items={medal:true,frame:true,cup:true,teapot:true,cactus:true};
+  const $=(s)=>document.querySelector(s);
+  const bust=(c)=>A.avatarSvg(c);
+  function room(){
+    return `<svg viewBox="0 0 640 420" class="${style}" role="img" aria-label="Комната с аватаром"><g class="stage-in">`+R.roomSvg({hour,items,ax:226,ay:92,as:1,avatar:`<g class="breath">${bust(cfg)}</g>`})+`</g></svg>`;
+  }
+  function draw(){
+    $('#stage').innerHTML=room();
+    $('#ph').innerHTML=`<svg viewBox="20 20 160 200" class="${style}"><g class="stage-in">${bust(cfg)}</g></svg>`;
+    $('#json').textContent=JSON.stringify(cfg);
+    drawParts(); drawControls();
+  }
+  function thumb(layerId,partId){
+    const c=JSON.parse(JSON.stringify(cfg)); c.layers[layerId].part=partId; c.tf={};
+    return `<svg viewBox="30 10 140 170" class="${style}">${bust(c)}</svg>`;
+  }
+  function drawTabs(){
+    $('#tabs').innerHTML=A.LAYERS.filter(l=>!l.hidden).map(l=>`<button type="button" role="tab" data-l="${l.id}" aria-pressed="${l.id===cur}">${l.name}</button>`).join('');
+  }
+  function drawParts(){
+    const L=A.LAYERS.find(l=>l.id===cur), ps=A.PARTS[cur];
+    $('#parts').innerHTML=Object.entries(ps).map(([id,p])=>`<button type="button" data-p="${id}" aria-pressed="${cfg.layers[cur].part===id}">${thumb(cur,id)}<span>${p.name}</span></button>`).join('');
+    const pal=L.pal?A.PAL[L.pal]:null;
+    $('#sw').innerHTML=pal?pal.map(c=>`<button type="button" data-c="${c}" style="background:${c}" aria-label="Цвет ${c}" aria-pressed="${cfg.layers[cur].color===c}"></button>`).join(''):'<span class="note">У этой детали нет цвета.</span>';
+  }
+  function drawControls(){
+    const t=cfg.tf[cur]||{};
+    const row=(k,label,min,max,step,val)=>`<label for="r-${k}">${label}</label><input id="r-${k}" type="range" data-k="${k}" min="${min}" max="${max}" step="${step}" value="${val}"><output>${val}</output>`;
+    $('#rg').innerHTML=row('dx','Сдвиг по X',-24,24,1,t.dx||0)+row('dy','Сдвиг по Y',-24,24,1,t.dy||0)+row('s','Масштаб',.6,1.5,.05,t.s||1)+row('r','Поворот',-30,30,1,t.r||0);
+    $('#flip').checked=!!t.f;
+  }
+  function setTf(k,v){const t=cfg.tf[cur]=cfg.tf[cur]||{};t[k]=v;const d={dx:0,dy:0,s:1,r:0,f:false};if(Object.keys(d).every(x=>(t[x]??d[x])===d[x]))delete cfg.tf[cur];}
+  function relight(){ $('#stage').innerHTML=room(); $('#ph').innerHTML=`<svg viewBox="20 20 160 200" class="${style}"><g class="stage-in">${bust(cfg)}</g></svg>`; $('#json').textContent=JSON.stringify(cfg); }
+  $('#tabs').addEventListener('click',e=>{const b=e.target.closest('[data-l]');if(!b)return;cur=b.dataset.l;drawTabs();drawParts();drawControls();});
+  $('#parts').addEventListener('click',e=>{const b=e.target.closest('[data-p]');if(!b)return;cfg.layers[cur].part=b.dataset.p;relight();drawParts();});
+  $('#sw').addEventListener('click',e=>{const b=e.target.closest('[data-c]');if(!b)return;cfg.layers[cur].color=b.dataset.c;if(cur==='head')cfg.layers.body.color=b.dataset.c;relight();drawParts();});
+  $('#rg').addEventListener('input',e=>{const i=e.target.closest('[data-k]');if(!i)return;const v=parseFloat(i.value);i.nextElementSibling.textContent=v;setTf(i.dataset.k,v);relight();});
+  $('#flip').addEventListener('change',e=>{setTf('f',e.target.checked);relight();});
+  $('#rl').addEventListener('click',()=>{delete cfg.tf[cur];relight();drawControls();});
+  $('#rst').addEventListener('click',()=>{cfg=A.DEFAULT();draw();});
+  $('#rnd').addEventListener('click',()=>{
+    const pick=a=>a[Math.floor(Math.random()*a.length)];
+    cfg=A.DEFAULT();
+    for(const L of A.LAYERS){const ids=Object.keys(A.PARTS[L.id]);if(L.id!=='body')cfg.layers[L.id].part=pick(ids);if(L.pal&&L.id!=='body')cfg.layers[L.id].color=pick(A.PAL[L.pal]);
+      if(L.id!=='body'&&L.id!=='head'&&L.id!=='clothes'&&Math.random()<.35){cfg.tf[L.id]={dx:Math.round(Math.random()*8-4),dy:Math.round(Math.random()*6-3),s:+(0.9+Math.random()*.25).toFixed(2),r:Math.round(Math.random()*10-5)};}}
+    cfg.layers.body.color=cfg.layers.head.color;
+    const hairC=cfg.layers.hairF.color;cfg.layers.hairB.color=hairC;cfg.layers.brows.color=hairC;
+    if(Math.random()<.6)cfg.layers.hat.part='none';
+    draw();
+  });
+  $('#bar-style').addEventListener('click',e=>{const b=e.target.closest('[data-st]');if(!b)return;style=b.dataset.st;document.querySelectorAll('#bar-style button').forEach(x=>x.setAttribute('aria-pressed',x===b));draw();});
+  $('#bar-time').addEventListener('click',e=>{const b=e.target.closest('[data-h]');if(!b)return;hour=+b.dataset.h;mark();relight();});
+  $('#bar-items').addEventListener('change',e=>{const i=e.target.closest('[data-it]');if(!i)return;items[i.dataset.it]=i.checked;relight();});
+  function mark(){const z=hour>=5&&hour<11?8:hour>=11&&hour<17?13:hour>=17&&hour<21?19:23;document.querySelectorAll('#bar-time [data-h]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.h===z));$('#real').textContent='по умолчанию — ваше время, '+new Date().getHours()+':00';}
+  // моргание раз в 3–7 секунд
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)');
+  (function blink(){setTimeout(()=>{if(!reduce.matches){const s=document.querySelectorAll('.stage svg,.ph svg');s.forEach(x=>x.classList.add('blinking'));setTimeout(()=>s.forEach(x=>x.classList.remove('blinking')),130);}blink();},3000+Math.random()*4000);})();
+  if(location.hash==='#v2')style='st-cut';if(location.hash==='#v3')style='st-pen';
+  document.querySelectorAll('#bar-style button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.st===style));
+  drawTabs();mark();draw();
+})();
+</script>
+</body>
+</html>
