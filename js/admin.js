@@ -33,12 +33,12 @@ function describe(row) {
   const obj = d.new || d.old || {};
   const name = (row.target_type === 'cases' ? `№ ${String(row.target_id).padStart(4, '0')}` : null) || obj.name || (obj.label ? `«${obj.label}»` : obj.key) || (obj.event_text ? `«${obj.event_text.slice(0, 60)}${obj.event_text.length > 60 ? '…' : ''}»` : `№ ${row.target_id}`);
   let extra = '';
-  if (row.target_type === 'settings' && d.old && d.new) extra = `: ${d.old.value} → ${d.new.value}`;
-  if (row.action === 'role') return `${ACTIONS.role} ${userNames[row.target_id] || 'участник'} — ${ROLES[d.old] || d.old} → ${ROLES[d.new] || d.new}`;
+  if (row.target_type === 'settings' && d.old && d.new) extra = `: было ${d.old.value}, стало ${d.new.value}`;
+  if (row.action === 'role') return `${ACTIONS.role} ${userNames[row.target_id] || 'участник'} — было «${ROLES[d.old] || d.old}», стало «${ROLES[d.new] || d.new}»`;
   if (row.action === 'mute' || row.action === 'unmute') return `${ACTIONS[row.action]} ${userNames[row.target_id] || 'участник'}${d.minutes ? ` на ${d.minutes} мин.` : ''}${d.reason ? ` (${d.reason})` : ''}`;
   if (row.action === 'reject' || row.action === 'return') return `${ACTIONS[row.action]} событие «${(d.old?.event_text || '').slice(0, 60)}» — ${d.reason}`;
   if (row.action === 'report_remove' || row.action === 'report_dismiss') return `${ACTIONS[row.action]} ${{ event: 'событие', theory: 'теорию', message: 'сообщение' }[d.type] || ''} «${(d.snapshot || '').slice(0, 60)}» (жалоба: ${d.reason})`;
-  if (row.action === 'theory_status') return `${ACTIONS.theory_status} теории № ${row.target_id}: ${d.old} → ${d.new}`;
+  if (row.action === 'theory_status') return `${ACTIONS.theory_status} теории № ${row.target_id}: было «${d.old}», стало «${d.new}»`;
   if (row.action === 'undo') return `${ACTIONS.undo} ${ACTIONS[d.action] || d.action} ${TARGETS[row.target_type] ?? row.target_type}`;
   return `${ACTIONS[row.action] || row.action} ${TARGETS[row.target_type] || row.target_type} ${name}${extra}`;
 }

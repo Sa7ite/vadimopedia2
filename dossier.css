@@ -909,3 +909,13 @@ body.guest .dh-note:not(.g),body:not(.guest) .dh-note.g{display:none}
 .bar-logo::after,.tome-tab::after,#chat-messages .chat-author::after{content:"";position:absolute;inset:-4px -6px}
 [data-group],.event-open,.btn-secondary{min-height:44px}
 footer a[data-open-rules]{display:inline-block;padding:11px 8px}
+
+/* Канцелярия: очередь — бланки на столе (отдельные листы вместо списка с точками) */
+.q-list{list-style:none;margin:14px 0 30px;padding:0;display:grid;gap:16px}
+.q-list .q-item{margin:0;padding:14px 18px 16px;background:var(--grain),var(--paper2);border:1.5px solid var(--ink);box-shadow:2px 3px 0 var(--sh)}
+.q-list .q-empty{padding:8px 0}
+.q-kind{display:inline-block;padding:2px 10px;border:1.5px solid var(--graphite);font:600 14px var(--mono);color:var(--ink)}
+.q-item p{margin:8px 0 0}
+.q-item .q-meta{color:var(--graphite);font-size:15px}
+.q-item .q-note{font-style:italic}
+.q-item .q-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin-top:14px}
