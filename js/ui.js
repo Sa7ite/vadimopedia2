@@ -638,7 +638,16 @@ export function renderChatMessages(messages, currentUserId, currentUserRole, onD
   const byId = new Map(messages.map(m => [String(m.id), m]));
   const reacts = ctx.reactions || {};
 
+  let lastDay = '';
   filteredMessages.forEach(msg => {
+    const dayKey = new Date(msg.created_at).toDateString();
+    if (dayKey !== lastDay) {
+      lastDay = dayKey;
+      const sep = document.createElement('div');
+      sep.className = 'chat-day';
+      sep.textContent = new Date(msg.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+      chatMessagesEl.appendChild(sep);
+    }
     const div = document.createElement('div');
     div.className = 'chat-message';
     div.dataset.id = msg.id;
@@ -704,18 +713,20 @@ export function renderChatMessages(messages, currentUserId, currentUserRole, onD
           ${clickableAuthor}
           ${titlesHtml}
           <span class="chat-time">${time}</span>
-          <button class="btn-evidence-message" data-id="${msg.id}" title="Сохранить в улики (видите только вы)" aria-label="В улики">${icon('evidence')}</button>
-          ${deleteBtn}
         </div>
         ${replyHtml}
         ${msg.card?.type === 'quote'
           ? `<blockquote class="chat-quote">«${escapeHtml(msg.card.quote)}»<cite>${escapeHtml(msg.card.source || '')} · из коллекции ${escapeHtml(msg.card.collector || '')}</cite></blockquote>`
           : `<div class="chat-message-text">${chatTextHtml(msg.message_text, ctx.names)}</div>`}
         <div class="chat-message-foot">
-          ${reactBtns}
-          ${ctx.onReply ? `<button type="button" class="chat-reply-btn" data-id="${msg.id}">Ответить</button>` : ''}
-          ${ctx.onReport && !isOwnMessage ? `<button type="button" class="chat-report-btn" data-id="${msg.id}">Пожаловаться</button>` : ''}
-          ${ctx.onMute && !isOwnMessage && currentUserRole === 'admin' ? `<button type="button" class="chat-mute-btn" data-user="${authorId}" data-name="${escapeHtml(authorName)}">Мут</button>` : ''}
+          <span class="chat-acts">
+            ${ctx.onReply ? `<button type="button" class="chat-reply-btn" data-id="${msg.id}">Ответить</button>` : ''}
+            <button type="button" class="btn-evidence-message" data-id="${msg.id}" title="Сохранить в улики (видите только вы)">В улики</button>
+            ${ctx.onReport && !isOwnMessage ? `<button type="button" class="chat-report-btn" data-id="${msg.id}">Пожаловаться</button>` : ''}
+            ${ctx.onMute && !isOwnMessage && currentUserRole === 'admin' ? `<button type="button" class="chat-mute-btn" data-user="${authorId}" data-name="${escapeHtml(authorName)}">Мут</button>` : ''}
+            ${deleteBtn}
+          </span>
+          <span class="chat-reacts">${reactBtns}</span>
         </div>
       `;
     }
@@ -745,6 +756,13 @@ export function renderChatMessages(messages, currentUserId, currentUserRole, onD
   chatMessagesEl.querySelectorAll('.chat-report-btn').forEach(b => b.addEventListener('click', () => ctx.onReport?.(b.dataset.id)));
   chatMessagesEl.querySelectorAll('.chat-mute-btn').forEach(b => b.addEventListener('click', () => ctx.onMute?.(b.dataset.user, b.dataset.name)));
   chatMessagesEl.querySelectorAll('.chat-sys-act').forEach(b => b.addEventListener('click', () => ctx.onSystem?.(b.dataset.sys, b.dataset.ref)));
+
+  chatMessagesEl.querySelectorAll('.chat-message:not(.system):not(.deleted)').forEach(m => m.addEventListener('click', (e) => {
+    if (e.target.closest('button, a') || String(window.getSelection?.() || '').length) return;
+    const was = m.classList.contains('open');
+    chatMessagesEl.querySelectorAll('.chat-message.open').forEach(o => o.classList.remove('open'));
+    if (!was) m.classList.add('open');
+  }));
 
   if (onAuthorClick) {
     chatMessagesEl.querySelectorAll('.clickable-author').forEach(span => {
