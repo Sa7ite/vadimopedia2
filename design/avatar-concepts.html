@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Вадимопедия — концепты аватара</title>
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;0,7..72,700&family=PT+Mono&display=swap&subset=cyrillic" rel="stylesheet">
+<style>
+:root{--ink:#1D2330;--paper:#DADBD0;--paper2:#E6E6DC;--graphite:#55575C;--violet:#5A2E8F;--desk:#1F2D27;--serif:"Literata",Georgia,serif;--mono:"PT Mono",monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--desk);color:var(--paper);font:17px/1.5 var(--serif)}
+.wrap{max-width:1240px;margin:0 auto;padding:24px 20px 60px}
+h1{font:700 34px/1.2 var(--serif);margin:0 0 6px}
+h2{font:700 21px/1.3 var(--serif);margin:0 0 6px;color:var(--ink)}
+.lead{max-width:780px;color:#C8CCC3;margin:0 0 20px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:22px}
+.sheet{background:var(--paper);color:var(--ink);padding:16px 18px 18px;box-shadow:2px 3px 0 rgba(12,20,17,.5),10px 18px 26px -8px rgba(12,20,17,.6)}
+.num{font:14px var(--mono);color:var(--graphite)}
+.pic{background:#B9C4BC;border:2px solid var(--ink);line-height:0;margin:8px 0 10px;cursor:pointer}
+.pic svg{width:100%;height:auto;display:block;max-height:300px}
+.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 8px}
+.row .t{font:13px var(--mono);color:var(--graphite);width:100%}
+button{font:inherit;color:var(--ink);background:transparent;border:1.5px solid var(--ink);min-height:44px;padding:4px 12px;cursor:pointer;font-size:15px}
+button[aria-pressed=true]{background:var(--violet);color:#fff;border-color:var(--violet)}
+button:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
+.sw button{width:44px;padding:0;border-radius:50%;border:2px solid var(--ink)}
+.sw button[aria-pressed=true]{outline:3px solid var(--violet);outline-offset:2px;background-clip:padding-box}
+.info{margin:8px 0 0;padding:0;list-style:none;font-size:15px}
+.info li{margin:0 0 4px}.info b{font-weight:700}
+.room{margin-top:28px}
+.stage{background:#14201B;border:3px solid #0b0f0d;line-height:0;margin:10px 0}
+.stage svg{width:100%;height:auto;display:block}
+.q{margin:22px 0 0;max-width:780px}
+.q ol{margin:8px 0 0;padding-left:22px}
+.note{font-size:15px;color:var(--graphite);margin:8px 0 0}
+.s{stroke:var(--ink);stroke-width:2.6;stroke-linejoin:round}
+.ln{fill:none;stroke:var(--ink);stroke-linecap:round;stroke-linejoin:round}
+.blink{transform-box:fill-box;transform-origin:center;transition:transform .08s}
+.blinking .blink{transform:scaleY(.1)}
+.bob{animation:bob 4s ease-in-out infinite}.headbob{animation:bob 4s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(2px)}}
+.flap{transform-box:fill-box;transform-origin:50% 0;animation:fl 3.2s ease-in-out infinite}.fr{animation-delay:.4s}
+.flap.up{animation:flup .5s ease-in-out infinite alternate}
+@keyframes fl{50%{transform:rotate(3deg)}}@keyframes flup{from{transform:rotate(-14deg)}to{transform:rotate(0)}}
+.fr.up{animation-name:flupr}@keyframes flupr{from{transform:rotate(14deg)}to{transform:rotate(0)}}
+.steam{animation:st 3s ease-in infinite}.st1{animation-delay:.7s}.st2{animation-delay:1.4s}.st3{animation-delay:2.1s}
+@keyframes st{0%{transform:translateY(8px);opacity:0}30%{opacity:.8}100%{transform:translateY(-10px);opacity:0}}
+.poke svg{animation:poke .45s ease-out}
+@keyframes poke{30%{transform:translateY(-10px) scale(1.03)}}
+@media (prefers-reduced-motion:reduce){.bob,.headbob,.flap,.steam,.poke svg{animation:none!important}.blink{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Аватар: кто это будет</h1>
+<p class="lead">Шесть идей существа вместо человека. У игрока всего три выбора: цвет, лицо и один предмет. Никаких ползунков. Нажмите на любое существо: оно подпрыгнет и обрадуется. Все существа моргают и покачиваются; при включённом в системе «уменьшении движения» движение выключается.</p>
+<div class="cards" id="cards"></div>
+<section class="room sheet">
+<h2>В комнате</h2>
+<p class="note" style="margin-top:0">Выбранное выше существо сидит на столе. Время суток меняет окно и свет лампы.</p>
+<div class="row" id="rtabs"></div>
+<div class="row" id="rtime"></div>
+<div class="stage" id="stage"></div>
+</section>
+<section class="q sheet">
+<h2>Что нужно от вас</h2>
+<ol>
+<li>Какие существа нравятся (одно или два)?</li>
+<li>Какие не нравятся совсем?</li>
+<li>Если идея другая (своё существо, другой жанр), опишите словами; я нарисую.</li>
+</ol>
+</section>
+</div>
+<script src="avatar-room.js"></script>
+<script src="avatar-creatures.js"></script>
+<script>
+(function(){
+const V=window.VPCreatures,$=(s,r)=>(r||document).querySelector(s);
+const TEXT={
+folder:['Живая папка-дело. Ближе всего к теме сайта: сайт сам состоит из папок и листов.','Листы покачиваются, подпрыгивает при нажатии.','Плоская форма, силуэт простой.'],
+raven:['Ворон на карандаше, хранитель архива.','Крылья, клюв открывается при радости, голова покачивается.','Самый выразительный силуэт, но птица не связана с темой Вадимов.'],
+kettle:['Чайник с лицом. Пар показывает настроение: много при радости, почти нет при недоверии.','Пар идёт без остановки, подпрыгивает.','Двигаться нечему, кроме пара; чайник уже есть в комнате как награда за достижение, придётся заменить.'],
+mushroom:['Гриб-следопыт. Шляпка, пятна, мох и цветы дают много разных видов.','Шляпка покачивается, моргает.','К теме сайта не привязан; лицо мелкое.'],
+lamp:['Лампа с одним глазом. Настроение лампы меняет свет во всей комнате.','Свет ярче при радости и почти гаснет при недоверии; глаз моргает.','Одна лампа в комнате уже есть: пришлось бы заменить; мало разных силуэтов.'],
+ushanka:['Шапка-ушанка с лицом. Абсурд в духе сайта: серьёзная шапка с красной звездой.','Уши-клапаны хлопают от радости.','Мало разных форм: меняются в основном цвет и предметы.']
+};
+const st={};let cur='folder',hour=new Date().getHours();
+for(const k of V.order)st[k]={c:0,m:'ok',e:0};
+function draw(k){const q=st[k],d=V.C[k];return d.draw(d.colors[q.c],q.m,d.extras[q.e][0]);}
+function svg(k){return `<svg viewBox="0 0 200 222" role="img" aria-label="${V.C[k].name}">${draw(k)}</svg>`;}
+function btns(label,items,sel,attr){return `<div class="row"><span class="t">${label}</span>${items.map((x,i)=>`<button type="button" ${attr}="${i}" aria-pressed="${i===sel}">${x}</button>`).join('')}</div>`;}
+function card(k,i){const d=V.C[k],q=st[k],t=TEXT[k];
+return `<article class="sheet" data-k="${k}"><div class="num">Идея ${i+1} из 6</div><h2>${d.name}</h2>
+<div class="pic" data-pic>${svg(k)}</div>
+<div class="row sw"><span class="t">Цвет</span>${d.colors.map((c,j)=>`<button type="button" data-c="${j}" style="background:${c}" aria-label="Цвет ${j+1}" aria-pressed="${j===q.c}"></button>`).join('')}</div>
+${btns('Лицо',['Обычное','Радость','Недоверие'],['ok','joy','sus'].indexOf(q.m),'data-m')}
+${btns('Предмет',d.extras.map(x=>x[1]),q.e,'data-e')}
+<ul class="info"><li>${t[0]}</li><li><b>Оживает:</b> ${t[1]}</li><li><b>Минус:</b> ${t[2]}</li></ul></article>`;}
+const cards=$('#cards');
+function paint(){cards.innerHTML=V.order.map(card).join('');room();}
+cards.addEventListener('click',e=>{
+ const a=e.target.closest('article');if(!a)return;const k=a.dataset.k,q=st[k];cur=k;
+ const b=e.target.closest('button');
+ if(b){if(b.dataset.c!=null)q.c=+b.dataset.c;if(b.dataset.m!=null)q.m=['ok','joy','sus'][+b.dataset.m];if(b.dataset.e!=null)q.e=+b.dataset.e;
+  const f=document.activeElement&&document.activeElement.getAttribute('aria-label');paint();return;}
+ if(e.target.closest('[data-pic]')){const pic=a.querySelector('[data-pic]'),prev=q.m;q.m='joy';pic.innerHTML=svg(k);pic.classList.remove('poke');void pic.offsetWidth;pic.classList.add('poke');
+  setTimeout(()=>{q.m=prev;pic.innerHTML=svg(k);pic.classList.remove('poke');room();},1100);room();}
+});
+const TIMES=[['Утро',8],['День',13],['Вечер',19],['Ночь',23]];
+function room(){
+ $('#rtabs').innerHTML='<span class="t" style="font:13px var(--mono);width:100%">Существо</span>'+V.order.map(k=>`<button type="button" data-rk="${k}" aria-pressed="${k===cur}">${V.C[k].name}</button>`).join('');
+ const hh=hour,act=TIMES.findIndex((t,i)=>hh>=t[1]-3&&(i===3||hh<TIMES[i+1][1]-3)); 
+ $('#rtime').innerHTML='<span class="t" style="font:13px var(--mono);width:100%">Время суток</span>'+TIMES.map((t,i)=>`<button type="button" data-h="${t[1]}" aria-pressed="${t[1]===hour||(hour<5&&i===3&&hour!==t[1]&&false)}">${t[0]}</button>`).join('');
+ const it={frame:1,medal:1,cup:1,teapot:0,cactus:1};
+ $('#stage').innerHTML='<svg viewBox="0 0 640 420" role="img" aria-label="Комната с существом">'+VPRoom.roomSvg({hour:hour,items:it,ax:235,ay:106,as:.95,avatar:'<g class="av-slot-in">'+draw(cur)+'</g>'})+'</svg>';
+}
+document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+ if(b.dataset.rk){cur=b.dataset.rk;room();}
+ if(b.dataset.h){hour=+b.dataset.h;room();}});
+// моргание
+function blinkLoop(){const go=()=>{document.querySelectorAll('svg').forEach(s=>s.classList.add('blinking'));setTimeout(()=>document.querySelectorAll('svg').forEach(s=>s.classList.remove('blinking')),130);setTimeout(go,3000+Math.random()*4000);};
+ if(!matchMedia('(prefers-reduced-motion:reduce)').matches)setTimeout(go,2500);}
+// обычное время по умолчанию: час посетителя приводится к одному из четырёх
+hour=(h=>h>=5&&h<11?8:h>=11&&h<17?13:h>=17&&h<21?19:23)(hour);
+paint();blinkLoop();
+})();
+</script>
+</body>
+</html>
