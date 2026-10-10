@@ -38,4 +38,6 @@ document.addEventListener('click',e=>{const b=e.target.closest('.theme-picker bu
 document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;const m=[...document.querySelectorAll('.modal')].filter(x=>x.style.display==='flex'||getComputedStyle(x).display!=='none').pop();m?.querySelector('.close-modal')?.click();});
 // PWA
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+// T3.5: доска расследования подключается отдельным модулем (js/board.js, board.css)
+import('./js/board.js').catch(e=>console.error('Доска не загрузилась',e));
 })();
