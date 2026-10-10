@@ -106,37 +106,49 @@ export function renderProfile(profile, onEditClick) {
   const avatarUrl = getAvatarUrl(profile);
   const titlesText = formatTitlesList(profile.user_titles);
 
+  const roleName = { admin: 'администратор', moderator: 'модератор', user: 'участник' }[profile.role] || profile.role;
+  const credCount = (profile.user_titles || []).filter(ut => ut?.titles).length;
+
+  // T3.6: кабинет — слева личное дело, кошелёк, оформление; справа медали, цитаты, фракция, заявки и ящик улик
   profileContent.innerHTML = `
-    <div class="profile-card">
-      <div class="profile-header">
-        <div class="avatar-wrap"><img src="${avatarUrl}" alt="Аватар" class="profile-avatar">${credBadgeHtml(profile)}</div>
-        <div class="profile-info">
-          <h3>${escapeHtml(profile.full_name || 'Без имени')}</h3>
-          ${titlesText}
-          <p class="profile-location">${icon('pin')} ${escapeHtml(profile.city || 'Локация не указана')}</p>
-          <p class="profile-role">${icon('badge')} Роль: ${profile.role}</p>
+    <div class="profile-card cab">
+      <div class="cab-left">
+        <article class="cab-id">
+          <span class="cab-tab">Личное дело</span>
+          <div class="profile-header">
+            <div class="avatar-wrap"><img src="${avatarUrl}" alt="Аватар" class="profile-avatar">${credBadgeHtml(profile)}</div>
+            <div class="profile-info">
+              <h3>${escapeHtml(profile.full_name || 'Без имени')}</h3>
+              ${titlesText}
+              <p class="profile-location">${icon('pin')} ${escapeHtml(profile.city || 'Локация не указана')}</p>
+              <p class="profile-role">${icon('badge')} Роль: ${escapeHtml(roleName)}</p>
+            </div>
+          </div>
+          ${profile.bio ? `<div class="profile-bio"><h4>О себе</h4><p>${escapeHtml(profile.bio)}</p></div>` : ''}
+          <div class="profile-actions">
+            <button class="btn-primary" id="btn-edit-profile">Редактировать профиль</button>
+            <button class="btn-secondary" id="btn-manage-titles">Управление титулами</button>
+            <button class="btn-danger" id="btn-logout">Выйти</button>
+          </div>
+        </article>
+        ${credCount ? `<button type="button" class="cab-wallet" data-wallet aria-label="Открыть кошелёк удостоверений: ${credCount}"><span>Кошелёк удостоверений</span><b class="cw-n">${credCount}</b></button>` : ''}
+        <div class="profile-settings">
+          <h4>Оформление</h4>
+          <div class="theme-picker" id="theme-picker">
+            <button type="button" data-t="dossier">Секретное досье</button>
+            <button type="button" data-t="agit">Агитпроп</button>
+          </div>
         </div>
       </div>
-      ${profile.bio ? `<div class="profile-bio"><h4>О себе</h4><p>${escapeHtml(profile.bio)}</p></div>` : ''}
-      <div class="profile-actions">
-        <button class="btn-primary" id="btn-edit-profile">Редактировать профиль</button>
-        <button class="btn-secondary" id="btn-manage-titles">Управление титулами</button>
-        <button class="btn-danger" id="btn-logout">Выйти</button>
-      </div>
-      <section class="sub-box" id="profile-submissions" hidden></section>
-      <section class="faction-box" id="profile-faction"></section>
-      <section class="ach-showcase" id="profile-achievements"></section>
-      <div id="profile-quotes">${quoteShelfHtml('Мои цитаты')}</div>
-      <details class="profile-evidence" id="profile-evidence">
-        <summary>${icon('evidence')} Улики <small>(видите только вы)</small></summary>
-        <div id="evidence-list"><p>Загрузка…</p></div>
-      </details>
-      <div class="profile-settings">
-        <h4>Оформление</h4>
-        <div class="theme-picker" id="theme-picker">
-          <button type="button" data-t="dossier">Секретное досье</button>
-          <button type="button" data-t="agit">Агитпроп</button>
-        </div>
+      <div class="cab-right">
+        <section class="sub-box" id="profile-submissions" hidden></section>
+        <section class="ach-showcase" id="profile-achievements"></section>
+        <div id="profile-quotes">${quoteShelfHtml('Мои цитаты')}</div>
+        <section class="faction-box" id="profile-faction"></section>
+        <details class="profile-evidence" id="profile-evidence">
+          <summary>${icon('evidence')} Ящик улик <small>(видите только вы)</small></summary>
+          <div id="evidence-list"><p>Загрузка…</p></div>
+        </details>
       </div>
     </div>
   `;
@@ -150,7 +162,7 @@ export function renderProfile(profile, onEditClick) {
   renderJailChip(profileContent.querySelector('.profile-info'), profile.id);
   renderFactionBox(document.getElementById('profile-faction'), profile.id, true);
   window.vpSubmissions?.(document.getElementById('profile-submissions'));
-  profileContent.querySelector('[data-wallet]')?.addEventListener('click', () => showWallet(profile, window.vpWalletHandlers?.(profile) || {}));
+  profileContent.querySelectorAll('[data-wallet]').forEach(w => w.addEventListener('click', () => showWallet(profile, window.vpWalletHandlers?.(profile) || {})));
 
   const btnManageTitles = document.getElementById('btn-manage-titles');
   if (btnManageTitles) btnManageTitles.addEventListener('click', () => showTitlesManager(profile));
