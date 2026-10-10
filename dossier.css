@@ -919,3 +919,13 @@ footer a[data-open-rules]{display:inline-block;padding:11px 8px}
 .q-item .q-meta{color:var(--graphite);font-size:15px}
 .q-item .q-note{font-style:italic}
 .q-item .q-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin-top:14px}
+
+/* Диалоги подтверждения вместо системных окон (js/dialog.js) */
+.vp-ask{position:fixed;inset:0;z-index:5000;display:grid;place-items:center;padding:16px;background:rgba(12,20,17,.74)}
+.vp-ask-sheet{width:min(460px,100%);padding:22px 24px 20px;background:var(--grain),var(--paper);color:var(--ink);box-shadow:2px 3px 0 rgba(12,20,17,.5),12px 22px 30px -8px rgba(12,20,17,.65);transform:rotate(-.3deg);animation:vp-ask-in .18s ease-out}
+.vp-ask-doc{margin:0 0 8px;font:14px var(--mono);color:var(--graphite)}
+.vp-ask-msg{margin:0 0 18px;font:600 19px/1.4 var(--serif);white-space:pre-line;overflow-wrap:anywhere}
+.vp-ask-field{display:block;width:100%;min-height:44px;margin:-6px 0 18px;padding:6px 8px;border:0;border-bottom:2px solid var(--ink);background:rgba(29,35,48,.05);font:17px var(--serif);color:var(--ink)}
+.vp-ask-acts{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
+@keyframes vp-ask-in{from{transform:translateY(-10px) rotate(-.3deg);opacity:0}to{transform:rotate(-.3deg);opacity:1}}
+@media (prefers-reduced-motion:reduce){.vp-ask-sheet{animation:none}}

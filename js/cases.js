@@ -1,4 +1,5 @@
 // T2.12: ДЕЛА — открытие, ордер, «к вам пришли», удостоверение, ответ, суд, приговор, апелляция (права — в базе)
+import { askConfirm } from './dialog.js';
 import { icon } from './icons.js';
 import { showNotification } from './ui.js';
 import {
@@ -235,26 +236,26 @@ function bindActs(scope, id, reload, after) {
     }
     catch (err) { showNotification(err.message, 'error'); if (btn) { btn.disabled = false; btn.classList.remove('dropping'); } }
   };
-  scope.querySelectorAll('[data-act]').forEach(btn => btn.addEventListener('click', () => {
+  scope.querySelectorAll('[data-act]').forEach(btn => btn.addEventListener('click', async () => {
       const a = btn.dataset.act;
       if (a === 'knock-close') return;
       if (a === 'knock-show') { const c = allCases.find(x => String(x.id) === String(id)); if (c) showKnock(c, false); return; }
       const adm = scope.querySelector('.case-admin');
       if (a === 'warrant') run(btn, () => supportWarrant(id), 'Голос за ордер учтён');
       else if (a === 'warrant-yes') run(btn, () => adminWarrant(id, true), 'Ордер выдан');
-      else if (a === 'warrant-no') { if (confirm('Отказать в ордере? Дело закроется.')) run(btn, () => adminWarrant(id, false), 'В ордере отказано'); }
+      else if (a === 'warrant-no') { if (await askConfirm('Отказать в ордере? Дело закроется.')) run(btn, () => adminWarrant(id, false), 'В ордере отказано'); }
       else if (a === 'door-open') run(btn, () => answerDoor(id, 'open'), 'Дверь открыта. Дело ушло в суд');
       else if (a === 'door-docs') run(btn, () => answerDoor(id, 'docs'), r => r.verdict === 'invalid' ? 'Документы не в порядке — дело недействительно' : 'Документы в порядке. Решайте: открыть или нет');
-      else if (a === 'door-resist') { if (confirm('Не открывать? В деле появится штамп «сопротивление».')) run(btn, () => answerDoor(id, 'resist'), 'Не открыли. Дело ушло в суд'); }
+      else if (a === 'door-resist') { if (await askConfirm('Не открывать? В деле появится штамп «сопротивление».')) run(btn, () => answerDoor(id, 'resist'), 'Не открыли. Дело ушло в суд'); }
       else if (a === 'vote') run(btn, () => voteVerdict(id, btn.dataset.v), 'Голос учтён');
       else if (a === 'verdict-guilty' || a === 'verdict-acquit') {
         const guilty = a === 'verdict-guilty';
         const isFalse = !guilty && adm.querySelector('[name="false"]').checked;
         const h = Number(adm.querySelector('[name="hours"]').value);
-        if (confirm(guilty ? `Виновен, ${h} ч камеры?` : isFalse ? `Оправдать и дать обвинителю ${h} ч за ложное обвинение?` : 'Оправдать?'))
+        if (await askConfirm(guilty ? `Виновен, ${h} ч камеры?` : isFalse ? `Оправдать и дать обвинителю ${h} ч за ложное обвинение?` : 'Оправдать?'))
           run(btn, () => adminVerdict(id, guilty ? 'guilty' : 'acquitted', h, isFalse), 'Приговор вынесен');
       }
-      else if (a === 'appeal') { if (confirm('Обжаловать? Это можно сделать только один раз; суд пройдёт заново.')) run(btn, () => appealCase(id), 'Апелляция подана, срок приостановлен'); }
-      else if (a === 'cancel') { if (confirm('Отменить дело и приговор? Ограничения снимутся сразу.')) run(btn, () => cancelCase(id), 'Дело отменено'); }
+      else if (a === 'appeal') { if (await askConfirm('Обжаловать? Это можно сделать только один раз; суд пройдёт заново.')) run(btn, () => appealCase(id), 'Апелляция подана, срок приостановлен'); }
+      else if (a === 'cancel') { if (await askConfirm('Отменить дело и приговор? Ограничения снимутся сразу.')) run(btn, () => cancelCase(id), 'Дело отменено'); }
     }));
 }

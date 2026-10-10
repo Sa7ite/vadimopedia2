@@ -1,3 +1,4 @@
+import { askConfirm, askText } from './dialog.js';
 import { icon } from './icons.js';
 import { hasTitle, evTitle } from './evtitle.js';
 import { getFactions, getUserFaction, getFactionMembers, joinFaction, leaveFaction } from './api.js';
@@ -287,7 +288,7 @@ async function showTitlesManager(profile) {
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
       const titleId = parseInt(btn.dataset.titleId);
-      const reason = prompt('Укажите причину запроса титула:');
+      const reason = await askText('Укажите причину запроса титула:', { title: 'Запрос титула' });
       if (!reason || !reason.trim()) return;
       try {
         const { requestTitle } = await import('./api.js');
@@ -1088,12 +1089,12 @@ export function renderChronicleEditor(editor, pendingEvents, handlers) {
   updatePreview(); updateDiff();
 
   document.getElementById('btn-save-chronicle').addEventListener('click', () => handlers.onSaveDraft(textarea.value));
-  document.getElementById('btn-publish-chronicle').addEventListener('click', () => {
-    if (confirm('Опубликовать этот текст? Читатели увидят его сразу. Прошлая версия сохранится для отката.')) handlers.onPublish(textarea.value);
+  document.getElementById('btn-publish-chronicle').addEventListener('click', async () => {
+    if (await askConfirm('Опубликовать этот текст? Читатели увидят его сразу. Прошлая версия сохранится для отката.')) handlers.onPublish(textarea.value);
   });
   document.getElementById('btn-generate-chronicle').addEventListener('click', () => handlers.onGenerate());
-  document.getElementById('btn-rollback-chronicle').addEventListener('click', () => {
-    if (confirm('Вернуть предыдущую опубликованную версию? Текущая опубликованная будет снята.')) handlers.onRollback();
+  document.getElementById('btn-rollback-chronicle').addEventListener('click', async () => {
+    if (await askConfirm('Вернуть предыдущую опубликованную версию? Текущая опубликованная будет снята.')) handlers.onRollback();
   });
 }
 
@@ -1341,7 +1342,7 @@ export function bindTheories(root, ctx) {
         await ctx.onVote(id, t?.my_vote === btn.dataset.vote ? null : btn.dataset.vote);
       } else if (btn.dataset.thAct === 'status') {
         const s = btn.dataset.status;
-        if (s === 'removed' && !confirm('Удалить теорию? Голоса пропадут, у кого она в уликах — останется снимок с пометкой.')) { btn.disabled = false; return; }
+        if (s === 'removed' && !await askConfirm('Удалить теорию? Голоса пропадут, у кого она в уликах — останется снимок с пометкой.')) { btn.disabled = false; return; }
         await ctx.onStatus(id, s);
         showNotification(s === 'canon' ? 'Теория признана каноном — она появится в летописи врезкой «Говорят, что…»' : s === 'removed' ? 'Теория удалена' : 'Канон снят', 'success');
       } else if (btn.dataset.thAct === 'evidence') {
@@ -1448,8 +1449,8 @@ export function renderYearPolls(box, { polls, states, years, isAdmin }, h) {
     const btn = e.target.closest('[data-yp]');
     if (!btn || btn.disabled) return;
     const k = btn.dataset.yp, year = btn.dataset.year;
-    if (k === 'vote' && !confirm('Отдать голос этому событию? Изменить выбор будет нельзя.')) return;
-    if (k === 'close' && !confirm(`Закрыть голосование за ${year} год сейчас?`)) return;
+    if (k === 'vote' && !await askConfirm('Отдать голос этому событию? Изменить выбор будет нельзя.')) return;
+    if (k === 'close' && !await askConfirm(`Закрыть голосование за ${year} год сейчас?`)) return;
     btn.disabled = true;
     try {
       if (k === 'vote') { await h.onVote(btn.dataset.event); showNotification('Голос учтён', 'success'); }
@@ -1540,7 +1541,7 @@ export async function renderQuoteShelf(box, userId, { own, onShare, onDelete, on
     btn.disabled = true;
     try {
       if (btn.dataset.q === 'share') { await onShare(id); showNotification('Цитата отправлена в чат карточкой', 'success'); btn.disabled = false; }
-      else if (confirm('Убрать цитату с полки? Карточки в чате останутся.')) { await onDelete(id); await renderQuoteShelf(box, userId, { own, onShare, onDelete, onEventClick }); }
+      else if (await askConfirm('Убрать цитату с полки? Карточки в чате останутся.')) { await onDelete(id); await renderQuoteShelf(box, userId, { own, onShare, onDelete, onEventClick }); }
       else btn.disabled = false;
     } catch (err) { showNotification(err.message, 'error'); btn.disabled = false; }
   };
@@ -1596,7 +1597,7 @@ export function showWallet(profile, { isAdmin, onRevoke, onChanged } = {}) {
   modal.addEventListener('click', e => { if (e.target === modal) close(); });
   modal.querySelectorAll('.cred-act').forEach(btn => btn.addEventListener('click', async () => {
     const revoke = btn.dataset.revoke === 'true';
-    if (revoke && !confirm('Отозвать удостоверение? Оно станет недействительным при проверке.')) return;
+    if (revoke && !await askConfirm('Отозвать удостоверение? Оно станет недействительным при проверке.')) return;
     btn.disabled = true;
     try { await onRevoke(btn.dataset.ut, revoke); showNotification(revoke ? 'Удостоверение отозвано' : 'Удостоверение снова действует', 'success'); close(); onChanged?.(); }
     catch (err) { showNotification(err.message, 'error'); btn.disabled = false; }

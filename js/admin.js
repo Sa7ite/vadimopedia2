@@ -1,4 +1,5 @@
 // T1.7: панель админа — настройки, персонажи, кампании, журнал действий
+import { askConfirm, askText } from './dialog.js';
 import {
   getSettings, updateSetting, getPersons, savePerson, deletePerson,
   getCampaigns, saveCampaign, getFactions, saveFaction, deleteFaction, deleteCampaign, getAuditLog,
@@ -98,7 +99,7 @@ async function renderPersons() {
   }));
   el.querySelectorAll('.p-del').forEach(btn => btn.addEventListener('click', async () => {
     const tr = btn.closest('tr');
-    if (!confirm(`Удалить «${tr.querySelector('.p-name').value}»? Он пропадёт из участников всех событий. Запись останется в журнале.`)) return;
+    if (!await askConfirm(`Удалить «${tr.querySelector('.p-name').value}»? Он пропадёт из участников всех событий. Запись останется в журнале.`)) return;
     if (await run(() => deletePerson(tr.dataset.id), 'Удалено')) { await renderPersons(); onListsChanged(); }
   }));
 }
@@ -131,7 +132,7 @@ async function renderCampaigns() {
   }));
   el.querySelectorAll('.c-del').forEach(btn => btn.addEventListener('click', async () => {
     const tr = btn.closest('tr');
-    if (!confirm(`Удалить кампанию «${tr.querySelector('.c-name').value}»? У её событий кампания станет «не указана».`)) return;
+    if (!await askConfirm(`Удалить кампанию «${tr.querySelector('.c-name').value}»? У её событий кампания станет «не указана».`)) return;
     if (await run(() => deleteCampaign(tr.dataset.id), 'Удалено')) { await renderCampaigns(); onListsChanged(); }
   }));
 }
@@ -171,7 +172,7 @@ async function renderAudit() {
       <span><strong>${esc(r.actor_name)}</strong> ${esc(describe(r))}</span>
       ${r.undone_at ? '<em class="audit-undone">отменено</em>' : UNDOABLE(r) ? `<button type="button" class="btn-secondary audit-undo" data-id="${r.id}">Отменить</button>` : ''}</li>`).join('')}</ol>` : '<p>Пока пусто.</p>';
     el.querySelectorAll('.audit-undo').forEach(b => b.addEventListener('click', async () => {
-      if (!confirm('Отменить это действие?')) return;
+      if (!await askConfirm('Отменить это действие?')) return;
       b.disabled = true;
       if (await run(() => undoAction(b.dataset.id), 'Отменено')) { renderAudit(); onListsChanged(); } else b.disabled = false;
     }));
@@ -207,7 +208,7 @@ async function renderUsers() {
     const id = li.dataset.id, name = li.querySelector('strong').textContent;
     li.querySelector('.u-role').addEventListener('change', async e => {
       const role = e.target.value;
-      if (!confirm(`Сделать «${name}» — ${ROLES[role]}?`)) { renderUsers(); return; }
+      if (!await askConfirm(`Сделать «${name}» — ${ROLES[role]}?`)) { renderUsers(); return; }
       await run(() => setUserRole(id, role), 'Роль изменена'); renderUsers();
     });
     li.querySelector('.u-grant').addEventListener('change', async e => {
@@ -218,12 +219,12 @@ async function renderUsers() {
       const b = e.target.closest('[data-u]'); if (!b || b.tagName === 'SELECT') return;
       const a = b.dataset.u;
       if (a === 'mute') {
-        const reason = prompt(`Причина запрета для «${name}» (увидит человек):`, '');
+        const reason = await askText(`Причина запрета для «${name}» (увидит человек):`, { title: 'Запрет писать' });
         if (reason === null) return;
         await run(() => muteUser(id, Number(b.dataset.min), reason), 'Запрет поставлен');
       } else if (a === 'unmute') await run(() => muteUser(id, 0, null), 'Запрет снят');
       else if (a === 'revoke' || a === 'restore') {
-        if (a === 'revoke' && !confirm('Отозвать удостоверение?')) return;
+        if (a === 'revoke' && !await askConfirm('Отозвать удостоверение?')) return;
         await run(() => revokeTitle(Number(b.dataset.ut), a === 'revoke'), a === 'revoke' ? 'Отозвано' : 'Возвращено');
       } else return;
       renderUsers();
@@ -249,7 +250,7 @@ async function renderFactions() {
       if (ok) renderFactions();
     });
     tr.querySelector('.f-del')?.addEventListener('click', async () => {
-      if (!confirm('Удалить фракцию? Участники останутся без фракции.')) return;
+      if (!await askConfirm('Удалить фракцию? Участники останутся без фракции.')) return;
       if (await run(() => deleteFaction(id), 'Удалено')) renderFactions();
     });
   });
@@ -281,7 +282,7 @@ async function renderTitles() {
       if (ok) renderTitles();
     });
     tr.querySelector('.t-del')?.addEventListener('click', async () => {
-      if (!confirm(`Удалить титул «${tr.querySelector('.t-name').value}» из системы? Он пропадёт у всех, кто его носит.`)) return;
+      if (!await askConfirm(`Удалить титул «${tr.querySelector('.t-name').value}» из системы? Он пропадёт у всех, кто его носит.`)) return;
       if (await run(() => deleteTitle(id), 'Титул удалён')) renderTitles();
     });
   });

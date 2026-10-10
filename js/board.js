@@ -1,6 +1,7 @@
 // T3.5: Доска расследования — пробка, карточки событий, красные нитки-теории.
 // Всё, что нельзя нарушить (лимиты, права, голоса, канон), проверяет база: здесь только показ и жесты.
 // Модуль самодостаточный: сам добавляет табличку «Доска» в меню и раздел на страницу.
+import { askConfirm } from './dialog.js';
 import { supabase } from './config.js';
 import { evTitle, hasTitle } from './evtitle.js';
 import { getApprovedEvents, getTheories, createTheory, voteTheory, setTheoryStatus, getPersons, getCampaigns, getChronicle, getSettingValue } from './api.js';
@@ -388,7 +389,7 @@ async function act(fn, ok) {
   catch (err) { showNotification(err.message || 'Не получилось', 'error'); }
 }
 
-function onClick(e) {
+async function onClick(e) {
   const t = e.target;
   const kind = t.closest('[data-kind]');
   if (kind) { S.kind = kind.dataset.kind; S.item = null; S.page = 0; S.sheet = null; pickItemAfterKind(); return; }
@@ -406,7 +407,7 @@ function onClick(e) {
   if (a.dataset.act === 'close') closeSheet();
   else if (a.dataset.act === 'canon') act(() => setTheoryStatus(id, 'canon'), 'Нитка в каноне');
   else if (a.dataset.act === 'uncanon') act(() => setTheoryStatus(id, 'active'), 'Канон снят');
-  else if (a.dataset.act === 'remove' && confirm('Убрать нитку? Это нельзя отменить.')) { closeSheet(); act(() => setTheoryStatus(id, 'removed'), 'Нитка убрана'); }
+  else if (a.dataset.act === 'remove' && await askConfirm('Убрать нитку? Это нельзя отменить.')) { closeSheet(); act(() => setTheoryStatus(id, 'removed'), 'Нитка убрана'); }
 }
 
 function pickItemAfterKind() {
