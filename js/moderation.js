@@ -113,7 +113,7 @@ function itemHtml(i) {
   if (i.kind === 'event') {
     const e = i.e;
     return `<li class="q-item"><span class="q-kind">Событие</span>
-      <p class="q-text">${esc(short(e.event_text, 400))}</p>
+      <p class="q-text">${e.title ? `<b>${esc(e.title)}.</b> ` : ''}${esc(short(e.event_text, 400))}</p>
       <p class="q-meta">${esc(e.profiles?.full_name || 'Аноним')} · ${day(e.created_at)}${e.event_date ? ' · ' + esc(e.event_date) : ''}${e.is_lore_significant ? ' · значимое для летописи' : ''}${e.as_chronicler ? ' · от имени Летописца' : ''}</p>
       ${e.review_note ? `<p class="q-note">Исправлено после замечания: «${esc(e.review_note)}»</p>` : ''}
       <div class="q-actions"><button type="button" class="btn-approve" data-act="approve" data-id="${e.id}">Одобрить</button>
@@ -133,7 +133,7 @@ function itemHtml(i) {
     return `<li class="q-item"><span class="q-kind">Новая теория</span>
       <p class="q-text">«${esc(t.note)}»</p>
       <p class="q-meta">${esc(t.author_name || 'Аноним')} · ${day(t.created_at)} · верю ${t.believe} / не верю ${t.doubt}</p>
-      <p class="q-note">${esc(short(t.event_a_text, 90))} ⟷ ${esc(short(t.event_b_text, 90))}</p>
+      <p class="q-note">${esc(t.event_a_title || short(t.event_a_text, 90))} ⟷ ${esc(t.event_b_title || short(t.event_b_text, 90))}</p>
       <div class="q-actions"><button type="button" class="btn-approve" data-act="canon" data-id="${t.id}">В канон</button>
         <button type="button" class="btn-reject" data-act="removed" data-id="${t.id}">Убрать</button></div></li>`;
   }
@@ -155,7 +155,7 @@ export async function renderMySubmissions(el, userId, onEdit) {
   const st = e => e.review_status === 'rejected' ? ['rejected', 'Отклонено'] : e.review_status === 'needs_work' ? ['needs-work', 'На доработку'] : ['pending', 'На проверке'];
   el.innerHTML = `<h4>Мои заявки</h4><ul class="sub-list">${list.map(e => { const [c, l] = st(e); return `
     <li class="sub-item ${c}"><span class="sub-stamp">${l}</span>
-      <p>${esc(short(e.event_text, 200))}</p>
+      <p>${e.title ? `<b>${esc(e.title)}.</b> ` : ''}${esc(short(e.event_text, 200))}</p>
       ${e.review_note && e.review_status ? `<p class="sub-note">Модератор: «${esc(e.review_note)}»</p>` : ''}
       <div class="sub-actions">${e.review_status === 'needs_work' ? `<button type="button" class="btn-primary" data-sub="edit" data-id="${e.id}">Исправить и отправить</button>` : ''}
         <button type="button" class="btn-secondary" data-sub="del" data-id="${e.id}">${e.review_status === 'rejected' ? 'Удалить' : 'Отозвать'}</button></div>

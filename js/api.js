@@ -91,7 +91,7 @@ export async function getEventById(eventId) {
 }
 
 // ИСПРАВЛЕНИЕ 3: Добавлен параметр isAutoApprove
-export async function addEvent(eventText, city, isLoreSignificant, eventDate, isAutoApprove = false, coords = {}, asChronicler = false, campaignId = null, personIds = []) {
+export async function addEvent(eventText, city, isLoreSignificant, eventDate, isAutoApprove = false, coords = {}, asChronicler = false, campaignId = null, personIds = [], title = null) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Пользователь не авторизован');
 
@@ -100,6 +100,7 @@ export async function addEvent(eventText, city, isLoreSignificant, eventDate, is
     .insert([{
       user_id: user.id,
       event_text: eventText,
+      title: title || null,
       city: city,
       is_lore_significant: isLoreSignificant,
       is_approved: isAutoApprove, // ИСПРАВЛЕНИЕ: автоодобрение для админов

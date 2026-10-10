@@ -585,3 +585,17 @@ body.guest .dh-note:not(.g),body:not(.guest) .dh-note.g{display:none}
 .blank-sheet.unfold{animation:blUnfold .32s cubic-bezier(.2,.8,.3,1) both;transform-origin:50% 0}
 @keyframes blUnfold{0%{transform:perspective(1200px) rotateX(-70deg);opacity:.3}100%{transform:rotate(-.4deg);opacity:1}}
 @media (max-width:600px){.blank-sheet.unfold{animation-name:blUnfoldM}@keyframes blUnfoldM{0%{transform:perspective(1200px) rotateX(-70deg);opacity:.3}100%{transform:none;opacity:1}}}
+
+/* ---------- Название события (необязательное поле events.title) ---------- */
+.ev-title{margin:0 0 6px;font:700 20px/1.3 var(--serif);letter-spacing:0;text-transform:none;color:inherit;overflow-wrap:anywhere}
+#events-list .ev-title{font-size:21px}
+.ev-sheet .ev-title.sh-title,.ev-sheet h2.ev-title{margin:8px 0 4px;font-size:26px;line-height:1.25}
+.user-event-item .ev-title,.bookmark-card .ev-title{font-size:18px}
+.timeline-event .ev-title{margin:0 0 3px;font-size:19px}
+.timeline-event strong.ev-sub{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:15px;line-height:1.45}
+.pending-event-card .ev-title{margin-bottom:2px;font-size:17px}
+.th-event .th-t,.yp-t{font-weight:700}
+.dh-line.has-t{font-weight:700;opacity:1}
+.dh-note-title{margin:0 0 8px;font:700 21px/1.25 var(--serif);letter-spacing:0;text-transform:none;color:var(--ink);overflow-wrap:anywhere}
+.q-text b{font-weight:700}
+@media (max-width:640px){.ev-sheet .ev-title.sh-title,.ev-sheet h2.ev-title{font-size:22px}#events-list .ev-title{font-size:19px}}

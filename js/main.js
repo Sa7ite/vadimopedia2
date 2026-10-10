@@ -262,6 +262,7 @@ function setupForms() {
     formAddEvent.addEventListener('submit', async (e) => {
       e.preventDefault();
       const eventText = document.getElementById('event-text').value.trim();
+      const eventTitle = document.getElementById('event-title')?.value.trim() || '';
       const city = document.getElementById('event-city').value.trim();
       const isLore = document.getElementById('event-is-lore').checked;
       const asChronicler = document.getElementById('event-as-chronicler')?.checked || false;
@@ -270,6 +271,10 @@ function setupForms() {
 
       if (!eventText) {
         showNotification('Введите текст события', 'error');
+        return;
+      }
+      if (eventTitle.length > 80) {
+        showNotification('Название длиннее 80 знаков. Сократите его или оставьте поле пустым.', 'error');
         return;
       }
       const dateError = validateDate(eventDate);
@@ -290,7 +295,7 @@ function setupForms() {
 
       try {
         const tags = readEventTags(formAddEvent, 'event');
-        await addEvent(eventText, city, isLore, eventDate, isAutoApprove, coords, asChronicler, tags.campaignId, tags.personIds);
+        await addEvent(eventText, city, isLore, eventDate, isAutoApprove, coords, asChronicler, tags.campaignId, tags.personIds, eventTitle);
         if (asChronicler && !isAutoApprove) {
           showNotification('Отправлено на проверку. После одобрения появится от имени Летописца.', 'success');
         } else if (isAutoApprove || !isLore) {
