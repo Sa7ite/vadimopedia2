@@ -1,4 +1,5 @@
 // T2.14: очередь модерации, жалобы, «Мои заявки», окно с причиной. Права проверяет база
+import { askConfirm } from './dialog.js';
 import {
   getPendingEvents, approveEvent, reviewEvent, reportContent, resolveReport, getOpenReports,
   getCases, adminWarrant, getTheories, setTheoryStatus, getMySubmissions, deleteEvent
@@ -93,12 +94,12 @@ export async function renderQueue(el, profile, onChanged = () => {}) {
       }
       else if (act === 'warrant-yes' || act === 'warrant-no') { await adminWarrant(id, act === 'warrant-yes'); ok = act === 'warrant-yes' ? 'Ордер выдан' : 'В ордере отказано'; }
       else if (act === 'canon' || act === 'removed') {
-        if (act === 'removed' && !confirm('Убрать теорию?')) return;
+        if (act === 'removed' && !await askConfirm('Убрать теорию?')) return;
         await setTheoryStatus(Number(id), act); ok = act === 'canon' ? 'Теория признана каноном' : 'Теория убрана';
       }
       else if (act === 'rep-remove' || act === 'rep-dismiss') {
         const remove = act === 'rep-remove';
-        if (remove && !confirm('Убрать материал? Отменить можно в журнале действий.')) return;
+        if (remove && !await askConfirm('Убрать материал? Отменить можно в журнале действий.')) return;
         await resolveReport(id, remove); ok = remove ? 'Убрано по жалобе' : 'Жалоба отклонена';
       }
       b.disabled = true;
@@ -164,7 +165,7 @@ export async function renderMySubmissions(el, userId, onEdit) {
     const b = ev.target.closest('[data-sub]'); if (!b) return;
     const e = list.find(x => String(x.id) === b.dataset.id);
     if (b.dataset.sub === 'edit') { onEdit?.(e, () => renderMySubmissions(el, userId, onEdit)); return; }
-    if (!confirm('Удалить заявку?')) return;
+    if (!await askConfirm('Удалить заявку?')) return;
     try { await deleteEvent(e.id); showNotification('Заявка удалена', 'success'); renderMySubmissions(el, userId, onEdit); }
     catch (err) { showNotification(err.message, 'error'); }
   };

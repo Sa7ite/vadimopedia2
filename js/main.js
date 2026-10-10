@@ -1,6 +1,7 @@
 // ============================================
 // ГЛАВНЫЙ МОДУЛЬ (ТОЧКА ВХОДА)
 // ============================================
+import { askConfirm, askText } from './dialog.js';
 import { supabase } from './config.js';
 import { 
   getProfileWithTitles, getUserCount, getApprovedEvents, getPendingEvents,
@@ -415,7 +416,7 @@ async function loadPendingEvents() {
 }
 
 async function handleDeleteEvent(eventId) {
-  if (!confirm('Вы уверены, что хотите удалить это событие?')) return;
+  if (!await askConfirm('Вы уверены, что хотите удалить это событие?')) return;
   try { 
     await deleteEvent(eventId); 
     showNotification('Событие удалено', 'success'); 
@@ -607,8 +608,8 @@ async function handleGenerateChronicle() {
     // T2.5: вставка в середину — сначала админ сравнивает «было / стало» и подтверждает
     if (result.mode === 'insert') {
       renderInsertReview(result, {
-        onAccept: () => {
-          if (textarea && textarea.value !== baseText && !confirm('Текст в редакторе изменился, пока ИИ работал. Вставка заменит эти правки. Продолжить?')) {
+        onAccept: async () => {
+          if (textarea && textarea.value !== baseText && !await askConfirm('Текст в редакторе изменился, пока ИИ работал. Вставка заменит эти правки. Продолжить?')) {
             showNotification('Вставка не применена, ваши правки сохранены в редакторе.', 'info');
             return;
           }
@@ -874,11 +875,11 @@ async function refreshChatReactions() {
 }
 
 async function handleMute(userId, name) {
-  const v = prompt(`Запретить «${name}» писать в чат на сколько минут?\n0 — снять запрет.`, '60');
+  const v = await askText(`Запретить «${name}» писать в чат на сколько минут?\n0 — снять запрет.`, { value: '60', title: 'Запрет писать' });
   if (v === null) return;
   const min = parseInt(v, 10);
   if (!(min >= 0)) { showNotification('Нужно число минут', 'error'); return; }
-  const reason = min > 0 ? (prompt('Причина (увидит человек):', '') || '') : '';
+  const reason = min > 0 ? ((await askText('Причина (увидит человек):', { title: 'Запрет писать' })) || '') : '';
   try { await muteUser(userId, min, reason); showNotification(min ? `«${name}» молчит ${min} мин.` : `Запрет для «${name}» снят`, 'success'); }
   catch (e) { showNotification(`Ошибка: ${e.message}`, 'error'); }
 }
@@ -931,9 +932,9 @@ function updateMessageInList(updatedMsg) {
   }
 }
 
-function handleDeleteChatClick(messageId, isOwn, isModerator) {
+async function handleDeleteChatClick(messageId, isOwn, isModerator) {
   if (isOwn) {
-    if (confirm('Удалить ваше сообщение?')) handleDeleteOwnMessage(messageId);
+    if (await askConfirm('Удалить ваше сообщение?')) handleDeleteOwnMessage(messageId);
   } else {
     showDeleteReasonModal(messageId, isOwn, isModerator, handleDeleteConfirm);
   }
