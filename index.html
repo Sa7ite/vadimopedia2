@@ -87,6 +87,7 @@
           <figcaption>Событие дня</figcaption></figure>
         <div class="dh-note">
           <div class="dh-note-h" id="dh-note-h">Дело № ····</div>
+          <h3 class="dh-note-title" id="dh-note-title" hidden></h3>
           <p id="dh-note-t">Секретарь достаёт дело дня…</p>
           <button type="button" class="btn-primary" id="dh-note-btn" hidden>Открыть дело</button>
         </div>
@@ -149,6 +150,10 @@
           <div class="bl-head"><span>Донесение</span><span>номер дела присвоят после проверки</span><button type="button" class="btn-link bl-close" id="bl-close">Свернуть бланк</button></div>
           <h3>Добавить событие</h3>
           <form id="form-add-event">
+            <div class="form-input-group">
+              <label for="event-title">Название (необязательно)</label>
+              <input type="text" id="event-title" maxlength="80" placeholder="Коротко, до 80 знаков, например: Открытие кофейни" autocomplete="off">
+            </div>
             <div class="form-input-group">
               <label for="event-text">Текст события</label>
               <textarea id="event-text" rows="3" placeholder="Что произошло? (например: Открыл кофейню)" required></textarea>

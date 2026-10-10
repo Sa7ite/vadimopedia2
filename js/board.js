@@ -2,6 +2,7 @@
 // Всё, что нельзя нарушить (лимиты, права, голоса, канон), проверяет база: здесь только показ и жесты.
 // Модуль самодостаточный: сам добавляет табличку «Доска» в меню и раздел на страницу.
 import { supabase } from './config.js';
+import { evTitle, hasTitle } from './evtitle.js';
 import { getApprovedEvents, getTheories, createTheory, voteTheory, setTheoryStatus, getPersons, getCampaigns, getChronicle, getSettingValue } from './api.js';
 import { showSection, showNotification } from './ui.js';
 
@@ -193,9 +194,9 @@ function cardHtml(e, isCanon) {
   const solos = S.theories.filter((t) => t.event_b == null && t.event_a === e.id);
   return `<div class="bd-card" data-id="${e.id}" style="--r:${r}deg">
     <button type="button" class="bd-pin ${c}" data-pin="${e.id}" aria-label="Протянуть нитку от дела № ${no(e.id)}"></button>
-    <button type="button" class="bd-open" data-open="${e.id}" aria-label="Дело № ${no(e.id)}: ${esc([yearOf(e), e.city].filter(Boolean).join(', '))}. Открыть. Стрелки двигают карточку.">
+    <button type="button" class="bd-open" data-open="${e.id}" title="${esc(e.event_text.length > 220 ? e.event_text.slice(0, 220) + '…' : e.event_text)}" aria-label="Дело № ${no(e.id)}: ${esc(evTitle(e, 64))}, ${esc([yearOf(e), e.city].filter(Boolean).join(', '))}. Открыть. Стрелки двигают карточку.">
       <span class="bd-ch"><span class="bd-no">№ ${no(e.id)}</span><span class="bd-yr">${esc(yearOf(e) ?? '????')}</span></span>
-      <span class="bd-tx">${esc(e.event_text)}</span>
+      <span class="bd-tx${hasTitle(e) ? ' has-t' : ''}">${esc(evTitle(e, 64))}</span>
       ${e.city ? `<span class="bd-pl">${esc(e.city)}</span>` : ''}
     </button>
     ${solos.length ? `<span class="bd-solo">${solos.map((t) => `<button type="button" class="bd-note solo" data-th="${t.id}" aria-label="Записка к делу: ${esc(t.note)}">${esc(words3(t.note))}</button>`).join('')}</span>` : ''}
@@ -333,7 +334,7 @@ function onKey(e) {
 const sheet = () => $('#bd-sheet');
 function closeSheet() { S.sheet = null; const s = sheet(); if (s) { s.hidden = true; s.innerHTML = ''; } }
 
-function evBrief(id) { const e = S.data.events.find((x) => x.id === id); return e ? `${yearOf(e) ?? '????'}${e.city ? ', ' + e.city : ''}: ${e.event_text.length > 90 ? e.event_text.slice(0, 90) + '…' : e.event_text}` : ''; }
+function evBrief(id) { const e = S.data.events.find((x) => x.id === id); return e ? `${yearOf(e) ?? '????'}${e.city ? ', ' + e.city : ''}: ${hasTitle(e) ? e.title.trim() : (e.event_text.length > 90 ? e.event_text.slice(0, 90) + '…' : e.event_text)}` : ''; }
 
 function openSheetFor(id) {
   const t = S.theories.find((x) => x.id === id), s = sheet(); if (!t || !s) { closeSheet(); return; }

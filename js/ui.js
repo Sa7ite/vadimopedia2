@@ -1,4 +1,5 @@
 import { icon } from './icons.js';
+import { hasTitle, evTitle } from './evtitle.js';
 import { getFactions, getUserFaction, getFactionMembers, joinFaction, leaveFaction } from './api.js';
 // ============================================
 // МОДУЛЬ ИНТЕРФЕЙСА
@@ -375,7 +376,7 @@ export async function showUserProfile(userId, currentUserId) {
                   <span class="event-date">${date}</span>
                   ${event.city ? `<span class="badge">${icon('pin')} ${escapeHtml(event.city)}</span>` : ''}
                 </div>
-                <p class="event-text">${escapeHtml(event.event_text)}</p>
+                ${titleLine(event)}<p class="event-text">${escapeHtml(event.event_text)}</p>
               </div>
             `;
           }).join('')}
@@ -555,6 +556,7 @@ export function renderEvents(events, currentUserRole, currentUserId, onDeleteEve
         ${clickableAuthor}
         <span class="event-date">${date}</span>
       </div>
+      ${titleLine(event)}
       <p class="event-text">${escapeHtml(event.event_text)}</p>
       ${eventTagsLine(event)}
       ${event.city ? `<span class="badge">${icon('pin')} ${escapeHtml(event.city)}</span>` : ''}
@@ -798,6 +800,9 @@ export function setupModalCloseHandlers() {
 // ЛЕТОПИСЬ — РЕЖИМ ЧТЕНИЯ
 // ============================================
 
+// строка с названием события (если оно есть); tag — h2/h3/h4
+const titleLine = (e, tag = 'h4') => hasTitle(e) ? `<${tag} class="ev-title">${escapeHtml(String(e.title).trim())}</${tag}>` : '';
+
 function escapeHtml(str) {
   return String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
@@ -1012,7 +1017,7 @@ export function renderChronicleEditor(editor, pendingEvents, handlers) {
           <div class="pending-events-list">
             ${pendingEvents.map(e => `
               <div class="pending-event-card" data-id="${e.id}">
-                <strong>${escapeHtml(e.event_text)}</strong>
+                ${titleLine(e)}<strong>${escapeHtml(e.event_text)}</strong>
                 <div class="event-meta">
                   <span>№ ${e.id}</span>
                   ${e.event_date ? `<span>${icon('calendar')} ${escapeHtml(e.event_date)}</span>` : ''}
@@ -1207,7 +1212,7 @@ export function renderTimeline(events, onEventClick) {
                 <div class="timeline-event" data-id="${e.id}">
                   <div class="event-dot"></div>
                   <div class="event-card">
-                    <strong>${escapeHtml(e.event_text)}</strong>
+                    ${titleLine(e)}<strong${hasTitle(e) ? ' class="ev-sub"' : ''}>${escapeHtml(e.event_text)}</strong>
                     <div class="event-meta">
                       <span>${icon('user')} ${escapeHtml(e.profiles?.full_name || 'Аноним')}</span>
                       ${e.event_date ? `<span>${icon('calendar')} ${escapeHtml(e.event_date)}</span>` : ''}
@@ -1241,7 +1246,7 @@ export function theoryCardHtml(t, ctx) {
   const mine = String(t.author_id) === String(ctx.userId);
   const canon = t.status === 'canon';
   const thick = 1 + Math.min(4, t.believe || 0);
-  const ev = (id, text, date) => `<button type="button" class="th-event" data-th-event="${id}">${date ? `<span class="th-date">${escapeHtml(date)}</span>` : ''}${escapeHtml(shortText(text))}</button>`;
+  const ev = (id, text, date, ttl) => `<button type="button" class="th-event" data-th-event="${id}" title="${escapeHtml(shortText(text, 200))}">${date ? `<span class="th-date">${escapeHtml(date)}</span>` : ''}${ttl && String(ttl).trim() ? `<b class="th-t">${escapeHtml(String(ttl).trim())}</b>` : escapeHtml(shortText(text))}</button>`;
   const vote = (kind, label, n) => `<button type="button" class="th-vote ${t.my_vote === kind ? 'active' : ''}" data-th-act="vote" data-vote="${kind}" aria-pressed="${t.my_vote === kind}" ${mine ? 'disabled title="За свою теорию голосовать нельзя"' : ''}>${label} <b>${n}</b></button>`;
   const admin = ctx.isAdmin
     ? `<button type="button" class="btn-secondary th-small" data-th-act="status" data-status="${canon ? 'active' : 'canon'}">${canon ? 'Снять канон' : 'Сделать каноном'}</button>` : '';
@@ -1250,9 +1255,9 @@ export function theoryCardHtml(t, ctx) {
     <article class="theory-card ${canon ? 'is-canon' : ''}" data-theory-id="${t.id}">
       ${canon ? '<span class="th-stamp">Канон</span>' : ''}
       <div class="th-pair ${t.event_b ? '' : 'th-single'}">
-        ${ev(t.event_a, t.event_a_text, t.event_a_date)}
+        ${ev(t.event_a, t.event_a_text, t.event_a_date, t.event_a_title)}
         ${t.event_b ? `<span class="th-thread" style="--th:${thick}px" title="Толщина нитки — по числу «верю»" aria-hidden="true"></span>
-        ${ev(t.event_b, t.event_b_text, t.event_b_date)}` : ''}
+        ${ev(t.event_b, t.event_b_text, t.event_b_date, t.event_b_title)}` : ''}
       </div>
       <p class="th-note">«${escapeHtml(t.note)}»</p>
       <div class="th-meta">${icon('user')} ${escapeHtml(t.author_name || 'Аноним')}, ${new Date(t.created_at).toLocaleDateString('ru-RU')}</div>
@@ -1268,7 +1273,7 @@ export function theoryCardHtml(t, ctx) {
 
 // форма новой теории: два события + записка до 280 знаков. fixedId — событие, из окна которого связываем
 export function theoryFormHtml(events, fixedId = null) {
-  const opts = (sel) => events.map(e => `<option value="${e.id}" ${String(e.id) === String(sel) ? 'selected' : ''}>${e.event_date ? escapeHtml(e.event_date) + ' — ' : ''}${escapeHtml(shortText(e.event_text, 70))}</option>`).join('');
+  const opts = (sel) => events.map(e => `<option value="${e.id}" ${String(e.id) === String(sel) ? 'selected' : ''}>${e.event_date ? escapeHtml(e.event_date) + ' — ' : ''}${escapeHtml(hasTitle(e) ? String(e.title).trim() : shortText(e.event_text, 70))}</option>`).join('');
   return `
     <form class="theory-form" novalidate>
       <label>Первое событие
@@ -1395,7 +1400,7 @@ export function renderYearPolls(box, { polls, states, years, isAdmin }, h) {
       else if (e.own) action = '<span class="yp-note">Ваше событие</span>';
       else if (!st.my_vote && !expired) action = `<button class="btn-primary yp-small" data-yp="vote" data-event="${e.id}" data-year="${p.year}">Голосовать</button>`;
       return `<li class="yp-row ${leader ? 'is-leader' : ''}">
-        <button type="button" class="yp-event" data-open="${e.id}">${e.event_date ? `<b>${escapeHtml(e.event_date)}</b> ` : ''}${escapeHtml(shortText(e.event_text, 160))}</button>
+        <button type="button" class="yp-event" data-open="${e.id}">${e.event_date ? `<b>${escapeHtml(e.event_date)}</b> ` : ''}${hasTitle(e) ? `<b class="yp-t">${escapeHtml(String(e.title).trim())}.</b> ` : ''}${escapeHtml(shortText(e.event_text, hasTitle(e) ? 110 : 160))}</button>
         <span class="yp-votes" title="Голосов">${e.votes}</span>
         <span class="yp-act">${action}</span></li>`;
     }).join('');
@@ -1629,7 +1634,7 @@ export function renderBookmarks(bookmarks, onEventClick) {
               <strong>${escapeHtml(e.profiles?.full_name || 'Аноним')}</strong>
               <span class="event-date">${new Date(e.created_at).toLocaleDateString('ru-RU')}</span>
             </div>
-            <p class="event-text">${escapeHtml(e.event_text)}</p>
+            ${titleLine(e)}<p class="event-text">${escapeHtml(e.event_text)}</p>
             <div class="event-meta">
               ${e.event_date ? `<span>${icon('calendar')} ${escapeHtml(e.event_date)}</span>` : ''}
               ${e.city ? `<span>${icon('pin')} ${escapeHtml(e.city)}</span>` : ''}
@@ -1735,6 +1740,7 @@ export async function showEventModal(event, currentUserId, onReaction, onComment
         <div class="sh-head"><span>Дело № ${evNo}</span><span>${escapeHtml(event.event_date || 'дата не указана')}</span><span>${escapeHtml(event.city || 'место не указано')}</span></div>
         ${people.length ? `<p class="sh-who">${people.map(escapeHtml).join(', ')}</p>` : ''}
         <div class="event-detail-header">
+          ${titleLine(event, 'h2')}
           <h3 class="sh-text">${escapeHtml(event.event_text)}</h3>
           <div class="event-detail-meta">
             <span>Записал: ${escapeHtml(event.profiles?.full_name || 'Аноним')}</span>
@@ -1941,6 +1947,10 @@ export function showEditEventModal(event, onSave, isValidDate, isValidCity, list
         <h2>Редактировать событие</h2>
       </div>
       <div class="form-input-group">
+        <label for="edit-event-title">Название (необязательно)</label>
+        <input type="text" id="edit-event-title" maxlength="80" value="${escapeHtml(event.title || '')}" placeholder="Коротко, до 80 знаков">
+      </div>
+      <div class="form-input-group">
         <label for="edit-event-text">Текст события</label>
         <textarea id="edit-event-text" rows="3">${escapeHtml(event.event_text)}</textarea>
       </div>
@@ -1968,11 +1978,17 @@ export function showEditEventModal(event, onSave, isValidDate, isValidCity, list
   
   modal.querySelector('#btn-save-event').addEventListener('click', async () => {
     const text = modal.querySelector('#edit-event-text').value.trim();
+    const title = modal.querySelector('#edit-event-title').value.trim();
     const city = modal.querySelector('#edit-event-city').value.trim();
     const date = modal.querySelector('#edit-event-date').value.trim();
     
     if (!text) {
       showNotification('Текст события не может быть пустым', 'error');
+      return;
+    }
+    
+    if (title.length > 80) {
+      showNotification('Название длиннее 80 знаков. Сократите его или оставьте поле пустым.', 'error');
       return;
     }
     
@@ -1988,7 +2004,7 @@ export function showEditEventModal(event, onSave, isValidDate, isValidCity, list
     
     try {
       const tags = readEventTags(modal, 'edit-event');
-      const updates = { event_text: text, city: city || null, event_date: date || null };
+      const updates = { event_text: text, title: title || null, city: city || null, event_date: date || null };
       if (modal.querySelector('#edit-event-campaign')) updates.campaign_id = tags.campaignId;
       await onSave(event.id, updates, modal.querySelector('#edit-event-people') ? tags.personIds : null);
       showNotification('Событие обновлено!', 'success');

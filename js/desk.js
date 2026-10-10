@@ -1,5 +1,5 @@
 // T3.2: главная в теме «Секретное досье» — ящик картотеки, «Событие дня» на фото с запиской, том новой главы.
-// Старая тема этот блок не показывает (themes.css). Тексты событий не меняются: длинные обрезает CSS с «…».
+// Старая тема этот блок не показывает (themes.css). Тексты событий не меняются: в папке показано название (если есть), иначе начало текста; длинное обрезает CSS с «…».
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const no = (id) => String(id).padStart(4, '0');
@@ -30,8 +30,8 @@ export function renderDesk(events, onOpen) {
   }
   const fresh = [...events].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 9);
   rows.innerHTML = fresh.length ? fresh.map((e, i) => `<button type="button" class="dh-fold" style="--d:${i}" data-id="${e.id}"
-      aria-label="Дело № ${no(e.id)}: ${esc(tab(e))}"><span class="dh-tab p${i % 3}">${esc(tab(e))}</span>
-      <span class="dh-line">${esc(e.event_text)}</span></button>`).join('')
+      aria-label="Дело № ${no(e.id)}: ${esc(e.title || tab(e))}"><span class="dh-tab p${i % 3}">${esc(tab(e))}</span>
+      <span class="dh-line${e.title ? ' has-t' : ''}">${esc(e.title || e.event_text)}</span></button>`).join('')
     : '<p class="dh-empty">Ящик пока пуст — добавьте первое событие.</p>';
   if (count) count.textContent = `${events.length} ${plural(events.length, 'дело', 'дела', 'дел')}`;
   slideOnce();
@@ -49,6 +49,8 @@ window.vpDeskDay = (e, open) => {
   $('#dh-year').textContent = year(e) || '????';
   $('#dh-city').textContent = e.city || 'место не указано';
   $('#dh-note-h').textContent = `Дело № ${no(e.id)}`;
+  const nt = $('#dh-note-title');
+  if (nt) { nt.textContent = e.title || ''; nt.hidden = !e.title; }
   $('#dh-note-t').textContent = e.event_text;
   const b = $('#dh-note-btn');
   b.hidden = false;

@@ -1,16 +1,17 @@
 /* T3.5: доска расследования. Цвета — из docs/design.md 2.1; шрифты те же, что у темы (Literata, PT Mono, Caveat). */
 #section-board .container{max-width:1320px}
-.bd{--cork:#8E7350;--paper:#DADBD0;--ink:#1D2330;--red:#B5261E;--wax:#8F1D17;--blue:#2B4C8C;--graphite:#55575C;--violet:#5A2E8F;--tag:#E3C65A;--steel:#55645E;--card:#C6A663;font-family:Literata,"PT Serif",Georgia,serif;color:var(--ink)}
+.bd{--cork:#8E7350;--paper:#DADBD0;--ink:#1D2330;--red:#B5261E;--wax:#8F1D17;--blue:#2B4C8C;--graphite:#55575C;--violet:#5A2E8F;--tag:#E3C65A;--steel:#55645E;--card:#C6A663;font-family:Literata,"PT Serif",Georgia,serif;color:var(--paper)}
 .bd button{font-family:inherit}
 .bd-head{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-end;margin:0 0 12px}
 .bd-kinds{display:flex;flex-wrap:wrap;gap:8px}
 .bd-tag{min-height:44px;padding:8px 18px;background:var(--card);color:var(--ink);border:0;font-size:16px;font-weight:600;cursor:pointer;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,0 100%);padding-right:26px;box-shadow:inset 0 -3px 0 rgba(12,20,17,.25)}
 .bd-tag[aria-pressed=true]{background:var(--violet);color:var(--paper);box-shadow:none}
-.bd-pick{display:flex;flex-direction:column;gap:2px;font-size:14px;color:var(--ink)}
+.bd-pick{display:flex;flex-direction:column;gap:2px;font-size:15px;color:var(--paper)}
 .bd-pick select{min-height:44px;max-width:360px;font:inherit;font-size:16px;padding:6px 10px;background:var(--paper);color:var(--ink);border:2px solid var(--ink)}
 .bd-pager{display:flex;align-items:center;gap:10px;font-size:16px}
 .bd-pager button{min-height:44px}
-.bd-info{margin:0 0 10px;font-size:16px;min-height:1.6em;color:var(--ink)}
+.bd-info{margin:0 0 10px;font-size:16px;min-height:1.6em;color:var(--paper)}
+.bd-pager .btn-secondary,.bd-list .btn-link{color:var(--tag)}
 /* рама и пробка */
 .bd-frame{border:14px solid #4A3626;box-shadow:inset 0 0 0 2px #2c1f14,0 4px 0 #0C1411,0 10px 18px -6px rgba(12,20,17,.6);background:var(--cork);position:relative}
 .bd-scroll{overflow:auto;position:relative}
@@ -33,12 +34,20 @@
 .bd-open{display:block;width:100%;text-align:left;background:none;border:0;padding:16px 10px 9px;color:var(--ink);cursor:inherit;min-height:104px}
 .bd-ch{display:flex;justify-content:space-between;gap:6px;font-family:"PT Mono",monospace;font-size:12px;border-bottom:1px solid var(--graphite);padding-bottom:3px;margin-bottom:5px}
 .bd-yr{font-weight:700}
-.bd-tx{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;font-size:14px;line-height:1.35}
+.bd-tx{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;font-family:"Literata",Georgia,serif;font-weight:700;font-size:16px;line-height:1.25;overflow-wrap:anywhere}
 .bd-pl{display:block;margin-top:4px;font-size:13px;color:var(--graphite)}
-.bd-pin{position:absolute;left:50%;top:-8px;width:18px;height:18px;margin-left:-9px;border-radius:50%;border:0;padding:0;cursor:crosshair;z-index:4;touch-action:none;box-shadow:1px 3px 3px rgba(12,20,17,.55),inset -3px -3px 4px rgba(12,20,17,.35),inset 3px 3px 4px rgba(255,255,255,.35)}
-.bd-pin::after{content:"";position:absolute;inset:-13px}
-.bd-pin.c0{background:var(--blue)}.bd-pin.c1{background:var(--tag)}.bd-pin.c2{background:#3C7A4A}.bd-pin.red{background:var(--red)}
-.bd-pin.armed{outline:3px solid var(--violet);outline-offset:3px}
+/* канцелярский гвоздик (кнопка): круглое основание, выпуклая шляпка, жёсткий блик и жёсткая тень на пробке */
+.bd-pin{position:absolute;left:50%;top:-10px;width:22px;height:22px;margin-left:-11px;border-radius:50%;border:0;padding:0;cursor:crosshair;z-index:4;touch-action:none;
+  --pc:#2F5DA8;--pl:#7FA3E0;--pd:#1B3568;
+  background:radial-gradient(circle at 37% 32%,#fff 0 6%,transparent 7%),radial-gradient(circle at 42% 38%,var(--pl) 0 17%,var(--pc) 18% 40%,var(--pd) 41% 46%,transparent 47%),var(--pl);
+  box-shadow:0 0 0 2px var(--pd),3px 4px 0 2px rgba(12,20,17,.4)}
+.bd-pin::after{content:"";position:absolute;inset:-11px}
+.bd-pin.c0{--pc:#2F5DA8;--pl:#7FA3E0;--pd:#1B3568}
+.bd-pin.c1{--pc:#D9B531;--pl:#F5E38A;--pd:#8E7410}
+.bd-pin.c2{--pc:#3C7A4A;--pl:#86C494;--pd:#1F4A2B}
+.bd-pin.red{--pc:#B5261E;--pl:#EE7D74;--pd:#6B120C}
+.bd-pin:active{transform:translate(1px,1px)}
+.bd .bd-pin:focus-visible,.bd .bd-pin.armed{outline:3px solid #fff;outline-offset:6px}
 .bd-board.connecting .bd-card{cursor:crosshair}
 /* записки на нитках и сургуч канона */
 .bd-note{position:absolute;pointer-events:auto;transform:translate(-50%,-50%) rotate(var(--r,0deg));background:var(--tag);color:var(--ink);border:0;padding:5px 10px;min-height:32px;font:700 18px/1.1 Caveat,"Bad Script",cursive;cursor:pointer;box-shadow:1px 2px 0 rgba(12,20,17,.5),3px 5px 6px -2px rgba(12,20,17,.45);max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -48,7 +57,7 @@
 .bd-note.solo{position:relative;transform:rotate(var(--r,-2deg));left:auto;top:auto}
 .bd-wax{position:absolute;transform:translate(-50%,-50%);width:32px;height:32px;display:grid;place-items:center;background:var(--wax);color:var(--paper);font:700 17px Literata,serif;border-radius:48% 52% 46% 54%/52% 46% 54% 48%;box-shadow:1px 3px 3px rgba(12,20,17,.6),inset 0 0 0 2px rgba(0,0,0,.25);pointer-events:none}
 /* лист-записка */
-.bd-sheet{position:fixed;right:24px;bottom:24px;width:min(400px,calc(100vw - 32px));max-height:min(82vh,680px);overflow:auto;z-index:1200;background:var(--paper);padding:22px 20px 18px;box-shadow:2px 3px 0 rgba(12,20,17,.5),12px 22px 30px -8px rgba(12,20,17,.65);transform:rotate(.3deg)}
+.bd-sheet{color:var(--ink);position:fixed;right:24px;bottom:24px;width:min(400px,calc(100vw - 32px));max-height:min(82vh,680px);overflow:auto;z-index:1200;background:var(--paper);padding:22px 20px 18px;box-shadow:2px 3px 0 rgba(12,20,17,.5),12px 22px 30px -8px rgba(12,20,17,.65);transform:rotate(.3deg)}
 .bd-sheet[hidden]{display:none}
 .bd-sheet h3{margin:0 28px 10px 0;font-size:20px;line-height:1.25}
 .bd-x{position:absolute;right:6px;top:6px;width:44px;height:44px;border:0;background:none;color:var(--ink);font-size:28px;line-height:1;cursor:pointer}
@@ -73,7 +82,8 @@
 .bd-list li{margin:0 0 4px}
 .bd-list .btn-link{text-align:left;min-height:44px}
 .bd-empty{padding:40px 20px;text-align:center;font-size:18px}
-.bd button:focus-visible,.bd select:focus-visible,.bd textarea:focus-visible,.bd summary:focus-visible{outline:3px solid var(--violet);outline-offset:2px;box-shadow:0 0 0 2px var(--paper)}
+.bd button:focus-visible,.bd select:focus-visible,.bd textarea:focus-visible,.bd summary:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.bd-sheet button:focus-visible,.bd-sheet select:focus-visible,.bd-sheet textarea:focus-visible{outline-color:var(--violet);box-shadow:0 0 0 2px var(--paper)}
 .bd-card:focus-within{z-index:6}
 @media (max-width:600px){
   .bd-frame{border-width:8px}
