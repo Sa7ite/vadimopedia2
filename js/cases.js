@@ -17,6 +17,7 @@ const AUTH = { arrest: 'арест' };
 let me = null;
 let prefill = null;
 let cfg = {};
+let allCases = [];
 
 // из чужого профиля: «Открыть дело» с готовым ответчиком
 export function openCaseAgainst(userId) { prefill = userId; }
@@ -44,6 +45,8 @@ export async function renderCases(profile) {
       getSettingValue('sentence.max_hours', 24), getSettingValue('appeal.max', 1)]);
   } catch (err) { box.innerHTML = `<p class="empty-state">Не удалось загрузить дела: ${esc(err.message)}</p>`; return; }
   cfg.arrested = !!arrest;
+  allCases = cases;
+  document.querySelector('.knock-overlay')?.remove();
   document.querySelector('.nav-link[data-section="cases"]')?.classList.toggle('has-alert', cases.some(c => c.status === 'arrest' && c.defendant_id === me.id));
   const free = evidence.filter(e => !e.case_id);
   const open = cases.filter(c => c.status !== 'closed');
@@ -59,6 +62,8 @@ export async function renderCases(profile) {
     ${open.length ? `<h3 class="case-group">Открытые (${open.length})</h3><div class="case-list">${open.map(cardHtml).join('')}</div>` : ''}
     ${closed.length ? `<h3 class="case-group">Архив (${closed.length})</h3><div class="case-list">${closed.map(cardHtml).join('')}</div>` : ''}`;
   bind(box);
+  const knock = cases.find(c => c.status === 'arrest' && c.defendant_id === me.id);
+  if (knock && !sessionStorage.getItem(`vpKnock${knock.id}:${knock.door}`)) showKnock(knock);
   if (prefill) box.querySelector('.case-new')?.scrollIntoView({ block: 'start' });
   prefill = null;
 }
@@ -67,6 +72,7 @@ function formHtml(people, free) {
   if (cfg.arrested) return '<p class="case-note">Под арестом дела не открывают.</p>';
   if (!free.length) return '<p class="case-note">Нужна хотя бы одна улика. Нажмите «Улика» у события или значок папки у сообщения в чате — потом возвращайтесь.</p>';
   return `<form class="case-form" id="case-form">
+    <h3 class="case-form-h">Постановление о возбуждении дела</h3>
     <label>Ответчик
       <select name="defendant" required><option value="">— выберите —</option>
         ${people.map(p => `<option value="${p.id}" ${p.id === prefill ? 'selected' : ''}>${esc(p.full_name || 'Без имени')}</option>`).join('')}
@@ -91,6 +97,9 @@ function credHtml(cr) {
       <p class="cred-meta">Выдано ${cr.granted_at ? new Date(cr.granted_at).toLocaleDateString('ru-RU') : '—'} · полномочия: ${esc((cr.authority || []).map(a => AUTH[a] || a).join(', ') || 'нет')}</p>
       ${cr.revoked ? `<span class="cred-stamp">Отозвано ${new Date(cr.revoked_at).toLocaleDateString('ru-RU')}</span>` : ''}
     </article>
+    <ul class="case-marks" aria-label="Отметки проверки">
+      ${[['Титул подлинный', cr.genuine], ['Не отозван', !cr.revoked], ['Полномочия достаточны', (cr.authority || []).includes('arrest')]].map(([t, v], k) => `<li class="${v ? 'ok' : 'bad'}" style="--k:${k}"><span>${t}</span><b class="mk-stamp">${v ? 'Верно' : 'Не верно'}</b></li>`).join('')}
+    </ul>
     <p class="${ok ? 'case-ok' : 'case-warn'}">${ok ? `${icon('check')} Сайт проверил: удостоверение настоящее, действует и даёт право ареста.` : `${icon('alert')} Документы не в порядке.`}</p>
   </div>`;
 }
@@ -119,14 +128,7 @@ function actionsHtml(c) {
   }
   if (c.status === 'arrest') {
     if (isDef) {
-      out.push(`<div class="case-knock"><b>${icon('alert')} К вам пришли: дело ${caseNo(c.id)}.</b>
-        <p>Ответьте до ${fmt(c.door_deadline)} — иначе дверь считается открытой.</p>
-        ${c.door === 'docs_ok' ? credHtml(c.credential) : ''}
-        <div class="case-btns">
-          <button type="button" class="btn-primary" data-act="door-open">Открыть дверь</button>
-          ${c.door === 'pending' ? '<button type="button" class="btn-secondary" data-act="door-docs">Предъявите документы</button>' : ''}
-          ${c.door === 'docs_ok' ? '<button type="button" class="btn-secondary" data-act="door-resist">Не открывать</button>' : ''}
-        </div></div>`);
+      out.push(`<button type="button" class="btn-primary" data-act="knock-show">Повестка: к вам пришли</button>`);
     } else out.push(`<p class="case-meta">Ордер получен (${c.warrant_by === 'admin' ? 'админ' : 'фракция'}). Ждём ответчика у двери до ${fmt(c.door_deadline)}.</p>`);
   }
   if (isDef && ['arrest', 'trial'].includes(c.status) && !c.defense) {
@@ -136,8 +138,8 @@ function actionsHtml(c) {
   if (c.status === 'trial') {
     const v = c.votes;
     out.push(`<p class="case-meta">Суд до ${fmt(c.trial_ends_at)}. Голоса: виновен ${v.guilty} · оправдан ${v.acquit} · обвинение ложное ${v.false}.</p>`);
-    if (!party && !cfg.arrested) out.push(`<div class="case-btns" role="group" aria-label="Ваш голос">
-      ${[['guilty', 'Виновен'], ['acquit', 'Оправдан'], ['false', 'Обвинение ложное']].map(([k, t]) => `<button type="button" class="btn-secondary ${c.my_verdict === k ? 'active' : ''}" aria-pressed="${c.my_verdict === k}" data-act="vote" data-v="${k}">${t}</button>`).join('')}</div>`);
+    if (!party && !cfg.arrested) out.push(`<div class="case-btns ballots" role="group" aria-label="Ваш голос">
+      ${[['guilty', 'Виновен'], ['acquit', 'Оправдан'], ['false', 'Обвинение ложное']].map(([k, t]) => `<button type="button" class="btn-secondary ${c.my_verdict === k ? 'active' : ''}" aria-pressed="${c.my_verdict === k}" data-act="vote" data-v="${k}">${t}</button>`).join('')}<span class="ballot-box" aria-hidden="true"></span></div>`);
     if (isAdmin) out.push(`<div class="case-admin"><label>Срок, ч <input type="number" name="hours" min="1" max="${cfg.max}" value="${cfg.max}"></label>
       <label class="case-check"><input type="checkbox" name="false"> обвинение ложное</label>
       <button type="button" class="btn-primary" data-act="verdict-guilty">Виновен</button><button type="button" class="btn-secondary" data-act="verdict-acquit">Оправдан</button></div>`);
@@ -148,6 +150,38 @@ function actionsHtml(c) {
   }
   if (isAdmin && (c.status !== 'closed' || c.sentence_until)) out.push(`<button type="button" class="btn-danger" data-act="cancel">Отменить дело</button>`);
   return out.join('');
+}
+
+function knockHtml(c) {
+  return `<div class="knock-sheet" role="dialog" aria-modal="true" aria-labelledby="knock-h" data-case="${c.id}">
+    <button type="button" class="knock-close" data-act="knock-close" aria-label="Свернуть повестку">&times;</button>
+    <p class="knock-no">Дело ${caseNo(c.id)}</p>
+    <h2 id="knock-h">К вам пришли</h2>
+    <p class="knock-charge">${esc(c.accuser || '—')} обвиняет вас: ${esc(c.charge)}</p>
+    <p class="knock-dl">Ответьте до ${fmt(c.door_deadline)}, иначе дверь считается открытой.</p>
+    ${c.door === 'docs_ok' ? credHtml(c.credential) : ''}
+    <div class="case-btns knock-btns">
+      <button type="button" class="btn-primary knock-big" data-act="door-open">Открыть дверь</button>
+      ${c.door === 'pending' ? '<button type="button" class="btn-primary knock-big alt" data-act="door-docs">Предъявите документы</button>' : ''}
+      ${c.door === 'docs_ok' ? '<button type="button" class="btn-secondary" data-act="door-resist">Не открывать</button>' : ''}
+    </div>
+  </div>`;
+}
+
+function showKnock(c, mark = true) {
+  document.querySelector('.knock-overlay')?.remove();
+  if (mark) sessionStorage.setItem(`vpKnock${c.id}:${c.door}`, '1');
+  const ov = document.createElement('div');
+  ov.className = 'knock-overlay';
+  ov.innerHTML = knockHtml(c);
+  document.body.appendChild(ov);
+  const close = () => { ov.remove(); document.removeEventListener('keydown', onKey); };
+  const onKey = e => { if (e.key === 'Escape') close(); };
+  document.addEventListener('keydown', onKey);
+  ov.addEventListener('click', e => { if (e.target === ov) close(); });
+  ov.querySelector('.knock-close').addEventListener('click', close);
+  bindActs(ov, c.id, () => renderCases(me), close);
+  ov.querySelector('.knock-btns button')?.focus();
 }
 
 function cardHtml(c) {
@@ -187,9 +221,25 @@ function bind(box) {
       e.preventDefault();
       run(e.target.querySelector('button'), () => submitDefense(id, e.target.text.value.trim()), 'Ответ записан в деле');
     });
-    card.querySelectorAll('[data-act]').forEach(btn => btn.addEventListener('click', () => {
+    bindActs(card, id, reload);
+  });
+}
+
+// кнопки действий внутри карточки дела или повестки
+function bindActs(scope, id, reload, after) {
+  const run = async (btn, fn, ok) => {
+    if (btn) btn.disabled = true;
+    try {
+      if (btn?.dataset.act === 'vote') { btn.classList.add('dropping'); await new Promise(r => setTimeout(r, 300)); } // бюллетень падает в урну
+      const r = await fn(); if (ok) showNotification(typeof ok === 'function' ? ok(r) : ok, 'success'); after?.(); await reload();
+    }
+    catch (err) { showNotification(err.message, 'error'); if (btn) { btn.disabled = false; btn.classList.remove('dropping'); } }
+  };
+  scope.querySelectorAll('[data-act]').forEach(btn => btn.addEventListener('click', () => {
       const a = btn.dataset.act;
-      const adm = card.querySelector('.case-admin');
+      if (a === 'knock-close') return;
+      if (a === 'knock-show') { const c = allCases.find(x => String(x.id) === String(id)); if (c) showKnock(c, false); return; }
+      const adm = scope.querySelector('.case-admin');
       if (a === 'warrant') run(btn, () => supportWarrant(id), 'Голос за ордер учтён');
       else if (a === 'warrant-yes') run(btn, () => adminWarrant(id, true), 'Ордер выдан');
       else if (a === 'warrant-no') { if (confirm('Отказать в ордере? Дело закроется.')) run(btn, () => adminWarrant(id, false), 'В ордере отказано'); }
@@ -207,5 +257,4 @@ function bind(box) {
       else if (a === 'appeal') { if (confirm('Обжаловать? Это можно сделать только один раз; суд пройдёт заново.')) run(btn, () => appealCase(id), 'Апелляция подана, срок приостановлен'); }
       else if (a === 'cancel') { if (confirm('Отменить дело и приговор? Ограничения снимутся сразу.')) run(btn, () => cancelCase(id), 'Дело отменено'); }
     }));
-  });
 }
