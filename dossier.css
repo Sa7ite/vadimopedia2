@@ -728,3 +728,70 @@ body.guest .dh-note:not(.g),body:not(.guest) .dh-note.g{display:none}
 .cab-edit .form-input-group>label{color:var(--graphite)}
 .cab-edit .form-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;margin-top:22px}
 @media (max-width:600px){.profile-card.cab-edit{margin-top:14px;padding:24px 16px 20px;transform:none}}
+
+/* ---------- T3.7: чат — лист-протокол с разделителями каналов ---------- */
+#section-chat>.container{max-width:900px;margin:0 auto;padding:0 40px;background:none;color:var(--paper);box-shadow:none}
+#section-chat>.container>h2{margin:0 0 22px;padding:0 0 12px;border-bottom:1px solid rgba(218,219,208,.35);font:700 34px/1.2 var(--serif);color:var(--paper)}
+#section-chat .chat-tabs,#section-chat .chat-tabs[hidden]{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 -2px 22px;padding:0;position:relative;z-index:2}
+#section-chat .chat-tabs button{min-height:44px;padding:0 20px;border:2px solid #0b0f0d;border-bottom:0;border-radius:0;background:var(--steel-d);color:var(--paper);font:600 16px var(--serif);cursor:pointer;box-shadow:none;transform:translateY(6px);transition:transform .12s}
+#section-chat .chat-tabs button:hover{transform:translateY(2px)}
+#section-chat .chat-tabs button[aria-selected=true]{transform:none;background:var(--grain),var(--paper);color:var(--ink);border-color:#0b0f0d;padding-top:4px;min-height:50px;font-weight:700}
+#section-chat .chat-tabs button:focus-visible{outline:3px solid #fff;outline-offset:-5px}
+#section-chat .case-jail{margin:0 0 12px;padding:10px 14px;background:var(--paper2);color:var(--ink);border:3px double var(--thread);font:600 16px/1.4 var(--serif)}
+#section-chat .chat-container{position:relative;isolation:isolate;display:block;background:none;color:var(--ink);border:2px solid #0b0f0d;box-shadow:5px 7px 0 var(--sh);padding:0}
+#section-chat .chat-container::after{content:"";position:absolute;z-index:-1;inset:0;background:var(--grain),var(--paper)}
+#section-chat[data-ch=cell] .chat-container::after{background:var(--grain),#B5B2A0}
+#section-chat[data-ch=cell] .chat-container::before{content:"";position:absolute;z-index:-2;inset:-18px -26px;background:repeating-linear-gradient(90deg,#0b0f0d 0 7px,transparent 7px 46px)}
+#section-chat[data-ch=faction] .chat-container{border-top:6px solid var(--seal)}
+#section-chat #chat-messages{height:clamp(340px,58vh,600px);overflow-y:auto;padding:18px 28px 8px}
+#section-chat .chat-empty{padding:30px 0;text-align:center}
+#section-chat .chat-day{margin:18px 0 6px;text-align:center;font:14px var(--mono);color:var(--graphite);letter-spacing:.04em}
+#section-chat .chat-day::before,#section-chat .chat-day::after{content:"";display:inline-block;width:56px;height:0;margin:0 12px;border-top:1px dashed var(--graphite);vertical-align:middle}
+#section-chat #chat-messages .chat-message{display:block;margin:0;padding:10px 0 2px;border:0;border-top:1px dotted #8a8d86;background:none;color:var(--ink);transition:none}
+#section-chat #chat-messages .chat-day+.chat-message{border-top:0}
+#section-chat #chat-messages .chat-message-header{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;margin:0 0 2px;padding:0;border:0}
+#section-chat #chat-messages .chat-author{min-height:0;padding:0;border:0;background:none;font:700 18px/1.3 var(--serif);color:var(--ink);text-decoration:none;cursor:pointer}
+#section-chat #chat-messages .chat-author:hover{text-decoration:underline}
+#section-chat #chat-messages .chat-author.own{color:var(--pen);font-family:var(--hand);font-size:24px;font-weight:700}
+#section-chat #chat-messages .chat-you{font:14px var(--serif);color:var(--graphite)}
+#section-chat #chat-messages .chat-titles{display:inline-flex;flex-wrap:wrap;gap:4px}
+#section-chat #chat-messages .chat-title-chip{padding:0 6px;border:1px solid var(--graphite);border-radius:0;font:14px/1.5 var(--serif);color:var(--graphite);background:none}
+#section-chat #chat-messages .chat-time{margin-left:auto;font:13px var(--mono);color:var(--graphite)}
+#section-chat #chat-messages .chat-message-text{margin:0;font:400 18px/1.55 var(--serif);color:var(--ink);overflow-wrap:anywhere}
+#section-chat #chat-messages .chat-message.own .chat-message-text{font-family:var(--hand);font-size:23px;line-height:1.35;color:var(--pen)}
+#section-chat #chat-messages .chat-mention{color:var(--seal);font-weight:700;text-decoration:none;background:rgba(227,198,90,.4);padding:0 3px}
+#section-chat #chat-messages .chat-message.mentions-me{background:rgba(227,198,90,.22);margin:0 -10px;padding-left:10px;padding-right:10px}
+#section-chat #chat-messages .chat-reply-ref{margin:2px 0 6px;padding:4px 10px;border:1px dashed var(--graphite);border-left-width:1px;background:var(--paper2);color:var(--ink);opacity:1;font:15px/1.4 var(--serif)}
+#section-chat #chat-messages .chat-quote{margin:4px 0;padding:10px 14px;border:3px double var(--graphite);font:italic 18px/1.5 var(--serif);background:var(--paper2)}
+#section-chat #chat-messages .chat-quote cite{display:block;margin-top:4px;font:14px var(--serif);color:var(--graphite);font-style:normal}
+#section-chat #chat-messages .deleted-text{font-style:italic;color:var(--graphite);text-decoration:none}
+#section-chat #chat-messages .chat-message.deleted .chat-author{color:var(--graphite)}
+#section-chat #chat-messages .chat-message-foot{display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:44px;margin:0}
+#section-chat #chat-messages .chat-acts{display:flex;flex-wrap:wrap;gap:0 14px;opacity:0;pointer-events:none;transition:opacity .15s}
+#section-chat #chat-messages .chat-message:hover .chat-acts,#section-chat #chat-messages .chat-message.open .chat-acts,#section-chat #chat-messages .chat-message:focus-within .chat-acts{opacity:1;pointer-events:auto}
+#section-chat #chat-messages .chat-acts button{min-height:44px;padding:0 2px;border:0;border-bottom:2px solid transparent;background:none;border-radius:0;box-shadow:none;font:600 15px var(--serif);color:var(--ink);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+#section-chat #chat-messages .chat-acts .btn-delete-message,#section-chat #chat-messages .chat-acts .chat-report-btn{color:var(--thread)}
+#section-chat #chat-messages .chat-acts button:focus-visible,#section-chat #chat-messages .chat-react:focus-visible,#section-chat #chat-messages .chat-author:focus-visible{outline:3px solid var(--seal);outline-offset:1px}
+#section-chat #chat-messages .chat-reacts{display:flex;gap:2px;margin-left:auto}
+#section-chat #chat-messages .chat-react,#section-chat #chat-messages .chat-react-count{display:inline-flex;align-items:center;gap:4px;min-width:44px;min-height:44px;justify-content:center;padding:0 6px;border:0;border-radius:0;background:none;box-shadow:none;color:var(--graphite);font:600 15px var(--serif);cursor:pointer}
+#section-chat #chat-messages .chat-react-count{cursor:default}
+#section-chat #chat-messages .chat-react .ic,#section-chat #chat-messages .chat-react-count .ic{width:20px;height:20px}
+#section-chat #chat-messages .chat-react:hover{color:var(--ink)}
+#section-chat #chat-messages .chat-react.active{color:var(--seal)}
+#section-chat #chat-messages .chat-react.active[data-react=dislike]{color:var(--thread)}
+#section-chat #chat-messages .chat-message.system{margin:12px 0 4px;padding:10px 14px;border:2px solid var(--steel-d);outline:1px solid var(--steel-d);outline-offset:3px;background:none;transform:rotate(-.3deg)}
+#section-chat #chat-messages .chat-sys{display:flex;gap:10px;align-items:baseline;margin:0 0 4px}
+#section-chat #chat-messages .chat-sys-label{font:700 14px var(--mono);color:var(--steel-d);letter-spacing:.03em}
+#section-chat #chat-messages .chat-message.system .chat-message-text{font:16px/1.5 var(--mono);font-style:normal;color:var(--ink)}
+#section-chat #chat-messages .chat-sys-act{min-height:44px;padding:0 2px;border:0;background:none;font:600 15px var(--serif);color:var(--seal);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+#section-chat .chat-reply-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0;padding:6px 28px;background:var(--paper2);border-top:1px dashed var(--graphite);font:15px/1.4 var(--serif);color:var(--ink)}
+#section-chat .chat-reply-bar button{min-width:44px;min-height:44px;border:0;background:none;font:700 22px var(--serif);color:var(--ink);cursor:pointer}
+#section-chat .chat-input-form{display:flex;flex-wrap:wrap;align-items:flex-end;gap:6px 18px;margin:0;padding:10px 28px 18px;border-top:2px solid var(--ink);background:none}
+#section-chat .chat-input-form input{flex:1 1 260px;min-width:0}
+#section-chat .chat-input-form button{flex:none}
+@media (max-width:600px){#section-chat>.container{padding:0 10px}#section-chat>.container>h2{font-size:26px}#section-chat #chat-messages{padding:14px 14px 6px;height:clamp(320px,56vh,560px)}#section-chat .chat-input-form{padding:8px 14px 14px}#section-chat .chat-reply-bar{padding:6px 14px}#section-chat .chat-tabs{margin-left:8px}#section-chat .chat-tabs button{padding:0 12px;font-size:15px}#section-chat #chat-messages .chat-message.mentions-me{margin:0 -4px;padding-left:4px;padding-right:4px}#section-chat[data-ch=cell] .chat-container::before{inset:-12px -8px}}
+@media (hover:none){#section-chat #chat-messages .chat-acts{transition:none}}
+@media (prefers-reduced-motion:reduce){#section-chat .chat-tabs button{transition:none}}
+#section-chat[data-ch=cell]{--graphite:#33353A}
+#section-chat .chat-input-form input::placeholder{color:var(--graphite);opacity:.85}
+#section-chat #chat-messages .chat-message.own.deleted .chat-message-text,#section-chat #chat-messages .chat-message.deleted .chat-message-text{font:italic 17px/1.5 var(--serif);color:var(--graphite)}

@@ -812,6 +812,7 @@ async function setupChatChannel() {
   tabs.dataset.jailed = until ? '1' : '';
   if (!list.some(t => t.ch === chatChannelName)) chatChannelName = 'general';
   tabs.hidden = list.length < 2;
+  document.getElementById('section-chat').dataset.ch = chatChannelName.startsWith('faction:') ? 'faction' : chatChannelName;
   tabs.innerHTML = list.map(t => `<button type="button" role="tab" data-ch="${t.ch}" aria-selected="${t.ch === chatChannelName}">${escapeText(t.label)}</button>`).join('');
   if (!tabs.dataset.bound) {
     tabs.dataset.bound = '1';
