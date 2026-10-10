@@ -133,7 +133,7 @@ function itemHtml(i) {
     return `<li class="q-item"><span class="q-kind">Новая теория</span>
       <p class="q-text">«${esc(t.note)}»</p>
       <p class="q-meta">${esc(t.author_name || 'Аноним')} · ${day(t.created_at)} · верю ${t.believe} / не верю ${t.doubt}</p>
-      <p class="q-note">${esc(t.event_a_title || short(t.event_a_text, 90))} ⟷ ${esc(t.event_b_title || short(t.event_b_text, 90))}</p>
+      <p class="q-note">${esc(t.event_a_title || short(t.event_a_text, 90))}${t.event_b_text || t.event_b_title ? ` и ${esc(t.event_b_title || short(t.event_b_text, 90))}` : ''}</p>
       <div class="q-actions"><button type="button" class="btn-approve" data-act="canon" data-id="${t.id}">В канон</button>
         <button type="button" class="btn-reject" data-act="removed" data-id="${t.id}">Убрать</button></div></li>`;
   }

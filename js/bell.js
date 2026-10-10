@@ -115,7 +115,7 @@ function go(l) {
 function renderPrefs() {
   const panel = document.querySelector('#bell .bell-panel');
   const muted = new Set(st.prefs.muted_kinds || []);
-  panel.innerHTML = `<div class="bell-head"><b>Что присылать</b><button type="button" class="bell-link" data-b="back">← Назад</button></div>
+  panel.innerHTML = `<div class="bell-head"><b>Что присылать</b><button type="button" class="bell-link" data-b="back">Назад</button></div>
     <form class="bell-prefs">${KINDS.map(([k, l]) => `<label><input type="checkbox" value="${k}" ${muted.has(k) ? '' : 'checked'} ${k === 'case' ? 'disabled' : ''}> ${l}</label>`).join('')}
       <label class="bell-quiet"><input type="checkbox" name="quiet" ${st.prefs.quiet ? 'checked' : ''}> Не беспокоить — без всплывающих окон (колокольчик всё равно считает)</label>
       <button type="submit" class="btn-primary">Сохранить</button></form>`;
