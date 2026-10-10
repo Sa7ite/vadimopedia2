@@ -177,7 +177,7 @@ blockquote{margin:0 0 1em;padding:0 0 0 18px;font-style:italic;border:0}
 .bell-panel{position:absolute;right:-6px;top:calc(100% + 12px);z-index:900;width:400px;max-height:min(70vh,560px);overflow-y:auto;background:var(--grain),var(--paper);color:var(--ink);box-shadow:3px 5px 0 var(--sh-hi),0 0 0 1px rgba(0,0,0,.1);text-align:left}
 .bell-head{position:sticky;top:0;z-index:1;display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--grain),var(--paper);border-bottom:1.5px solid var(--ink)}
 .bell-head b{margin-right:auto;font-size:18px}
-.bell-link{min-height:40px;padding:2px 4px;border:0;background:none;color:var(--ink);font:400 15px var(--serif);text-decoration:underline;text-underline-offset:4px}
+.bell-link{min-height:44px;padding:2px 4px;border:0;background:none;color:var(--ink);font:400 15px var(--serif);text-decoration:underline;text-underline-offset:4px}
 .bell-list{list-style:none;margin:0;padding:0}
 .bell-item{display:flex;gap:12px;width:100%;padding:12px 16px;border:0;border-bottom:1px solid var(--line);background:none;color:var(--ink);text-align:left;font:400 16px/1.4 var(--serif)}
 .bell-item:hover,.bell-item:focus-visible{background:rgba(29,35,48,.05)}
@@ -203,7 +203,6 @@ button:hover{background:rgba(29,35,48,.06)}
 .navbar button{color:inherit}
 /* главная до своего оформления (T3.2): читаемый текст на столе */
 .hero{max-width:1100px;margin:0 auto;padding:0 40px;color:var(--paper)}
-.theme-picker{display:none}
 @media (max-width:600px){.hero{padding:0 14px}}
 
 /* ---------- 13. Главная: ящик картотеки под лампой (блок 2, вариант 3; T3.2) ---------- */
@@ -347,7 +346,7 @@ body.guest .dh-note:not(.g),body:not(.guest) .dh-note.g{display:none}
 /* T3.2б: бирки группировки на лицевой стенке ящика */
 .ev-grouper{display:flex;flex-wrap:wrap;align-items:center;gap:6px;flex:1 1 100%;margin-top:4px}
 .ev-grouper-l{font:15px var(--serif);color:#dfe3df;margin-right:4px}
-.ev-grouper button{min-height:34px;padding:3px 12px;background:var(--grain),var(--paper2);color:var(--ink);border:1.5px solid #0b0f0d;font:15px var(--serif);cursor:pointer;box-shadow:2px 2px 0 var(--sh)}
+.ev-grouper button{min-height:44px;padding:3px 12px;background:var(--grain),var(--paper2);color:var(--ink);border:1.5px solid #0b0f0d;font:15px var(--serif);cursor:pointer;box-shadow:2px 2px 0 var(--sh)}
 .ev-grouper button[aria-pressed=true]{background:var(--tag);font-weight:700;box-shadow:inset 0 2px 0 rgba(0,0,0,.25);transform:translateY(1px)}
 .ev-grouper button:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
 .ev-grouper .ev-latch{margin-left:auto;background:var(--brass);color:#1a140a;border-color:#3a2a10}
@@ -432,7 +431,7 @@ body.guest .dh-note:not(.g),body:not(.guest) .dh-note.g{display:none}
 #section-chronicle>.container{background:none;box-shadow:none;padding:0 40px;color:var(--paper)}
 #section-chronicle>.container>h2:first-child{border-bottom-color:rgba(218,219,208,.35);color:var(--paper);margin-left:48px}
 .chronicle-controls{display:flex;flex-wrap:wrap;align-items:flex-end;gap:4px;margin:0 0 0 48px;position:relative;z-index:1}
-#section-chronicle .chronicle-controls button{min-height:40px;padding:7px 18px 5px;border:0;border-radius:6px 6px 0 0;background:var(--grain),var(--card);color:var(--ink);font:400 17px/1.2 var(--serif);text-decoration:none;box-shadow:0 -1px 0 rgba(0,0,0,.15) inset;filter:none;clip-path:none;cursor:pointer;transition:min-height .12s}
+#section-chronicle .chronicle-controls button{min-height:44px;padding:7px 18px 5px;border:0;border-radius:6px 6px 0 0;background:var(--grain),var(--card);color:var(--ink);font:400 17px/1.2 var(--serif);text-decoration:none;box-shadow:0 -1px 0 rgba(0,0,0,.15) inset;filter:none;clip-path:none;cursor:pointer;transition:min-height .12s}
 #section-chronicle .chronicle-controls button:hover{min-height:44px}
 #section-chronicle .chronicle-controls button.on{min-height:48px;background:var(--grain),var(--paper);font-weight:700;box-shadow:none}
 .tome-page:focus{outline:none}
@@ -514,7 +513,7 @@ body.guest .dh-note:not(.g),body:not(.guest) .dh-note.g{display:none}
 .th-note{font:400 23px/1.25 var(--hand);color:var(--pen);margin:6px 0}
 .th-meta{font-size:15px;color:var(--graphite);display:flex;align-items:center;gap:6px}.th-meta .ic{width:18px;height:18px}
 .th-actions{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin-top:10px}
-.th-vote{min-height:40px;padding:4px 12px;border:1.5px solid var(--ink);background:transparent;color:var(--ink);font:400 16px var(--serif);cursor:pointer}
+.th-vote{min-height:44px;padding:4px 12px;border:1.5px solid var(--ink);background:transparent;color:var(--ink);font:400 16px var(--serif);cursor:pointer}
 .th-vote.active{background:var(--ink);color:var(--paper)}
 .th-vote:disabled{opacity:.55;cursor:not-allowed}
 /* редактор летописи: поля подсвечены, правки двумя цветами */
@@ -633,7 +632,7 @@ body.guest .dh-note:not(.g),body:not(.guest) .dh-note.g{display:none}
 .cab-wallet:active{transform:translate(1px,2px)}
 .cab-wallet .cw-n{padding:1px 9px;background:#EBDDBB;color:#4A3626;font:700 16px var(--mono)}
 .cab-wallet:focus-visible{outline:3px solid var(--tag);outline-offset:3px}
-.profile-settings{display:none}
+
 /* стена медалей */
 .ach-showcase{padding:22px 24px 20px;background:var(--grain),var(--steel-d);color:var(--paper);box-shadow:inset 0 0 0 3px #2c3733,inset 0 0 0 5px rgba(218,219,208,.18),3px 5px 0 var(--sh)}
 .ach-head{display:flex;align-items:center;gap:10px;margin:0 0 16px;font:700 22px/1.2 var(--serif);color:var(--paper)}
@@ -867,7 +866,7 @@ body.guest .dh-note:not(.g),body:not(.guest) .dh-note.g{display:none}
 .case-cred{margin:12px 0}
 .case-cred .cred-card{max-width:320px;animation:none}
 .case-marks{display:grid;gap:8px;max-width:420px;margin:12px 0 6px;padding:0;list-style:none}
-.case-marks li{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:40px;padding:4px 0;border-bottom:1px dotted var(--graphite);font:600 17px var(--serif);color:var(--ink)}
+.case-marks li{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:4px 0;border-bottom:1px dotted var(--graphite);font:600 17px var(--serif);color:var(--ink)}
 .mk-stamp{display:inline-block;padding:3px 10px;border:2.5px solid currentColor;font:700 13px/1.1 var(--mono);text-transform:uppercase;letter-spacing:.08em;transform:rotate(-5deg);animation:stampDrop .24s cubic-bezier(.3,1.6,.6,1) both;animation-delay:calc(var(--k,0) * 220ms + 200ms)}
 .case-marks li.ok .mk-stamp{color:var(--pen)}
 .case-marks li.bad .mk-stamp{color:var(--thread)}
@@ -904,3 +903,9 @@ body.guest .dh-note:not(.g),body:not(.guest) .dh-note.g{display:none}
 #section-admin>.container>h2{font-size:32px}
 @media (prefers-reduced-motion:reduce){#form-register .rules-check:has(input:checked)::after{animation:none;clip-path:none}}
 @media (max-width:600px){#form-register .rules-check{padding-bottom:50px}#form-register .rules-check::after{left:0;right:auto;bottom:2px;width:130px;height:42px}}
+
+/* T3.10: зоны нажатия не меньше 44 px (итоговая проверка доступности) */
+.bar-logo,.tome-tab,#chat-messages .chat-author{position:relative}
+.bar-logo::after,.tome-tab::after,#chat-messages .chat-author::after{content:"";position:absolute;inset:-4px -6px}
+[data-group],.event-open,.btn-secondary{min-height:44px}
+footer a[data-open-rules]{display:inline-block;padding:11px 8px}

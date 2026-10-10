@@ -132,13 +132,6 @@ export function renderProfile(profile, onEditClick) {
           </div>
         </article>
         ${credCount ? `<button type="button" class="cab-wallet" data-wallet aria-label="Открыть кошелёк удостоверений: ${credCount}"><span>Кошелёк удостоверений</span><b class="cw-n">${credCount}</b></button>` : ''}
-        <div class="profile-settings">
-          <h4>Оформление</h4>
-          <div class="theme-picker" id="theme-picker">
-            <button type="button" data-t="dossier">Секретное досье</button>
-            <button type="button" data-t="agit">Агитпроп</button>
-          </div>
-        </div>
       </div>
       <div class="cab-right">
         <section class="sub-box" id="profile-submissions" hidden></section>
@@ -152,8 +145,6 @@ export function renderProfile(profile, onEditClick) {
       </div>
     </div>
   `;
-  window.vpMarkTheme?.();
-
   const btnEditProfile = document.getElementById('btn-edit-profile');
   if (btnEditProfile && onEditClick) btnEditProfile.addEventListener('click', () => onEditClick());
   document.getElementById('profile-evidence')?.addEventListener('toggle', e => { if (e.target.open) renderEvidenceList(); });

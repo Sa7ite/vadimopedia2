@@ -5,22 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Вадимопедия — Все Вадимы Мира</title>
   
-  <!-- Стили: новая тема «Секретное досье» включается адресом ?new=1 (Фаза 3), ?new=0 — вернуть старую -->
-  <script>
-    (function(){var q=new URLSearchParams(location.search).get('new');
-      if(q==='1')localStorage.setItem('vpNew','1');if(q==='0')localStorage.removeItem('vpNew');
-      var n=localStorage.getItem('vpNew')==='1';window.VP_NEW=n;
-      if(n){document.documentElement.setAttribute('data-theme','dossier');
-        document.write('<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;0,7..72,700;1,7..72,400&family=PT+Mono&family=Caveat:wght@500;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="dossier.css">');}
-      else document.write('<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=PT+Sans:wght@400;700&family=PT+Mono&display=swap" rel="stylesheet"><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="themes.css">');
-    })();
-  </script>
+  <!-- Стили: тема «Секретное досье» (по умолчанию с Фазы 3; старая тема «Агитпроп» удалена в T3.10) -->
+  <script>window.VP_NEW=true;document.documentElement.setAttribute('data-theme','dossier');</script>
+  <link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;0,7..72,700;1,7..72,400&family=PT+Mono&family=Caveat:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="dossier.css">
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#d41f1f">
+  <meta name="theme-color" content="#22302B">
   <link rel="icon" href="favicon.ico" type="image/x-icon">
 </head>
-<body>
-<script>document.body.className=window.VP_NEW?"theme-new":"theme-"+(localStorage.getItem("theme")||"agit")</script>
+<body class="theme-new">
 
   <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><filter id="vp-rough" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.2" xChannelSelector="R" yChannelSelector="G" result="d"/><feTurbulence type="fractalNoise" baseFrequency="0.35" numOctaves="1" seed="8" result="n2"/><feColorMatrix in="n2" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.3 1.45" result="m"/><feComposite in="d" in2="m" operator="in"/></filter></svg>
   <!-- Контейнер для всплывающих уведомлений -->
